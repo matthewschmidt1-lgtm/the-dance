@@ -344,7 +344,7 @@ button.ps-btn:hover { background: var(--accent-soft); }
 .thinker-x:hover { border-color: var(--ink); }
 @media (prefers-reduced-motion: no-preference) { .thinker-dialog[open] { animation: popIn .22s ease-out; } @keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(.98); } } }
 .bench-card.is-grand { background: color-mix(in srgb, var(--tc) 12%, var(--surface)); }
-.bench-badge { font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--tc) 64%, var(--ink)); margin-bottom: 4px; }
+.bench-badge { font-family: var(--f-display); font-size: .8125rem; font-weight: 700; letter-spacing: .05em; line-height: 1.35; text-transform: uppercase; color: color-mix(in srgb, var(--tc) 74%, var(--ink)); margin-bottom: 4px; }
 .bench-name { font-weight: 720; font-size: var(--t-lg); }
 .bench-teaches { font-family: var(--f-read); color: var(--muted); }
 
@@ -389,15 +389,16 @@ button.ps-btn:hover { background: var(--accent-soft); }
 .te-icon svg { width: 30px; height: 30px; }
 .te-title { display: grid; gap: 4px; min-width: 0; }
 .te-title h2, .te-title h3 { font-size: var(--t-xl); font-weight: 780; font-stretch: 106%; line-height: 1.15; }
-.te-field, .te-badge { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--tc-ink); }
-.te-badge { display: inline-block; justify-self: start; margin-top: 4px; padding: 3px 8px; border-radius: 6px; background: var(--surface); line-height: 1.5; }
+/* Eyebrow labels: the heading face reads more clearly than mono at small caps sizes. */
+.te-field, .te-badge, .te-label { font-family: var(--f-display); font-size: .875rem; font-weight: 700; letter-spacing: .05em; line-height: 1.35; text-transform: uppercase; color: color-mix(in srgb, var(--tc) 74%, var(--ink)); }
+.te-badge { display: inline-block; justify-self: start; margin-top: 6px; padding: 4px 10px; border-radius: 6px; background: var(--surface); font-size: .8125rem; }
 .te-mark { flex-shrink: 0; width: 22px; height: 22px; color: var(--tc-ink); }
 .te-mark svg { width: 100%; height: 100%; }
 .te-teaches { display: flex; gap: 10px; align-items: flex-start; font-size: var(--t-lg); line-height: 1.45; }
 .te-teaches strong { color: var(--tc-ink); font-weight: 720; }
 .te-idea { font-family: var(--f-read); font-size: 1.125rem; line-height: 1.75; max-width: 62ch; }
-.te-label { display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--tc-ink); }
-.te-label .te-mark { width: 18px; height: 18px; }
+.te-label { display: flex; align-items: center; gap: 8px; }
+.te-label .te-mark { width: 20px; height: 20px; }
 .te-ask { display: grid; gap: 10px; padding: 18px 20px; border-radius: 14px; background: var(--tc-soft); border-left: 4px solid var(--tc); }
 .te-q { font-family: var(--f-read); font-style: italic; font-size: 1.1875rem; line-height: 1.55; }
 

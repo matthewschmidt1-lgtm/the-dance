@@ -337,6 +337,8 @@ button.ps-btn:hover { background: var(--accent-soft); }
 .bench-sec { padding-block: clamp(40px, 7vw, 80px); }
 .bench-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; margin-bottom: 16px; }
 .bench-grid > li { display: flex; }
+.bench-grid > li.is-wide { grid-column: 1 / -1; }
+.bench-card.is-practitioner { background: color-mix(in srgb, var(--tc) 9%, var(--surface)); }
 .bench-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; margin-bottom: 8px; background: var(--tc); color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -4px 8px rgba(0,0,0,.12); }
 .bench-icon svg { width: 22px; height: 22px; }
 .bench-card { flex: 1; width: 100%; background: var(--surface); padding: 18px 18px 20px; display: grid; gap: 4px; align-content: start; text-align: left; border: 0; border-radius: 0; font: inherit; color: inherit; cursor: pointer; transition: background .15s; }
@@ -408,6 +410,21 @@ button.ps-btn:hover { background: var(--accent-soft); }
 .te-idea { font-family: var(--f-read); font-size: 1.125rem; line-height: 1.75; max-width: 62ch; }
 .te-label { display: flex; align-items: center; gap: 8px; }
 .te-label .te-mark { width: 20px; height: 20px; }
+.thinker.is-practitioner { grid-column: 1 / -1; }
+.te-quote { margin: 0; padding: 4px 0 4px 20px; border-left: 3px solid var(--tc); display: grid; gap: 6px; }
+.te-quote blockquote { margin: 0; font-family: var(--f-read); font-style: italic; font-size: clamp(1.25rem, 2.4vw, 1.6rem); line-height: 1.35; }
+.te-quote figcaption { font-size: var(--t-sm); color: var(--muted); }
+.te-block { display: grid; gap: 14px; }
+.te-steps { display: flex; flex-wrap: wrap; gap: 8px; counter-reset: step; }
+.te-steps li { counter-increment: step; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px 8px 8px; border-radius: 999px; background: var(--tc-soft); font-weight: 650; font-size: var(--t-sm); }
+.te-steps li::before { content: counter(step); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--tc); color: #fff; font-size: .75rem; font-weight: 700; }
+.te-lessons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 14px; }
+.te-lessons li { display: grid; gap: 6px; align-content: start; padding: 18px; border-radius: 14px; background: var(--bg); border: 1px solid color-mix(in srgb, var(--tc) 22%, var(--line)); }
+.te-l-tag { font-family: var(--f-display); font-size: .75rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in srgb, var(--tc) 74%, var(--ink)); }
+.te-lessons h4 { font-size: var(--t-lg); font-weight: 760; line-height: 1.2; }
+.te-lessons li > p:last-child { font-family: var(--f-read); line-height: 1.65; }
+.te-takeaway { font-size: var(--t-xl); font-weight: 760; font-stretch: 106%; line-height: 1.3; padding-top: 18px; border-top: 1px solid var(--line); max-width: 40ch; }
+.te-related { font-size: var(--t-sm); color: var(--muted); }
 .te-ask { display: grid; gap: 10px; padding: 18px 20px; border-radius: 14px; background: var(--tc-soft); border-left: 4px solid var(--tc); }
 .te-q { font-family: var(--f-read); font-style: italic; font-size: 1.1875rem; line-height: 1.55; }
 

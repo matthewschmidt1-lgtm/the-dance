@@ -155,7 +155,7 @@
 
     const bench = thinkerOrder.map(k => {
       const t = thinkers[k];
-      return `<li><button type="button" class="bench-card ${t.grandfather ? 'is-grand' : ''}" data-thinker="${k}" aria-haspopup="dialog" style="--tc:${t.color}"><span class="bench-icon">${t.icon}</span>${t.grandfather ? `<span class="bench-badge">Intellectual grandfather</span>` : ''}<span class="bench-name">${t.name}</span><span class="bench-teaches">teaches you ${t.teaches}</span><span class="bench-more" aria-hidden="true">Read more</span></button></li>`;
+      return `<li class="${t.practitioner ? 'is-wide' : ''}"><button type="button" class="bench-card ${t.grandfather ? 'is-grand' : ''} ${t.practitioner ? 'is-practitioner' : ''}" data-thinker="${k}" aria-haspopup="dialog" style="--tc:${t.color}"><span class="bench-icon">${t.icon}</span>${t.grandfather ? `<span class="bench-badge">Intellectual grandfather</span>` : ''}${t.practitioner ? `<span class="bench-badge">The practitioner · Market Wizards</span>` : ''}<span class="bench-name">${t.name}</span><span class="bench-teaches">teaches you ${t.teaches}</span><span class="bench-more" aria-hidden="true">Read more</span></button></li>`;
     }).join('');
 
     const ep2 = PP.episodes[1];
@@ -198,13 +198,13 @@
       </section>
 
       <section class="wrap bench-sec">
-        <div class="section-head"><p class="eyebrow">The bench</p><h2>Six thinkers. One question each.</h2>
+        <div class="section-head"><p class="eyebrow">The bench</p><h2>Six thinkers and a trader. One question each.</h2>
           <p class="lede">Each scene is seen through one of their lenses. Thomas Schelling sits at the head of the table: he studied people whose interests partly conflict and partly overlap, which describes almost everyone you'll meet.</p></div>
         <ul class="bench-grid">${bench}</ul>
         <dialog class="thinker-dialog" id="thinker-dialog" aria-labelledby="thinker-dialog-h">
           <div class="thinker thinker-pop"></div>
           <form method="dialog" class="thinker-close-row"><button class="btn btn-ghost btn-sm" value="close">Close</button></form>
-          <form method="dialog"><button class="thinker-x" value="close" aria-label="Close">×</button></form>
+          <form method="dialog"><button class="thinker-x" value="close" aria-label="Close" autofocus>×</button></form>
         </dialog>
         <button class="btn btn-link" data-act="bench">Read what each one teaches →</button>
       </section>
@@ -230,7 +230,7 @@
             <img class="nm-art" src="/img/next/bench.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
             <span class="nm-k">The bench</span>
             <span class="nm-t">Meet the thinkers</span>
-            <span class="nm-d">Six ideas from Schelling, Nash, Aumann, Axelrod, Nalebuff and Duke, one question each.</span>
+            <span class="nm-d">Six thinkers and a trader, from Schelling and Nash to Ed Seykota, one question each.</span>
             <span class="nm-go" aria-hidden="true">→</span>
           </button>
           <button class="nm nm-prof" data-act="profile">
@@ -254,15 +254,20 @@
         </header>
         <p class="te-teaches"><span class="te-mark">${I.teaches}</span><span>${t.short} teaches you <strong>${t.teaches}</strong>.</span></p>
         <p class="te-idea">${t.idea}</p>
-        <div class="te-ask"><p class="te-label"><span class="te-mark">${I.ask}</span>The question to ask</p><p class="te-q">${t.ask}</p></div>`;
+        <div class="te-ask"><p class="te-label"><span class="te-mark">${I.ask}</span>The question to ask</p><p class="te-q">${t.ask}</p></div>
+        ${t.quote ? `<figure class="te-quote"><blockquote>“${t.quote.text}”</blockquote><figcaption>${t.quote.source}</figcaption></figure>` : ''}
+        ${t.steps ? `<div class="te-block"><p class="te-label">His game in five moves</p><ol class="te-steps">${t.steps.map(x => `<li>${x}</li>`).join('')}</ol></div>` : ''}
+        ${t.lessons ? `<div class="te-block"><p class="te-label">Seven lessons for everyday play</p><ol class="te-lessons">${t.lessons.map(l => `<li><p class="te-l-tag">${l.tag}</p><h4>${l.name}</h4><p>${l.body}</p></li>`).join('')}</ol></div>` : ''}
+        ${t.takeaway ? `<p class="te-takeaway">${t.takeaway}</p>` : ''}
+        ${t.related ? `<p class="te-related">${t.related}</p>` : ''}`;
   }
 
 
   function viewBench() {
-    const cards = thinkerOrder.map(k => `<article class="thinker ${thinkers[k].grandfather ? 'is-grand' : ''}" style="--tc:${thinkers[k].color}">${thinkerEntry(k)}</article>`).join('');
+    const cards = thinkerOrder.map(k => `<article class="thinker ${thinkers[k].grandfather ? 'is-grand' : ''} ${thinkers[k].practitioner ? 'is-practitioner' : ''}" style="--tc:${thinkers[k].color}">${thinkerEntry(k)}</article>`).join('');
     return `<section class="wrap page">
       <div class="section-head"><p class="eyebrow">The bench</p><h1>The thinkers behind the game</h1>
-        <p class="lede">You won't be asked to memorize anything. Each scene puts one of these ideas in front of you as a situation, and the analysis afterward names it.</p></div>
+        <p class="lede">You won't be asked to memorize anything. Each scene puts one of these ideas in front of you as a situation, and the analysis afterward names it. Six thinkers built the theory, and a practitioner from the markets shows what it takes to live by it.</p></div>
       <div class="thinker-grid">${cards}</div>
       <div class="page-actions"><button class="btn btn-primary" data-act="play">${history.length ? 'Back to the episode' : 'Play Episode 1'}</button></div>
     </section>`;
@@ -584,6 +589,7 @@
       box.innerHTML = thinkerEntry(who.dataset.thinker, 'h2', 'thinker-dialog-h');
       dlg.returnTo = who;
       dlg.showModal();
+      dlg.scrollTop = 0;
       return;
     }
     // A click on the dimmed backdrop (the dialog element itself) closes the popup.

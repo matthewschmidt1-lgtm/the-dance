@@ -161,7 +161,7 @@
     const ep2 = PP.episodes[1];
     return `
       <section class="hero-cine">
-        <div class="hero-art"><img src="/img/hero-dance-floor.webp" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dance steps lead toward them, dice rest in the foreground, and a corridor of doorways recedes into haze toward a lit exit."></div>
+        <div class="hero-art"><img src="/img/hero-dance-floor.webp?v=${PP.assetV}" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dance steps lead toward them, dice rest in the foreground, and a corridor of doorways recedes into a soft glow of haze."></div>
         <div class="hero-over">
           <div class="wrap hero-over-in">
             <p class="eyebrow eyebrow-on-dark">Episode ${EP.number} · ${EP.title}</p>
@@ -220,21 +220,21 @@
         <div class="section-head"><p class="eyebrow">Your next move</p><h2 id="next-move-h">See the game without becoming the game.</h2></div>
         <div class="nm-grid">
           <button class="nm nm-play" data-act="${done ? 'profile' : 'play'}">
-            <img class="nm-art" src="/img/next/play.webp" width="720" height="720" alt="" loading="lazy">
+            <img class="nm-art" src="/img/next/play.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
             <span class="nm-k">${done ? 'Episode complete' : n ? `Scene ${n + 1} of ${LIST.length}` : 'Start here'}</span>
             <span class="nm-t">${done ? 'See your results' : n ? 'Continue playing' : 'Play Episode 1'}</span>
             <span class="nm-d">${done ? 'Your rating, your ten measures, and who trusts you now.' : n ? `Pick up at ${LIST[n].title}.` : 'Six scenes across three places, starting at a grocery store checkout.'}</span>
             <span class="nm-go" aria-hidden="true">→</span>
           </button>
           <button class="nm nm-bench" data-act="bench">
-            <img class="nm-art" src="/img/next/bench.webp" width="720" height="720" alt="" loading="lazy">
+            <img class="nm-art" src="/img/next/bench.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
             <span class="nm-k">The bench</span>
             <span class="nm-t">Meet the thinkers</span>
             <span class="nm-d">Six ideas from Schelling, Nash, Aumann, Axelrod, Nalebuff and Duke, one question each.</span>
             <span class="nm-go" aria-hidden="true">→</span>
           </button>
           <button class="nm nm-prof" data-act="profile">
-            <img class="nm-art" src="/img/next/profile.webp" width="720" height="720" alt="" loading="lazy">
+            <img class="nm-art" src="/img/next/profile.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
             <span class="nm-k">Your profile</span>
             <span class="nm-t">${n ? 'See how you play' : 'What gets measured'}</span>
             <span class="nm-d">${n ? 'Strengths, blind spots, and decisions versus luck.' : 'Ten measures of strategic judgment. Getting your way isn\'t one of them.'}</span>

@@ -272,7 +272,7 @@ body.on-home .site-nav a:focus-visible { outline-color: var(--cine-accent); }
 .hero-title { font-size: clamp(2rem, 4.2vw, 3.6rem); font-weight: 820; font-stretch: 112%; letter-spacing: -0.022em; line-height: 1.07; max-width: 16ch; margin-bottom: 20px; padding-bottom: .04em; color: #ece3cf; }
 /* Handmade paper inside the letters: warm rag tone, pulp mottling, plant fibers. */
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
-  .hero-title { background: url("/img/paper.webp") 0 0 / 360px repeat, #ece3cf; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+  .hero-title { background: url("/img/paper.webp?v=2") 0 0 / 360px repeat, #ece3cf; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
 }
 .hero-sub { font-family: var(--f-read); font-size: clamp(1.15rem, 2.2vw, 1.5rem); line-height: 1.4; color: rgba(236,227,207,.86); margin-bottom: 32px; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px 16px; }

@@ -2,6 +2,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 const ROOT = path.join(__dirname, 'public');
@@ -51,8 +52,14 @@ const server = http.createServer((req, res) => {
     const ext = path.extname(target);
     fs.readFile(target, (readErr, data) => {
       if (readErr) return send(res, 500, 'Server error', 'text/plain; charset=utf-8');
-      const cache = ext === '.webp' || ext === '.png' ? 'public, max-age=86400' : 'no-cache';
-      send(res, 200, req.method === 'HEAD' ? '' : data, TYPES[ext] || 'application/octet-stream', { 'Cache-Control': cache });
+      // Browsers always check for a newer copy; unchanged files cost only a 304 reply.
+      const etag = '"' + crypto.createHash('sha1').update(data).digest('base64url').slice(0, 20) + '"';
+      const headers = { 'Cache-Control': 'no-cache', ETag: etag };
+      if (req.headers['if-none-match'] === etag) {
+        res.writeHead(304, { ...SECURITY_HEADERS, ...headers });
+        return res.end();
+      }
+      send(res, 200, req.method === 'HEAD' ? '' : data, TYPES[ext] || 'application/octet-stream', headers);
     });
   });
 });

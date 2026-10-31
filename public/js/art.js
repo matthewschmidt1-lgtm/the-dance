@@ -6,6 +6,8 @@ window.PP = window.PP || {};
 
 PP.art = (function () {
   let uid = 0;
+  // Bump when rendered images change, so browsers fetch the new files.
+  PP.assetV = '2';
 
   const DOG = `<g class="dog-head">
     <path d="M-30,-6 C-46,0 -48,34 -36,44 C-30,30 -28,14 -24,4 Z" fill="#5a3f28"/>
@@ -523,7 +525,7 @@ PP.art = (function () {
   function rendered(name) {
     const d = window.PP.envData && PP.envData[name];
     if (!d) return null;
-    const img = l => d.layers.includes(l) ? `<image href="/img/env/${name}-${l}.webp" x="0" y="0" width="1600" height="900" preserveAspectRatio="none"/>` : '';
+    const img = l => d.layers.includes(l) ? `<image href="/img/env/${name}-${l}.webp?v=${PP.assetV}" x="0" y="0" width="1600" height="900" preserveAspectRatio="none"/>` : '';
     let far = '', midX = '', fgX = '';
     if (name === 'checkout' && d.points && d.points.reg) {
       const { x, y } = d.points.reg, w = d.points.reg_w || 80;

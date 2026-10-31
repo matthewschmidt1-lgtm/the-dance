@@ -32,7 +32,7 @@ PP.scenarios = [
     known: [`The register says $11.99.`, `You remember a shelf tag reading $8.49.`, `The difference is $3.50.`],
     unknown: [`Whether the tag was for this exact bottle.`, `Whether Maya can fix it herself.`, `How long a price check takes.`],
     clues: [
-      { label: `Look at Maya's screen`, text: `A sticky note on the monitor reads "Price overrides → call Dev x204." There's a Price Check key. Maya can start the process but can't finish it alone.` },
+      { label: `Look at Maya's screen`, text: `A sticky note on the monitor reads "Overrides over $5 → call Dev x204." There's a Price Check key. A $3.50 fix may be Maya's call, if she's willing to make it.` },
       { label: `Look at the bottle`, text: `It's the 1-liter bottle. The 500 ml bottle sat right next to it on the shelf. You're now less sure which one the $8.49 tag belonged to.` }
     ],
     question: `What do you do?`,
@@ -41,8 +41,8 @@ PP.scenarios = [
         key: 'A', text: `"That's wrong. The shelf says $8.49. I'm not paying that."`,
         q: 1, s: { reg: -2, com: -1, coo: -1, bnd: 1 },
         outcomes: [
-          { p: 0.55, tone: 'mixed', text: `Maya flushes and calls Dev. Six minutes later he confirms the tag was right and overrides it. You saved $3.50, and the whole lane watched Maya get nervous.` },
-          { p: 0.45, tone: 'bad', text: `Maya calls Dev. Six minutes later he walks back with the tag: it was for the 500 ml bottle. You pay $11.99 with five people watching.` }
+          { p: 0.6, tone: 'good', text: `Maya flushes and calls Dev. Six minutes later he confirms the tag was right and overrides it. You saved $3.50. You were right this time, and the whole lane watched Maya get nervous.` },
+          { p: 0.4, tone: 'bad', text: `Maya calls Dev. Six minutes later he walks back with the tag: it was for the 500 ml bottle. You pay $11.99 with five people watching.` }
         ],
         later: `Maya remembers you. Next time she'll be polite and careful, which is not the same as being on your side.`
       },
@@ -57,7 +57,7 @@ PP.scenarios = [
         q: 4, s: { com: 2, inf: 2, reg: 1, inc: 2, jdg: 1, coo: 1 },
         outcomes: [
           { p: 0.7, tone: 'good', text: `Maya visibly relaxes. "I'll ring it at the shelf price and flag it for Dev. If it's wrong, that's on us." You're out the door in thirty seconds.` },
-          { p: 0.3, tone: 'mixed', text: `Maya says she can't override it, but tells you the service desk handles it in a minute. You check on the way: the tag was for the 500 ml bottle. You're glad you didn't argue.` }
+          { p: 0.3, tone: 'mixed', text: `Maya would rather not override it without a check, and tells you the service desk handles it in a minute. You check on the way: the tag was for the 500 ml bottle. You're glad you didn't argue.` }
         ],
         later: `You named your uncertainty, gave Maya an easy path, and took the line's pressure off her. She had the discretion, and you made using it painless.`
       },
@@ -71,22 +71,22 @@ PP.scenarios = [
         key: 'E', text: `Pay now, then take the receipt to customer service on the way out.`,
         q: 3, s: { reg: 2, jdg: 1, inf: 1, coo: 1 },
         outcomes: [
-          { p: 0.65, tone: 'good', text: `You check the shelf on the way out. The tag was right. Customer service refunds the $3.50 in under a minute.` },
-          { p: 0.35, tone: 'mixed', text: `You check the shelf on the way out. The tag belonged to the 500 ml bottle. No refund, and no scene.` }
+          { p: 0.6, tone: 'good', text: `You check the shelf on the way out. The tag was right. Customer service refunds the $3.50 in under a minute.` },
+          { p: 0.4, tone: 'mixed', text: `You check the shelf on the way out. The tag belonged to the 500 ml bottle. No refund, and no scene.` }
         ],
         later: `You separated the time pressure from the money question and checked your facts before pressing your case. That habit is worth far more than $3.50.`
       }
     ],
     analysis: {
-      game: `A coordination problem with a clock running. Maya wants the line moving and no trouble. You want a fair price. The line wants speed. All three can win at once.`,
+      game: `A common-interest game with a clock running. Maya wants the line moving and no trouble. You want a fair price. The line wants speed. All three can win at once.`,
       incentives: `Maya's real incentive is to avoid a scene and avoid blame. Anything that makes helping you easy, quick and blame-free makes her likely to help.`,
       leverage: `Not the manager. The leverage was Maya's goodwill, because she decides how hard to try. Store policy was a backup, not the opening move.`,
-      missing: `Which bottle the tag belonged to. You were acting on a memory, under time pressure.`,
+      missing: `Which bottle the tag belonged to. You were acting on a memory, under time pressure. Checking would have cost a minute. Being wrong cost a public scene.`,
       assumptions: `That the store was wrong, and that someone above Maya was needed to fix it.`,
       controlled: `Your tone, how certain you sounded, and when you raised it.`,
       couldnt: `Store policy, the line's patience, and what the tag actually said.`,
       concept: { name: `Decision quality is not outcome`, thinker: 'duke', body: `Duke calls the habit of judging a choice by how it turned out "resulting." Arguing loudly and being right is still a poor decision, because it risked a public loss on a fact you hadn't checked. Asking calmly and being wrong is still a good one.` },
-      second: { name: `Discretion lives low in the org chart`, thinker: 'schelling', body: `Schelling noticed that the person who can actually act is often not the person with the title. Here it was a nineteen-year-old cashier.` },
+      second: { name: `Make the cooperative move cheap`, thinker: 'schelling', body: `Schelling studied how you shape someone's choice by changing what each option costs them. Offering the service desk made helping you easy and saying no blame-free. Maya's best reply became the one you wanted.` },
       better: `Option C, or E if the line pressure felt heavy. Both keep the question small and keep your facts honest.`,
       lesson: `The person in front of you often has more discretion than the person above them. Make helping you easy.`
     }
@@ -141,7 +141,7 @@ PP.scenarios = [
       },
       {
         key: 'D', text: `"I can, if you ask Ellen to move something off my plate."`,
-        q: 3, s: { neg: 1, bnd: 2, inc: 1, com: -1 },
+        q: 2, s: { neg: 1, bnd: 2, inc: 1, com: -1 },
         outcomes: [
           { p: 0.5, tone: 'mixed', text: `Dana asks Ellen. Ellen, an Avoider, says "work it out between you." You end up doing it anyway, a day late.` },
           { p: 0.5, tone: 'good', text: `Ellen pushes your Henley deadline to Monday. You do the vendor section Friday. Fair trade.` }
@@ -166,7 +166,7 @@ PP.scenarios = [
       assumptions: `That the choice was yes or no. Most requests have a "yes, if" or a "yes, when."`,
       controlled: `What you asked, what you offered, and on what terms.`,
       couldnt: `Dana's workload, Ellen's management style, and whether Dana says thanks.`,
-      concept: { name: `Reciprocity beats both extremes`, thinker: 'axelrod', body: `In Axelrod's tournaments, always-cooperate strategies got exploited and always-defect strategies got isolated. What worked: cooperate first, respond to what the other side actually does, and be clear enough that they can read you.` },
+      concept: { name: `Reciprocity beats both extremes`, thinker: 'axelrod', body: `In Axelrod's computer tournaments, Tit for Tat won: cooperate first, then do what the other side did last time. Strategies that never pushed back got exploited, and strategies that defected first got stuck in mutual defection. Asking what the task involves and trading help for help is the same idea: cooperative, conditional, and easy for Dana to read.` },
       second: { name: `This is a repeated game`, thinker: 'aumann', body: `Aumann showed that repeated interactions follow different logic than one-offs. Your answer to Dana is also your answer to her next five requests.` },
       better: `Option C. Gather information first, then say yes on terms you can keep.`,
       lesson: `Before you answer a request, find out what it actually is.`
@@ -208,14 +208,17 @@ PP.scenarios = [
       {
         key: 'B', text: `Walk over, say hi, and mention you usually park there. Ask if it's a temporary thing.`,
         q: 4, s: { com: 2, inf: 2, reg: 1, coo: 2, lng: 2 }, rel: { gary: 2 },
-        outcomes: [{ p: 1, tone: 'good', text: `"Oh no, sorry! My driveway's being resealed, it's done Tuesday. I had no idea there was a system." He moves the truck that afternoon and offers you a coffee.` }],
+        outcomes: [
+          { p: 0.8, tone: 'good', text: `"Oh no, sorry! My driveway's being resealed, it's done Tuesday. I had no idea there was a system." He moves the truck that afternoon and offers you a coffee.` },
+          { p: 0.2, tone: 'mixed', text: `Gary's a little stiff. "It's a public street. But fine, the driveway's done Tuesday." He moves it Tuesday. You got the facts in one minute, and nothing was put in writing.` }
+        ],
         later: `You learned the facts, taught the norm without accusing anyone, and made a first impression that will matter later.`
       },
       {
         key: 'C', text: `Park in front of his house to make a point.`,
         q: 0, s: { reg: -2, coo: -2, lng: -2, str: -1 }, rel: { gary: -3 },
         outcomes: [{ p: 1, tone: 'bad', text: `Gary doesn't get the point. He just thinks you're strange. Ruth saw the whole thing and mentions it at the block party.` }],
-        later: `Retaliation only works as a signal if the other person understands what it's a reply to. Gary didn't.`
+        later: `That was the urge to get even, dressed up as a plan. Retaliation only works as a signal if the other person understands what it's a reply to. Gary didn't, so you paid for a move he never noticed.`
       },
       {
         key: 'D', text: `Say nothing. Park down the block until it sorts itself out.`,
@@ -284,7 +287,7 @@ PP.scenarios = [
           { p: 0.5, tone: 'mixed', text: `"Actually, I built most of that." The room goes quiet. Ellen says "Let's take that offline." You're right, and you're now part of an awkward moment.` },
           { p: 0.5, tone: 'bad', text: `Jordan says "It was a team effort, obviously." Ellen moves on quickly. You look like you cared more about credit than the work.` }
         ],
-        later: `Jordan is now an adversary, and Ellen filed the moment under "conflict" rather than "contribution."`
+        later: `The need to be seen as right, right now, made this move. Jordan is now an adversary, and Ellen filed the moment under "conflict" rather than "contribution."`
       },
       {
         key: 'B', text: `Say nothing in the meeting. Address it with Jordan privately afterward.`,
@@ -323,12 +326,12 @@ PP.scenarios = [
     analysis: {
       game: `A signaling game with an audience. The real question isn't how you feel about Jordan. It's what Ellen ends up believing about who does the work.`,
       incentives: `Jordan may be desperate before his review. Ellen wants smooth meetings and capable people. You want accurate credit and a working relationship that survives.`,
-      leverage: `The version history and your knowledge of the work. Whoever understands the analysis best can show it without saying a word about credit.`,
-      missing: `Jordan's intent, and what Ellen already believes.`,
+      leverage: `The version history and your knowledge of the work. Anyone can claim credit, so a claim alone is cheap talk. A file history and fluent answers about the model are hard to fake, which is why they persuade where a claim can't.`,
+      missing: `Jordan's intent, and what Ellen already believes. The "Prepared by J. Pike" footer is evidence he claimed the work. It is not evidence of why.`,
       assumptions: `That Jordan is a villain, and that a moment of lost credit is permanent.`,
       controlled: `Your timing, your tone, and whether you correct the record publicly or privately.`,
       couldnt: `Jordan's motives, Ellen's style, and what was already said.`,
-      concept: { name: `Best response`, thinker: 'nash', body: `Nash's insight is to evaluate each move by the other players' best reply. A public accusation invites Jordan to defend himself and Ellen to shut it down. A good question gives Ellen a reason to look at you, and gives Jordan nothing to fight.` },
+      concept: { name: `Best response`, thinker: 'nash', body: `Nash's insight is to evaluate each move by the other players' best reply. A public correction invites Jordan to defend himself and Ellen to shut it down. A good question gives Ellen a reason to look at you, and gives Jordan nothing to fight.` },
       second: { name: `Intent is uncertain`, thinker: 'duke', body: `You can't know if Jordan meant it. Duke would ask: which response works reasonably well whether he's scheming or just scared? C and B both do.` },
       better: `C in the room, then B or D afterward. The strongest response here is a sequence, not a single move.`,
       lesson: `When you can't control the moment, control the record.`
@@ -363,10 +366,10 @@ PP.scenarios = [
     options: [
       {
         key: 'A', text: `"Okay, go ahead. Just keep the crew here."`,
-        q: 2, s: { coo: 1, jdg: -1, inf: -2, neg: -2 },
+        q: 1, s: { coo: 1, jdg: -1, inf: -2, neg: -2 },
         outcomes: [
           { p: 0.6, tone: 'mixed', text: `The work is done well. The final invoice shows $2,600 for materials and labor you never saw itemized. It was probably fair. You'll never know.` },
-          { p: 0.4, tone: 'bad', text: `The work is done. Later a friend in construction looks at the photos: "That's a $1,200 repair." You agreed under a deadline you never tested.` }
+          { p: 0.4, tone: 'bad', text: `The work is done. Later a friend in construction looks at the photos: "Documented, that's about $1,900." You paid $700 extra under a deadline you never tested.` }
         ],
         later: `Luis learned that urgency works on you.`
       },
@@ -409,7 +412,7 @@ PP.scenarios = [
       assumptions: `That "today" leaves no time to verify, and that a fixed bid means no changes, ever.`,
       controlled: `Whether you verified, and what you asked for in writing.`,
       couldnt: `The rot, the crew's schedule, and the price of plywood.`,
-      concept: { name: `Commitments and deadlines`, thinker: 'schelling', body: `Schelling showed how a deadline, real or not, shifts bargaining power toward the person who sets it. The response isn't to ignore the deadline. It's to meet it on your terms: verify fast, approve in writing.` },
+      concept: { name: `Commitments and deadlines`, thinker: 'schelling', body: `Schelling showed that a deadline shifts bargaining power toward whoever sets it, as long as the other side believes it. The response isn't to ignore the deadline. It's to meet it on your terms: verify fast, approve in writing.` },
       second: { name: `What does information cost?`, thinker: 'duke', body: `Duke asks how much it would cost to know more. Looking at the floor took a minute. A second contractor took three weeks. Choose the cheapest check that resolves the uncertainty.` },
       better: `Option C. You kept the schedule and the right to verify.`,
       lesson: `Urgency is a negotiating position. Meet the deadline, but don't skip the check.`
@@ -478,7 +481,7 @@ PP.scenarios = [
           { p: 0.75, tone: 'good', text: `Ellen lights up. A decision that doesn't feel like picking a winner. Priya gets her rebuild, phased. Marcus gets his budget. Both of them think it was partly their idea.` },
           { p: 0.25, tone: 'mixed', text: `Marcus pushes back hard on Friday. Ellen adopts your criteria but takes another week. Still, the argument is now about evidence, not egos.` }
         ],
-        later: `You moved the fight from people to criteria. Both sides can say yes without losing, which is why the agreement will hold.`
+        later: `You moved the fight from people to criteria. Phasing is also a small bet first: if fixing the two worst modules doesn't cut tickets, you learn that cheaply, before the whole budget is spent. Both sides can say yes without losing.`
       },
       {
         key: 'E', text: `Tell Ellen privately what each of them said to you.`,
@@ -492,12 +495,12 @@ PP.scenarios = [
       incentives: `Priya wants the right technical answer. Marcus wants budget safety and influence. Ellen wants a decision that won't hurt her in March. Tom's clue showed you the incentive that mattered most.`,
       leverage: `Ellen's question. She handed you the agenda without realizing it.`,
       missing: `What Ellen actually cares about, and what the data says. Both were one conversation away.`,
-      assumptions: `That the options were Priya's plan or Marcus's plan.`,
+      assumptions: `That the options were Priya's plan or Marcus's plan, and that money already spent on the old tool should decide anything. That money is gone either way. The only question is what the next dollar buys.`,
       controlled: `What criteria you proposed, and whether you represented anyone else's private views.`,
       couldnt: `Ellen's final call, the budget, and two weeks of history between Priya and Marcus.`,
-      concept: { name: `Expand the pie before splitting it`, thinker: 'nalebuff', body: `Nalebuff's co-opetition asks whether competitors can create more value together before they fight over who gets what. A phased plan gives Priya most of what she wants and Marcus most of what he needs.` },
-      second: { name: `An equilibrium everyone keeps`, thinker: 'nash', body: `Nash equilibrium is an arrangement where nobody gains by deviating on their own. A compromise both sides helped shape is far more stable than a win one side resents.` },
-      better: `Option D, ideally floated to Tom or Ellen before Friday so the room arrives already half-agreed.`,
+      concept: { name: `Expand the pie before splitting it`, thinker: 'nalebuff', body: `Co-opetition, from Nalebuff and Brandenburger, asks whether rivals can create value together before they fight over shares. Priya cares most about the broken modules. Marcus cares most about spending before March. Fixing the two modules behind 62% of tickets now and the rest later gives each most of what they value at little cost to the other.` },
+      second: { name: `An equilibrium everyone keeps`, thinker: 'nash', body: `A Nash equilibrium is an outcome where nobody gains by changing only their own move. After a win-lose call, the loser gains by reopening it at every budget meeting. Under the phased plan, Priya has her rebuild and Marcus has March protected, so neither gains by reopening it. That is why it holds.` },
+      better: `Option D, ideally shared with Priya and Marcus before Friday so each can test the criteria and suggest changes.`,
       lesson: `When two people ask you to pick a side, see if you can change the question.`
     }
   },
@@ -580,8 +583,8 @@ PP.scenarios = [
       assumptions: `That fair means 50/50, or that "I didn't ask for it" settles the matter.`,
       controlled: `Your counteroffer and whether you said it directly.`,
       couldnt: `Gary's dog, the cost of cedar, and how your first meeting went.`,
-      concept: { name: `The shadow of the future`, thinker: 'aumann', body: `Aumann proved that when people interact indefinitely and care about the future, cooperation can sustain itself without any enforcer. Your history with Gary shaped how he approached you today. Today shapes the next ten years.` },
-      second: { name: `Pay for what you value`, thinker: 'nalebuff', body: `Splitting what you both need and letting each person pay for their extras creates value instead of fighting over it. Neither of you is subsidizing the other's preferences.` },
+      concept: { name: `Cooperation without an enforcer`, thinker: 'aumann', body: `Aumann's work on repeated games showed that when people expect to keep meeting and care enough about the future, cooperation can hold up with no one enforcing it. Axelrod later called this pull the shadow of the future. Your history with Gary shaped how he approached you today, and today shapes the next ten years.` },
+      second: { name: `Pay for what you value`, thinker: 'nalebuff', body: `When each person pays for what they value, the deal can happen at all. Gary gets the six feet his dog needs, you pay only for a fence you'd choose anyway, and nobody has to win an argument about whose preferences count.` },
       better: `Option C. Agree on the shared need, separate the upgrade, say it directly.`,
       lesson: `In a relationship that repeats, the best deal is one both sides would choose again.`
     }
@@ -617,16 +620,16 @@ PP.scenarios = [
         key: 'A', text: `"That's great, I accept!"`,
         q: 1, s: { neg: -2, inf: -1, jdg: -1, coo: 1 },
         outcomes: [{ p: 1, tone: 'mixed', text: `Sam is delighted. You start at $92,000. Six months later you learn a peer hired the same month started at $101,000.` }],
-        later: `Starting salary compounds. Every raise is a percentage of this number.`
+        later: `Fear of losing the offer answered for you. Asking would have cost a few awkward seconds. Not asking costs you every year, because each raise is a percentage of this number.`
       },
       {
         key: 'B', text: `"I have another offer at $105,000. Can you match it?"`,
         q: 0, s: { com: -2, lng: -2, neg: -1, jdg: -2 },
         outcomes: [
           { p: 0.5, tone: 'bad', text: `Sam asks, pleasantly, if you can share the offer in writing so they can "move quickly." You can't. The conversation gets a lot cooler.` },
-          { p: 0.5, tone: 'mixed', text: `They come up to $101,000. You won. You also started a job with a lie that Alicia might someday discover.` }
+          { p: 0.5, tone: 'good', text: `They come up to $101,000. You won. You also started a job with a lie that Alicia might someday discover.` }
         ],
-        later: `A bluff is a threat you can't carry out. Schelling would call it non-credible. And when it works, it teaches you a habit that eventually fails publicly.`
+        later: `A fake offer is a false claim about your alternative. It only works until someone asks to see it, so its credibility was always borrowed. And when it works, it teaches you a habit that eventually fails publicly.`
       },
       {
         key: 'C', text: `"I'm excited about this. The posted range goes to $110,000, and I can start before your November launch. Could we get to $102,000? I'm also interviewing elsewhere next week, so could we make the deadline Tuesday?"`,
@@ -644,7 +647,7 @@ PP.scenarios = [
           { p: 0.6, tone: 'bad', text: `It's above their posted range. Sam says they'll "keep you in mind for future roles." You're now negotiating with your current employer, who doesn't know you were looking.` },
           { p: 0.4, tone: 'mixed', text: `Alicia calls you directly. They can't go above $110,000 and are disappointed by the tone. You take $105,000 with a slightly awkward start.` }
         ],
-        later: `An ultimatum above their published ceiling is a commitment you'd have to keep, and you probably don't want to.`
+        later: `You put a $7,000 raise on the table to chase a few thousand more. Even when it works, you took a large risk for a small gain. Never risk the whole deal for the last slice of it.`
       },
       {
         key: 'E', text: `"Thank you. Could I have until next Wednesday to decide?"`,
@@ -664,7 +667,7 @@ PP.scenarios = [
       concept: { name: `Bargaining depends on alternatives`, thinker: 'nash', body: `Nash's bargaining solution shows that how a deal is split depends on what each side gets if talks fail. Your real alternative was weak, staying at $85,000, but theirs was weak too: no hire before launch. Naming what you can offer them shifts the split honestly.` },
       second: { name: `Credible commitments`, thinker: 'schelling', body: `A threat only works if the other side believes you'd carry it out. Bluffs and ultimatums above the published range fail that test. Truthful information does not.` },
       better: `Option C. Anchor with their own range, offer what they value, ask for time honestly.`,
-      lesson: `The strongest negotiators aren't the toughest. They know both sides' alternatives and say true things about them.`
+      lesson: `Know both sides' alternatives, say true things about them, and never risk the whole offer to win the last few thousand.`
     }
   }
 ];

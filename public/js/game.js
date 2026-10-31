@@ -12,7 +12,7 @@
 
   const growthAdvice = {
     str: `Before choosing, ask what each person's best reply to your move would be.`,
-    reg: `Notice the moment you want to react. The urge is information, not instruction.`,
+    reg: `Your strongest urge to act usually arrives when you know the least. Wait one beat, name the feeling, then decide.`,
     inc: `Ask what each person gains or loses before deciding what they "really" want.`,
     neg: `Look for a "yes, if" before settling for a yes or a no.`,
     com: `Say what you need plainly and give the other person an easy way to help.`,
@@ -20,7 +20,7 @@
     coo: `Look for the version where both people come out ahead before defending your share.`,
     bnd: `A clear, early limit is kinder than a late, resentful one.`,
     inf: `One good question often beats a confident guess. Freeze the scene and read the room first.`,
-    jdg: `Separate what you know from what you assume, and price what it would cost to find out.`
+    jdg: `Before you act, ask two things: what does it cost to check, and what does it cost to be wrong? When checking is cheap, check.`
   };
   const strengthNote = {
     str: `You think a move ahead of the conversation.`,
@@ -28,11 +28,11 @@
     inc: `You look for what people want before judging them.`,
     neg: `You find terms instead of settling for yes or no.`,
     com: `You make it easy for people to say yes to you.`,
-    lng: `You play for the relationship, not the round.`,
+    lng: `You play for the next ten rounds, so you rarely overpay to win this one.`,
     coo: `You look for outcomes where both sides win.`,
     bnd: `You protect your time without burning bridges.`,
     inf: `You gather facts before you commit.`,
-    jdg: `You act sensibly when you can't know everything.`
+    jdg: `You match the size of your move to how much you actually know.`
   };
   const toneLabel = { good: `Went well`, mixed: `Mixed`, bad: `Went badly` };
 
@@ -429,8 +429,8 @@
     const last = idx === LIST.length - 1;
     const ctxAfter = { rel: all.rel, flags: all.flags };
     const ratingDelta = move.ratingAfter - move.ratingBefore;
-    const why = opt.q >= 3 && outcome.tone !== 'good' ? `A sound decision that didn't fully pay off this time. That's uncertainty, not a mistake.`
-      : opt.q <= 1 && outcome.tone === 'good' ? `It worked out, but the reasoning was weak. Don't let a lucky result teach you the wrong lesson.`
+    const why = opt.q >= 3 && outcome.tone !== 'good' ? `A sound decision that didn't fully pay off this time. Keep making it. Over many tries, sound decisions come out ahead.`
+      : opt.q <= 1 && outcome.tone === 'good' ? `It worked out, but the reasoning was weak. Be most careful here: a lucky win teaches you to do it again.`
         : `The grade judges the decision. The result includes things you couldn't control.`;
 
     const tabs = [['outcome', 'Outcome'], ['game', 'The game'], ['people', 'The people'], ['lens', 'The lens']];

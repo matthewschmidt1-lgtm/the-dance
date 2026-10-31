@@ -9,7 +9,7 @@ PP.thinkers = {
     teaches: `to negotiate`,
     field: `Negotiation and leverage`,
     grandfather: true,
-    idea: `Most of life is a mixed-motive game: people whose interests partly conflict and partly overlap, influencing each other anyway. Schelling showed how commitments, deadlines, unspoken norms (focal points) and credibility shape what each side can get.`,
+    idea: `Most of life is a mixed-motive game: people whose interests partly conflict and partly overlap, influencing each other anyway. Schelling showed how commitments, deadlines, focal points (answers that stand out to everyone without discussion) and credibility shape what each side can get.`,
     ask: `What does each person expect the other to do, and what would change that expectation?`
   },
   nash: {
@@ -17,7 +17,7 @@ PP.thinkers = {
     short: `Nash`,
     teaches: `to anticipate`,
     field: `Strategic choices and equilibrium`,
-    idea: `A good move accounts for everyone else's best response. An equilibrium is an arrangement nobody can improve by changing only their own behavior, which is why it tends to last. Nash also described how bargains split value based on each side's alternatives.`,
+    idea: `A good move accounts for everyone else's best response. An equilibrium is an outcome where no one can do better for themselves by changing only their own move, which is why it tends to hold. It is not always the outcome that is best for everyone. Nash also described how bargains split value based on each side's alternatives.`,
     ask: `If I make this move, what is each other person's best reply?`
   },
   aumann: {
@@ -41,7 +41,7 @@ PP.thinkers = {
     short: `Nalebuff`,
     teaches: `to find mutual advantage`,
     field: `Competition and collaboration`,
-    idea: `People can compete over how a pie is divided and cooperate to make it bigger, at the same time. Nalebuff's work on co-opetition asks you to look for the version of the deal where both sides are better off before fighting over shares.`,
+    idea: `People can compete over how a pie is divided and cooperate to make it bigger, at the same time. Nalebuff's work with Adam Brandenburger on co-opetition asks you to look for the version of the deal where both sides are better off before fighting over shares.`,
     ask: `Is there a version of this where we both come out ahead?`
   },
   duke: {

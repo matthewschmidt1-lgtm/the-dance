@@ -40,7 +40,7 @@ PP.viz = (function () {
       </td>`;
     }).join('')}</tr>`).join('');
     return `<div class="mx-wrap"><table class="mx"><caption class="sr">Payoff matrix</caption><thead>${head}</thead><tbody>${body}</tbody></table></div>
-      <p class="viz-note"><strong>${m.you} / ${m.them}</strong>, scored 0–3 for how well each side does. ${m.note}</p>`;
+      <p class="viz-note"><strong>${m.you} / ${m.them}</strong>, scored 0–3 for how well each side does. The highlighted cell is where neither side gains by switching alone, and here it is also best for both. ${m.note}</p>`;
   }
 
   // People around you, edges colored by trust. `deltas` pulse the edges that just changed.

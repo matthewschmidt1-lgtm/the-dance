@@ -98,7 +98,7 @@ PP.scenes = {
             { who: 'maya', mood: 'happy', say: `Have a good one!` }
           ] },
           { col: 1, beats: [
-            { who: 'maya', mood: 'nervous', say: `I can't override it myself, but the service desk does it in, like, a minute.` },
+            { who: 'maya', mood: 'nervous', say: `I'd rather not override it without a check, but the service desk does it in, like, a minute.` },
             { who: 'maya', mood: 'smile', act: 'nod', say: `Sorry about that.` },
             { cam: 'wide', caption: `On the way out, you check the shelf. The $8.49 tag belongs to the 500 ml bottle.` },
             { caption: `You are very glad you asked nicely.` }
@@ -160,7 +160,7 @@ PP.scenes = {
       { who: 'dana', mood: 'nervous', say: `Any chance you could take the vendor section of the Q3 report? It's due Monday. I'm drowning.` },
       { cam: 'wide', caption: `Third time this quarter. Once she thanked you in the team channel. Once she didn't mention it.` },
       { who: 'dana', mood: 'smile', act: 'lean', say: `You're just so good at the vendor stuff.` },
-      { caption: `Flattery noted.` }
+      { caption: `Maybe flattery. Maybe she means it.` }
     ],
     options: {
       A: { line: `Of course, I'll take care of it.`, preview: `Instant goodwill. Sets a pattern, and costs you Thursday night.`, row: 0,
@@ -225,7 +225,7 @@ PP.scenes = {
     },
     leverage: {
       you: [`Your yes, which has value`, `Your skill with vendor data`, `A real deadline of your own`],
-      them: [`Friendship and goodwill`, `Flattery`, `Guilt, if you let it work`],
+      them: [`Friendship and goodwill`, `Your track record of saying yes`, `A real overload, if it is one`],
       tilt: -4
     },
     links: [['dana', 'ellen', 'reports to']]
@@ -306,11 +306,11 @@ PP.scenes = {
     },
     matrix: {
       you: `You`, them: `Jordan`,
-      rows: [`Accuse him`, `Make ownership visible`],
+      rows: [`Correct him in public`, `Make ownership visible`],
       cols: [`Defends himself`, `Concedes`],
       cells: [[[0, 1], [2, 0]], [[2, 1], [3, 2]]],
       best: [1, 1],
-      note: `An accusation makes defending himself Jordan's best reply. Making ownership visible leaves him nothing to fight, so conceding costs him less.`
+      note: `A public correction makes defending himself Jordan's best reply. Making ownership visible leaves him nothing to fight, so conceding costs him less.`
     },
     leverage: {
       you: [`Version history: 31 of 38 slides`, `You understand the analysis best`],
@@ -342,7 +342,7 @@ PP.scenes = {
     options: {
       A: { line: `I'm with Priya. A rebuild is the right call.`, preview: `Clear and loyal. Turns a technical question into a vote on people.`, row: 0,
         outcomes: [
-          { col: 0, beats: [
+          { col: 1, beats: [
             { who: 'priya', mood: 'happy', pose: 'down' },
             { who: 'marcus', mood: 'frustrated', act: 'shake', pose: 'crossed' },
             { who: 'ellen', mood: 'thinking', say: `Rebuild it is. Carefully.` }
@@ -379,7 +379,7 @@ PP.scenes = {
             { cam: 'wide', caption: `Slower. But the argument is now about evidence, not egos.` }
           ] }
         ] },
-      E: { caption: `Later, you tell Ellen privately what each of them said to you.`, preview: `Ellen gets useful information. You become the leak.`, row: 1,
+      E: { caption: `Later, you tell Ellen privately what each of them said to you.`, preview: `Ellen gets useful information. You become the leak.`, row: null,
         outcomes: [{ col: 1, beats: [
           { who: 'ellen', mood: 'smile', say: `That's very helpful to know.` },
           { who: 'marcus', mood: 'frustrated', act: 'glance', cam: 'marcus', caption: `A week later, Ellen repeats something Marcus told you. He figures out where she heard it.` }
@@ -388,10 +388,10 @@ PP.scenes = {
     matrix: {
       you: `You`, them: `Priya & Marcus`,
       rows: [`Pick a person`, `Stay out of it`, `Change the question`],
-      cols: [`Both can say yes`, `Someone loses face`],
-      cells: [[[2, 2], [1, 0]], [[1, 1], [0, 0]], [[3, 3], [2, 1]]],
+      cols: [`Engage with the criteria`, `Dig in`],
+      cells: [[[1, 0], [1, 1]], [[1, 0], [0, 1]], [[3, 3], [2, 1]]],
       best: [2, 0],
-      note: `Picking a person makes "someone loses face" almost certain. Agreeing on criteria first is the only row where both of them can say yes.`
+      note: `Picking a person makes digging in the losing side's best reply, so the fight continues. Shared criteria make engaging their best reply, because each of them gets most of what they care about. Priya's and Marcus's payoffs are combined.`
     },
     leverage: {
       you: [`Ellen asked you directly`, `The ticket data`, `Tom's read on March`],
@@ -429,6 +429,9 @@ PP.scenes = {
           { who: 'gary', mood: 'awkward', say: `I had no idea there was a system.` },
           { who: 'gary', mood: 'happy', pose: 'mug', say: `Want a coffee? I just made a pot.` },
           { who: 'ruth', mood: 'smile', act: 'nod', caption: `Ruth nods approvingly. This will be all over the street by lunch.` }
+        ] }, { col: 0, beats: [
+          { who: 'gary', mood: 'skeptical', pose: 'mug', say: `It's a public street, you know. But fine. Driveway's done Tuesday.` },
+          { cam: 'wide', caption: `Not the warmest start. Still, you know the facts, and it cost you one minute.` }
         ] }] },
       C: { caption: `You park in front of Gary's house. That'll show him.`, preview: `Retaliation. Only works if he knows what it's a reply to.`, row: 2,
         outcomes: [{ col: 1, beats: [
@@ -452,7 +455,7 @@ PP.scenes = {
       you: `You`, them: `Gary`,
       rows: [`Ask directly`, `Stay silent`, `Escalate (note, post, payback)`],
       cols: [`Cooperates`, `Gets defensive`],
-      cells: [[[3, 3], [1, 1]], [[2, 3], [0, 2]], [[2, 0], [0, 0]]],
+      cells: [[[3, 3], [1, 1]], [[2, 3], [0, 2]], [[2, 0], [0, 1]]],
       best: [0, 0],
       note: `Asking makes cooperating Gary's easiest reply. Escalating makes him defensive even when he moves the truck, and you'll live next to that.`
     },

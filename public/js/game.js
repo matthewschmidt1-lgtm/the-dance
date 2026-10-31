@@ -143,7 +143,7 @@
 
     const bench = thinkerOrder.map(k => {
       const t = thinkers[k];
-      return `<li><button type="button" class="bench-card ${t.grandfather ? 'is-grand' : ''}" data-thinker="${k}" aria-haspopup="dialog">${t.grandfather ? `<span class="bench-badge">Intellectual grandfather</span>` : ''}<span class="bench-name">${t.name}</span><span class="bench-teaches">teaches you ${t.teaches}</span><span class="bench-more" aria-hidden="true">Read more</span></button></li>`;
+      return `<li><button type="button" class="bench-card ${t.grandfather ? 'is-grand' : ''}" data-thinker="${k}" aria-haspopup="dialog" style="--tc:${t.color}"><span class="bench-icon">${t.icon}</span>${t.grandfather ? `<span class="bench-badge">Intellectual grandfather</span>` : ''}<span class="bench-name">${t.name}</span><span class="bench-teaches">teaches you ${t.teaches}</span><span class="bench-more" aria-hidden="true">Read more</span></button></li>`;
     }).join('');
 
     const ep2 = PP.episodes[1];
@@ -235,19 +235,25 @@
   // ───────────────────────── Bench
 
   function thinkerEntry(k, h = 'h3', id = '') {
-    const t = thinkers[k];
+    const t = thinkers[k], I = PP.uiIcons;
     const used = LIST.filter(s => s.lens[0] === k).map(s => s.title);
     const also = LIST.filter(s => s.lens.slice(1).includes(k)).map(s => s.title);
-    return `<header class="thinker-head"><p class="thinker-field">${t.field}</p><${h}${id ? ` id="${id}"` : ''}>${t.name}</${h}>${t.grandfather ? `<p class="thinker-badge">Intellectual grandfather of The Dance</p>` : ''}</header>
-        <p class="thinker-teaches">${t.short} teaches you ${t.teaches}.</p>
-        <p>${t.idea}</p>
-        <p class="thinker-ask"><span>The question to ask</span>${t.ask}</p>
-        ${used.length ? `<p class="thinker-used">Main lens in: ${used.join(', ')}</p>` : ''}
-        ${also.length ? `<p class="thinker-used">Also in: ${also.join(', ')}</p>` : ''}`;
+    const chips = list => list.map(x => `<li class="te-chip">${x}</li>`).join('');
+    return `<header class="te-head">
+          <span class="te-icon">${t.icon}</span>
+          <div class="te-title"><p class="te-field">${t.field}</p><${h}${id ? ` id="${id}"` : ''}>${t.name}</${h}>${t.grandfather ? `<p class="te-badge">Intellectual grandfather of The Dance</p>` : ''}</div>
+        </header>
+        <p class="te-teaches"><span class="te-mark">${I.teaches}</span><span>${t.short} teaches you <strong>${t.teaches}</strong>.</span></p>
+        <p class="te-idea">${t.idea}</p>
+        <div class="te-ask"><p class="te-label"><span class="te-mark">${I.ask}</span>The question to ask</p><p class="te-q">${t.ask}</p></div>
+        ${used.length || also.length ? `<div class="te-scenes"><p class="te-label"><span class="te-mark">${I.scenes}</span>Where you'll meet this idea</p>
+          ${used.length ? `<div class="te-row"><span class="te-row-k">Main lens</span><ul class="te-chips">${chips(used)}</ul></div>` : ''}
+          ${also.length ? `<div class="te-row"><span class="te-row-k">Also in</span><ul class="te-chips te-chips-soft">${chips(also)}</ul></div>` : ''}
+        </div>` : ''}`;
   }
 
   function viewBench() {
-    const cards = thinkerOrder.map(k => `<article class="thinker ${thinkers[k].grandfather ? 'is-grand' : ''}">${thinkerEntry(k)}</article>`).join('');
+    const cards = thinkerOrder.map(k => `<article class="thinker ${thinkers[k].grandfather ? 'is-grand' : ''}" style="--tc:${thinkers[k].color}">${thinkerEntry(k)}</article>`).join('');
     return `<section class="wrap page">
       <div class="section-head"><p class="eyebrow">The bench</p><h1>The thinkers behind the game</h1>
         <p class="lede">You won't be asked to memorize anything. Each scene puts one of these ideas in front of you as a situation, and the analysis afterward names it.</p></div>
@@ -564,6 +570,7 @@
       const dlg = document.getElementById('thinker-dialog');
       const box = dlg.querySelector('.thinker-pop');
       box.className = `thinker thinker-pop ${thinkers[who.dataset.thinker].grandfather ? 'is-grand' : ''}`;
+      box.style.setProperty('--tc', thinkers[who.dataset.thinker].color);
       box.innerHTML = thinkerEntry(who.dataset.thinker, 'h2', 'thinker-dialog-h');
       dlg.returnTo = who;
       dlg.showModal();

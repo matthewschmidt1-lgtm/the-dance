@@ -1,0 +1,14 @@
+{
+  "name": "power-play",
+  "version": "1.0.0",
+  "description": "POWER PLAY: the everyday game of human behavior, strategy and influence.",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED"
+}

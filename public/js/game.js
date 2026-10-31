@@ -197,7 +197,33 @@
           <span class="lock" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
           <div><p class="eyebrow">Episode ${ep2.number} · In development</p><h3>${ep2.title}</h3><p>${ep2.blurb}</p></div>
         </div>
-        <p class="principle-line">See the game without becoming the game.</p>
+      </section>
+
+      <section class="wrap next-move" aria-labelledby="next-move-h">
+        <div class="section-head"><p class="eyebrow">Your next move</p><h2 id="next-move-h">See the game without becoming the game.</h2></div>
+        <div class="nm-grid">
+          <button class="nm nm-play" data-act="${done ? 'profile' : 'play'}">
+            <img class="nm-art" src="/img/next/play.webp" width="720" height="720" alt="" loading="lazy">
+            <span class="nm-k">${done ? 'Episode complete' : n ? `Scene ${n + 1} of ${LIST.length}` : 'Start here'}</span>
+            <span class="nm-t">${done ? 'See your results' : n ? 'Continue playing' : 'Play Episode 1'}</span>
+            <span class="nm-d">${done ? 'Your rating, your ten measures, and who trusts you now.' : n ? `Pick up at ${LIST[n].title}.` : 'Six scenes across three places, starting at a grocery store checkout.'}</span>
+            <span class="nm-go" aria-hidden="true">→</span>
+          </button>
+          <button class="nm nm-bench" data-act="bench">
+            <img class="nm-art" src="/img/next/bench.webp" width="720" height="720" alt="" loading="lazy">
+            <span class="nm-k">The bench</span>
+            <span class="nm-t">Meet the thinkers</span>
+            <span class="nm-d">Six ideas from Schelling, Nash, Aumann, Axelrod, Nalebuff and Duke, one question each.</span>
+            <span class="nm-go" aria-hidden="true">→</span>
+          </button>
+          <button class="nm nm-prof" data-act="profile">
+            <img class="nm-art" src="/img/next/profile.webp" width="720" height="720" alt="" loading="lazy">
+            <span class="nm-k">Your profile</span>
+            <span class="nm-t">${n ? 'See how you play' : 'What gets measured'}</span>
+            <span class="nm-d">${n ? 'Strengths, blind spots, and decisions versus luck.' : 'Ten measures of strategic judgment. Getting your way isn\'t one of them.'}</span>
+            <span class="nm-go" aria-hidden="true">→</span>
+          </button>
+        </div>
       </section>`;
   }
 

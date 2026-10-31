@@ -23,8 +23,11 @@
   const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
   const fresh = (clues = [], type = null) => ({ selected: null, clues, type });
   // Some people are one of several hidden types (Luis honest or padding). Each play draws one.
-  function drawType(sc) {
+  // Scenes that share a key (Omar across the trip and the loan) keep whoever was drawn first.
+  function drawType(sc, past = []) {
     if (!sc.types) return null;
+    const prev = sc.share && past.find((h, i) => LIST[i] && LIST[i].share === sc.share && h.type);
+    if (prev && sc.types.some(t => t.id === prev.type)) return prev.type;
     let r = Math.random();
     for (const t of sc.types) { r -= t.p; if (r <= 0) return t.id; }
     return sc.types[sc.types.length - 1].id;
@@ -191,7 +194,8 @@
       const b = vague ? { ...o, ...o.vague, vague } : { ...o, vague };
       // A vague version can keep the same results at different odds (pv), or bring its own.
       const outs = vague && o.vague.pv ? b.outcomes.map((x, i) => ({ ...x, p: o.vague.pv[i] })) : b.outcomes;
-      return { ...b, needs, q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
+      const relv = b.rel && Object.fromEntries(Object.entries(b.rel).map(([k, v]) => [k, val(v, c)]));
+      return { ...b, _c: c, needs, text: val(b.text, c), rel: relv, q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
     });
   }
   const optsNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return resolve(sc, { rel: d.rel, flags: d.flags, type: draft.type }, draft.clues); };
@@ -199,10 +203,11 @@
   // Staging for the version actually played: a vague option may have its own line and reactions.
   const staged = (sc, opt) => {
     const so = sc.stage.options[opt.key];
-    if (!opt.vague || !so.vague) return so;
+    const said = o => typeof o.line === 'function' ? { ...o, line: o.line(opt._c || {}) } : o;
+    if (!opt.vague || !so.vague) return said(so);
     const v = { ...so, ...so.vague };
     if (so.vague.outcomes) v.outcomes = so.vague.outcomes.map((o, i) => ({ col: (so.outcomes[i] || {}).col, ...o }));
-    return v;
+    return said(v);
   };
 
   const skillScore = t => Math.max(0, Math.min(100, Math.round(50 + t * 3.5)));
@@ -468,7 +473,7 @@
   function mountStage(sc, idx) {
     if (stage) stage.destroy();
     const d = derive(history.slice(0, idx));
-    if (idx >= history.length && sc.types && !draft.type) draft.type = drawType(sc);
+    if (idx >= history.length && sc.types && !draft.type) draft.type = drawType(sc, history.slice(0, idx));
     const type = idx < history.length ? typeOf(sc, history[idx]) : draft.type;
     stage = new PP.Stage(document.getElementById('stage-mount'), sc.stage, {
       ctx: { rel: d.rel, flags: d.flags, type, account: isMarket() ? capitals(history.slice(0, idx)).cap.fin : null, rules },
@@ -600,7 +605,7 @@
   // them changed, and whether you found what you needed to make the strong version of your move.
   function theirSide(sc, opt, type) {
     const t = sc.types && sc.types.find(x => x.id === type);
-    const who = t ? `<div><p class="their-k">Who they were this time</p><p><strong>${t.label}.</strong> ${t.tell}</p><p class="their-note">Play it again and ${t.who} may be different.</p></div>` : '';
+    const who = t ? `<div><p class="their-k">Who they were this time</p><p><strong>${t.label}.</strong> ${t.tell}</p><p class="their-note">${sc.share ? `${t.who} stays the same for the rest of this episode, so what you learned here still applies later. Replay the episode and that may change.` : `Play it again and ${t.who} may be different.`}</p></div>` : '';
     let knew = '';
     if (opt.needs) {
       const labels = opt.needs.map(i => `“${sc.clues[i].label}”`).join(' and ');

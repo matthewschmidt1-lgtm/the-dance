@@ -727,7 +727,16 @@ button.ps-btn:hover { background: var(--accent-soft); }
   .decide-bar .btn, .result-bar .btn { flex: 1 1 0; min-width: 0; padding: 0 12px; font-size: var(--t-sm); line-height: 1.2; text-align: center; }
   .pin { width: 24px; height: 24px; font-size: .75rem; }
 }
-@media (max-width: 400px) { .wordmark span { display: none; } }
+/* Narrow phones: keep the wordmark, and tighten the nav instead of hiding the name. */
+@media (max-width: 420px) {
+  .site-head-in { gap: 8px; }
+  .wordmark { gap: 7px; letter-spacing: 0; }
+  .wordmark svg { width: 17px; height: 17px; }
+  .wordmark span { font-size: 0.78rem; font-stretch: 112%; }
+  .site-nav { gap: 0; }
+  .site-nav a { padding: 8px 5px; font-size: 0.8125rem; }
+}
+@media (max-width: 340px) { .wordmark span { display: none; } }
 @media (max-width: 520px) { .nav-the { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {

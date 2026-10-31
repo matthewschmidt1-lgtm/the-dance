@@ -34,7 +34,20 @@ Six deals. In most, the other side knows more than you. In one, you're the one w
 | 5 | The Used Car | The Marketplace (Alder Street) | Robert Aumann | Kim: careful or trusting |
 | 6 | The Trade-In | The Marketplace (a dealership) | Barry Nalebuff | Vince: four-square or straight |
 
-Episode 3 (*The Circle*: friends, family and the group chat) is shown as "in development".
+## Episode 3: The Circle
+
+Friends, family and the group chat. The games you play with people you can't walk away from.
+
+| # | Scene | Place | Lens | Formal term | Hidden type |
+|---|---|---|---|---|---|
+| 1 | The Rental | The Trip (a lake cabin) | Barry Nalebuff | Mechanism design | Omar: square or a taker |
+| 2 | The Bill | The Trip (the last dinner) | John Nash | Free-rider problem | Omar (same draw) |
+| 3 | The Date | The Group Chat (your new place) | Thomas Schelling | Focal point | The group: birthday clear or a clash |
+| 4 | The Loan | The Group Chat (your new place) | Robert Axelrod | Tit for tat | Omar (same draw) |
+| 5 | The Holidays | The Family (Mom's kitchen) | Robert Aumann | Repeated bargaining | Nate: stretched thin or coasting |
+| 6 | The Parents' House | The Family (Mom's kitchen) | Barry Nalebuff | Fair division | Nate (same draw) |
+
+Omar and Nate are each drawn once and stay the same across their scenes (`share: 'omar'` / `share: 'nate'` in `episode3.js`), so what you learn about them early still holds later.
 
 ## The Trader's Mind
 

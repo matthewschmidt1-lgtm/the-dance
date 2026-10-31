@@ -37,6 +37,11 @@ PP.voice = (function () {
     vince:    { names: ['Aaron', 'Tom', 'Eddy (English (United States))', 'Guy', 'Google US English'], pitch: 0.96, rate: 1.1 },
     theo:     { names: ['Grandpa (English (United Kingdom))', 'Daniel', 'Arthur', 'Reed (English (United Kingdom))', 'Google UK English Male'], pitch: 0.88, rate: 0.9 },
     nadia:    { names: ['Kate', 'Serena', 'Martha', 'Sonia', 'Google UK English Female'], pitch: 1.0, rate: 1.0 },
+    jess:     { names: ['Shelley (English (United States))', 'Jenny', 'Aria', 'Karen', 'Google US English'], pitch: 1.08, rate: 1.06 },
+    omar:     { names: ['Eddy (English (United States))', 'Nathan', 'Aaron', 'Guy', 'Google US English'], pitch: 0.94, rate: 1.04 },
+    lena:     { names: ['Tessa', 'Libby', 'Sonia', 'Flo (English (United Kingdom))', 'Google UK English Female'], pitch: 1.02, rate: 0.96 },
+    carol:    { names: ['Grandma (English (United States))', 'Susan', 'Victoria', 'Moira', 'Google US English'], pitch: 1.0, rate: 0.94 },
+    nate:     { names: ['Reed (English (United States))', 'Evan', 'Alex', 'Tom', 'Google US English'], pitch: 0.92, rate: 1.0 },
     you:      { names: ['Ava', 'Allison', 'Jenny', 'Aria', 'Samantha', 'Google US English'], pitch: 1, rate: 1 },
     narrator: { names: ['Serena', 'Libby', 'Sandy (English (United Kingdom))', 'Google UK English Female', 'Shelley (English (United Kingdom))', 'Moira'], pitch: 1, rate: 0.95 }
   };

@@ -286,6 +286,9 @@ CINEMA = {
     'lobby':      dict(focus=(0.0, 1.8, 1.4), fstop=2.4, haze=0.006, rim=((0.2, 5.4, 3.0), '#cfe8ff', 600), dim=0.45),
     'openhouse':  dict(focus=(-0.4, 2.2, 1.4), fstop=2.8, haze=0.005, rim=((1.0, 4.4, 2.4), '#fff1dc', 300), dim=0.55),
     'dealer':     dict(focus=(-1.15, 1.95, 1.4), fstop=2.8, haze=0.004, rim=((0.5, 5.5, 3.0), '#e8f2ff', 500), dim=0.6),
+    'cabin':      dict(focus=(0.2, 2.4, 1.4), fstop=2.8, haze=0.006, rim=((1.7, 4.4, 1.6), '#dfe9f2', 160), dim=0.5),
+    'restaurant': dict(focus=(0.2, 1.8, 1.4), fstop=2.4, haze=0.008, rim=((0.6, 4.0, 2.4), '#ffd9a0', 300), dim=0.4),
+    'family':     dict(focus=(0.3, 2.4, 1.4), fstop=2.8, haze=0.004, rim=((0.4, 4.4, 2.4), '#fff4dd', 260), dim=0.55),
     'trading':    dict(focus=(0.0, 1.3, 1.13), fstop=2.0, haze=0.004, rim=((1.6, 5.0, 2.6), '#9fc8d8', 260), dim=0.6),
 }
 
@@ -1154,7 +1157,121 @@ def env_dealer():
     }
 
 
-ENVS = {'checkout': env_checkout, 'desks': env_desks, 'kitchen': env_kitchen, 'conference': env_conference, 'street': env_street, 'yard': env_yard, 'bathroom': env_bathroom, 'lobby': env_lobby, 'trading': env_trading, 'openhouse': env_openhouse, 'dealer': env_dealer}
+def env_cabin():
+    """A lakeside rental at dusk: log walls, a stone fireplace, the lake through big windows, the long table."""
+    world('#c9d6de', 0.6)
+    box('floor', (0, 3, -0.01), (14, 12, 0.01), mat('#8a6440', 0.4))
+    boxes('logs', [(0, 5.2, z * 0.24, 10, 0.22, 0.22) for z in range(12)], mat('#9c7348', 0.7))
+    boxes('logs-l', [(-4.4, 2.6, z * 0.24, 0.22, 5.4, 0.22) for z in range(12)], mat('#93693f', 0.7))
+    boxes('logs-r', [(4.4, 2.6, z * 0.24, 0.22, 5.4, 0.22) for z in range(12)], mat('#93693f', 0.7))
+    box('ceiling', (0, 1.2, 2.9), (9.2, 8.4, 0.06), mat('#7a5634', 0.8))
+    boxes('beams', [(x, 1.2, 2.7, 0.18, 8.4, 0.2) for x in (-2.6, 0, 2.6)], mat('#5e4128', 0.7))
+    # The lake at dusk through the windows.
+    box('window', (1.7, 5.08, 0.6), (3.6, 0.04, 1.8), mat('#000', 0.3, emit='#9fb9c8', emit_strength=2.2))
+    boxes('mullions', [(x, 5.05, 0.6, 0.06, 0.06, 1.8) for x in (-0.1, 0.8, 1.7, 2.6, 3.5)] + [(1.7, 5.05, 1.5, 3.6, 0.06, 0.06)], mat('#3e2c1d', 0.6))
+    area('window-light', (1.7, 4.6, 1.4), 3.4, 380, '#dfe9f2', rot=(math.radians(-90), 0, 0), sy=1.6)
+    # Stone fireplace with a fire.
+    box('chimney', (-2.4, 4.9, 0), (1.6, 0.5, 2.9), mat('#8b8780', 0.9), bevel=0.04)
+    box('hearth', (-2.4, 4.45, 0), (1.9, 0.5, 0.45), mat('#7c776f', 0.9), bevel=0.02)
+    box('firebox', (-2.4, 4.66, 0.45), (0.9, 0.05, 0.6), mat('#1d1a18', 0.9))
+    ball('fire', (-2.4, 4.56, 0.62), 0.18, mat('#000', 0.5, emit='#ff9a3c', emit_strength=14), scale=(1.3, 0.6, 1.1), sub=2)
+    area('fire-glow', (-2.4, 4.1, 0.75), 0.6, 60, '#ffb070', rot=(math.radians(-90), 0, 0))
+    box('mantel', (-2.4, 4.6, 1.3), (1.8, 0.3, 0.08), mat('#5e4128', 0.5))
+    # Couch and rug.
+    box('rug', (-1.4, 2.6, 0.003), (3.0, 2.2, 0.006), mat('#a8443a', 0.95))
+    box('couch', (-2.4, 2.9, 0), (2.0, 0.85, 0.42), mat('#6b7a5e', 0.85), bevel=0.06)
+    box('couch-back', (-2.4, 3.25, 0.42), (2.0, 0.18, 0.4), mat('#6b7a5e', 0.85), bevel=0.06)
+    # The long table, near you, with the laptop and the room list.
+    box('table', (0.6, 0.7, 0.74), (2.4, 0.9, 0.06), mat('#6b4a2c', 0.4), 'fg')
+    boxes('table-legs', [(-0.5, 0.35, 0, 0.08, 0.08, 0.74), (1.7, 0.35, 0, 0.08, 0.08, 0.74), (-0.5, 1.05, 0, 0.08, 0.08, 0.74), (1.7, 1.05, 0, 0.08, 0.08, 0.74)], mat('#4a3320', 0.5), 'fg')
+    box('laptop', (0.2, 0.7, 0.8), (0.34, 0.24, 0.015), mat('#2a2d31', 0.3), 'fg', bevel=0.004)
+    box('laptop-screen', (0.2, 0.83, 0.8), (0.34, 0.012, 0.22), mat('#000', 0.3, emit='#d9e7ee', emit_strength=1.4), 'fg', rot=(math.radians(-14), 0, 0))
+    box('room-list', (0.9, 0.62, 0.802), (0.22, 0.3, 0.002), mat('#f2ece0', 0.8), 'fg', rot=(0, 0, math.radians(-6)))
+    for k, x in enumerate((1.3, 1.45)):
+        cyl(f'mug{k}', (x, 0.85, 0.8), 0.04, 0.09, mat('#c45a3a', 0.5), 'fg')
+    camera((0.3, -2.6, 1.55), (0.1, 3.6, 1.25), 26)
+    return {
+        'spots': {'jess': spot((-0.9, 2.2, 0)), 'omar': spot((1.3, 2.5, 0)), 'lena': spot((2.6, 3.4, 0))},
+        'cams': {'list': point((0.9, 0.62, 0.81), 3.0), 'lake': point((1.7, 5.08, 1.5), 1.6)},
+    }
+
+
+def env_restaurant():
+    """A warm bistro on the last night of the trip: pendant lights, a long table, the bill arriving."""
+    world('#2a2320', 0.5)
+    box('floor', (0, 3, -0.01), (14, 12, 0.01), mat('#5b3d2a', 0.35))
+    box('back-wall', (0, 5.0, 0), (10, 0.15, 3.2), mat('#7d3f2f', 0.85))
+    boxes('wainscot', [(0, 4.9, 0, 10, 0.06, 1.0)], mat('#3f2a1e', 0.6))
+    box('left-wall', (-4.6, 2.5, 0), (0.15, 5.2, 3.2), mat('#6e3a2c', 0.85))
+    box('right-wall', (4.6, 2.5, 0), (0.15, 5.2, 3.2), mat('#6e3a2c', 0.85))
+    # Bar along the back with bottles.
+    box('bar', (2.2, 4.4, 0), (3.6, 0.6, 1.05), mat('#3a261a', 0.5), bevel=0.02)
+    box('bar-top', (2.2, 4.4, 1.05), (3.7, 0.7, 0.05), mat('#c9b48e', 0.3))
+    r = random.Random(5)
+    for k in range(14):
+        cyl(f'bottle{k}', (0.6 + k * 0.24, 4.85, 1.35), 0.04, 0.3, mat(r.choice(['#2f5d3a', '#6a2c22', '#c8a24a', '#e9e2d0']), 0.2))
+    box('shelf', (2.2, 4.88, 1.32), (3.6, 0.18, 0.03), mat('#3a261a', 0.5))
+    area('wall-wash', (0, 3.6, 2.6), 4.0, 160, '#ffcf9a', rot=(math.radians(-60), 0, 0), sy=1.0)
+    # Pendant lights over the long table.
+    for k, x in enumerate((-1.2, 0.2, 1.6)):
+        cyl(f'cord{k}', (x, 1.6, 2.4), 0.006, 0.8, mat('#1a1a1a', 0.4))
+        cyl(f'shade{k}', (x, 1.6, 2.2), 0.2, 0.2, mat('#b88a3e', 0.35, 0.6), r2=0.07)
+        ball(f'bulb{k}', (x, 1.6, 2.2), 0.06, mat('#fff', 0.5, emit='#ffd9a0', emit_strength=10))
+        area(f'pool{k}', (x, 1.6, 2.1), 0.5, 120, '#ffcf8a', rot=(0, 0, 0))
+    # The long table, near you, with plates, glasses and the bill.
+    box('table', (0.2, 0.8, 0.74), (3.0, 1.0, 0.05), mat('#4a2f1f', 0.35), 'fg')
+    boxes('table-legs', [(x, y, 0, 0.07, 0.07, 0.74) for x in (-1.2, 1.6) for y in (0.4, 1.2)], mat('#2e1d14', 0.5), 'fg')
+    box('cloth', (0.2, 0.8, 0.79), (3.1, 1.05, 0.006), mat('#efe9df', 0.8), 'fg')
+    for k, x in enumerate((-1.0, -0.2, 0.6, 1.4)):
+        cyl(f'plate{k}', (x, 0.55, 0.797), 0.13, 0.012, mat('#fbfaf6', 0.3), 'fg')
+        cyl(f'glass{k}', (x + 0.18, 0.7, 0.797), 0.035, 0.16, mat('#d8e6ea', 0.05, alpha=0.35), 'fg')
+    cyl('champagne', (0.2, 1.0, 0.797), 0.045, 0.32, mat('#2f4a2c', 0.2), 'fg')
+    box('lobster-plate', (1.4, 0.95, 0.8), (0.3, 0.2, 0.02), mat('#d9573a', 0.5), 'fg')
+    box('bill', (0.2, 0.45, 0.8), (0.12, 0.26, 0.006), mat('#2a1d16', 0.6), 'fg', rot=(0, 0, math.radians(8)))
+    camera((0.2, -2.4, 1.5), (0.1, 3.4, 1.2), 27)
+    return {
+        'spots': {'jess': spot((-0.9, 1.75, 0)), 'omar': spot((1.35, 1.8, 0)), 'lena': spot((0.25, 2.2, 0))},
+        'cams': {'bill': point((0.2, 0.45, 0.81), 3.0), 'lobster': point((1.4, 0.95, 0.82), 3.0)},
+    }
+
+
+def env_family():
+    """Mom's kitchen: worn cabinets, a calendar on the fridge, the table where the family decides things."""
+    world('#e4ddd0', 0.7)
+    box('floor', (0, 3, -0.01), (14, 12, 0.01), mat('#b9a27e', 0.6))
+    boxes('tiles', [(x * 0.4 - 4, 3, 0, 0.006, 12, 0.003) for x in range(21)], mat('#a38c69', 0.7))
+    box('back-wall', (0, 5.0, 0), (10, 0.15, 2.8), mat('#e9dfc4', 0.9))
+    box('left-wall', (-4.3, 2.5, 0), (0.15, 5.2, 2.8), mat('#e4d9bd', 0.9))
+    box('right-wall', (4.3, 2.5, 0), (0.15, 5.2, 2.8), mat('#e4d9bd', 0.9))
+    box('ceiling', (0, 2.6, 2.8), (9, 5.2, 0.05), mat('#f2ece0', 0.9))
+    # Cabinets, counter, window over the sink.
+    box('base-cab', (-1.6, 4.6, 0), (4.0, 0.6, 0.9), mat('#7c8f74', 0.6), bevel=0.01)
+    box('counter', (-1.6, 4.6, 0.9), (4.1, 0.66, 0.04), mat('#d8cfbf', 0.35))
+    box('upper-cab', (-2.6, 4.75, 1.45), (2.0, 0.34, 0.8), mat('#7c8f74', 0.6), bevel=0.01)
+    box('window', (-0.4, 4.92, 1.2), (1.2, 0.04, 0.9), mat('#000', 0.3, emit='#f3f1e6', emit_strength=2.4))
+    area('window-light', (-0.4, 4.5, 1.6), 1.2, 260, '#fff4dd', rot=(math.radians(-90), 0, 0), sy=0.9)
+    cyl('kettle', (-1.4, 4.6, 0.94), 0.1, 0.18, mat('#b8483a', 0.35))
+    # Fridge with the family calendar.
+    box('fridge', (2.6, 4.55, 0), (0.85, 0.75, 1.8), mat('#efeee8', 0.3), bevel=0.04)
+    box('calendar', (2.6, 4.165, 1.05), (0.42, 0.004, 0.5), mat('#ffffff', 0.7), rot=(0, 0, 0))
+    boxes('cal-grid', [(2.6, 4.16, 1.05 + k * 0.08, 0.4, 0.002, 0.004) for k in range(6)], mat('#9a3a2e', 0.6))
+    for k, (dx, dz, col) in enumerate(((-0.3, 1.55, '#f2c94c'), (0.28, 1.4, '#7fb3d5'), (-0.25, 0.85, '#e8a0a0'))):
+        box(f'photo{k}', (2.6 + dx, 4.163, dz), (0.12, 0.003, 0.15), mat(col, 0.6))
+    # The kitchen table, near you, with mugs and papers.
+    box('table', (0.4, 1.0, 0.74), (1.8, 1.0, 0.05), mat('#a07a4e', 0.45), 'fg')
+    boxes('table-legs', [(-0.4, 0.6, 0, 0.06, 0.06, 0.74), (1.2, 0.6, 0, 0.06, 0.06, 0.74), (-0.4, 1.4, 0, 0.06, 0.06, 0.74), (1.2, 1.4, 0, 0.06, 0.06, 0.74)], mat('#7b5a38', 0.5), 'fg')
+    box('papers', (0.1, 0.85, 0.79), (0.24, 0.3, 0.006), mat('#fbf8f0', 0.8), 'fg', rot=(0, 0, math.radians(-10)))
+    cyl('mug-a', (0.7, 0.95, 0.79), 0.045, 0.1, mat('#3f6e8a', 0.45), 'fg')
+    cyl('mug-b', (0.95, 1.15, 0.79), 0.045, 0.1, mat('#e9e2d0', 0.45), 'fg')
+    ball('fruit', (0.4, 1.3, 0.83), 0.09, mat('#d27a2c', 0.6), scale=(1, 1, 0.8), sub=2, layer='fg')
+    camera((0.2, -2.3, 1.55), (0.1, 3.6, 1.25), 26)
+    return {
+        'spots': {'carol': spot((-0.9, 2.3, 0)), 'nate': spot((0.95, 2.6, 0))},
+        'cams': {'calendar': point((2.6, 4.165, 1.25), 3.0), 'papers': point((0.1, 0.85, 0.8), 3.0)},
+    }
+
+
+ENVS = {'checkout': env_checkout, 'desks': env_desks, 'kitchen': env_kitchen, 'conference': env_conference, 'street': env_street, 'yard': env_yard, 'bathroom': env_bathroom, 'lobby': env_lobby, 'trading': env_trading, 'openhouse': env_openhouse, 'dealer': env_dealer, 'cabin': env_cabin, 'restaurant': env_restaurant, 'family': env_family}
 
 data = {}
 if os.path.exists(DATA):

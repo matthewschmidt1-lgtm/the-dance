@@ -52,9 +52,14 @@ PP.episodes = [
     ]
   },
   {
-    id: 'ep3', number: 3, title: `The Circle`, locked: true,
+    id: 'ep3', number: 3, title: `The Circle`,
     blurb: `Friends, family and the group chat. The games you play with people you can't walk away from.`,
-    scenes: []
+    scenes: ['the-rental', 'the-bill', 'the-date', 'the-loan', 'the-holidays', 'the-parents-house'],
+    places: [
+      { key: 'trip', name: `The Trip`, theme: `Splitting rooms, splitting bills, and the friend who orders the lobster.`, scenes: ['the-rental', 'the-bill'], preview: 'the-bill' },
+      { key: 'chat', name: `The Group Chat`, theme: `Twelve people, one date, and a friend who needs a favor. Again.`, scenes: ['the-date', 'the-loan'], preview: 'the-loan' },
+      { key: 'family', name: `The Family`, theme: `Siblings, holidays, and who looks after Mom and Dad.`, scenes: ['the-holidays', 'the-parents-house'], preview: 'the-holidays' }
+    ]
   }
 ];
 

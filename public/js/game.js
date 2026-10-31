@@ -334,7 +334,7 @@
 
       <section class="wrap hook">
         <p class="hook-line">"I've been in that exact situation. What should I have done?"</p>
-        <p class="hook-sub">Every scene in The Dance is something that has happened to you, or will. You watch it unfold, choose what to do, and see how the people in the room react. Then you see the game underneath.</p>
+        <p class="hook-sub">Every scene in The Dance is the kind of thing that happens to most of us sooner or later. You watch it unfold, choose what to do, and see how the people in the room react. Then you see the game underneath.</p>
       </section>
 
       <section class="wrap ep-intro">

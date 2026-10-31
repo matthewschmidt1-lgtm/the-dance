@@ -279,10 +279,20 @@
         </div>
       </article>`;
     }).join('');
-    const placesSec = ep => `<section class="wrap places">
-        <div class="section-head"><p class="eyebrow">Episode ${ep.number} · ${ep.title} · ${words[ep.places.length] || ep.places.length} places</p><h2>${ep.blurb}</h2></div>
-        <div class="place-grid place-grid-${ep.places.length}">${placesOf(ep)}</div>
+    // Each episode is its own panel: a number, a tinted edge, and how far you've got.
+    const placesSec = ep => {
+      const total = ep.scenes.length, played = LIST.filter((sc, i) => sc.ep === ep && i < n).length;
+      return `<section class="wrap places ep-block">
+        <div class="ep-panel ep-${ep.number}">
+          <header class="ep-head">
+            <span class="ep-num" aria-hidden="true">${ep.number}</span>
+            <div class="ep-titles"><p class="eyebrow">Episode ${ep.number} · ${words[ep.places.length] || ep.places.length} places</p><h2>${ep.title}</h2><p class="ep-blurb">${ep.blurb}</p></div>
+            <span class="ep-progress">${played === total ? 'Complete' : played ? `${played} of ${total} played` : `${total} scenes`}</span>
+          </header>
+          <div class="place-grid place-grid-${ep.places.length}">${placesOf(ep)}</div>
+        </div>
       </section>`;
+    };
 
     const cred = LIST.find(s => s.id === 'credit-taker');
     const pins = cred.stage.cast.map((c, i) => {
@@ -320,10 +330,13 @@
       </section>
       ${EPS.map(placesSec).join('')}
 
-      ${soon ? `<section class="wrap next-ep">
-        <div class="next-card">
-          <span class="lock" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
-          <div><p class="eyebrow">Episode ${soon.number} · In development</p><h3>${soon.title}</h3><p>${soon.blurb}</p></div>
+      ${soon ? `<section class="wrap places ep-block">
+        <div class="ep-panel ep-${soon.number} is-soon">
+          <header class="ep-head">
+            <span class="ep-num" aria-hidden="true">${soon.number}</span>
+            <div class="ep-titles"><p class="eyebrow">Episode ${soon.number} · In development</p><h2>${soon.title}</h2><p class="ep-blurb">${soon.blurb}</p></div>
+            <span class="ep-progress"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Coming soon</span>
+          </header>
         </div>
       </section>` : ''}
 

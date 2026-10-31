@@ -1,4 +1,4 @@
-// The Bench: the six thinkers whose ideas frame every move in POWER PLAY.
+// The Bench: the six thinkers whose ideas frame every move in The Dance.
 // Descriptions paraphrase their published ideas; nothing here is a direct quote.
 window.PP = window.PP || {};
 

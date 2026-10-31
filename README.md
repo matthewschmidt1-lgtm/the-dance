@@ -1,10 +1,10 @@
-# POWER PLAY
+# The Dance
 
 **The everyday game of human behavior, strategy & influence.**
 
 > You don't have to be the most powerful person in the room. You have to understand the dynamics of the room well enough to make good decisions.
 
-POWER PLAY is a playable, animated episode of everyday situations. You watch a scene unfold in a grocery store, an office or your street, choose what to do, and watch the people in the room react. Then the game shows what was happening underneath: who wanted what, where the leverage was, what you couldn't know, and which idea from game theory was at work.
+The Dance is a playable, animated episode of everyday situations. You watch a scene unfold in a grocery store, an office or your street, choose what to do, and watch the people in the room react. Then the game shows what was happening underneath: who wanted what, where the leverage was, what you couldn't know, and which idea from game theory was at work.
 
 The aim is to see the game without becoming the game. Manipulation is never rewarded.
 

@@ -1,7 +1,7 @@
 {
-  "name": "power-play",
+  "name": "the-dance",
   "version": "1.0.0",
-  "description": "POWER PLAY: the everyday game of human behavior, strategy and influence.",
+  "description": "The Dance: the everyday game of human behavior, strategy and influence.",
   "private": true,
   "main": "server.js",
   "scripts": {

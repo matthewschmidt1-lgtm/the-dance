@@ -1,4 +1,4 @@
-"""Build and render POWER PLAY's environments in Blender.
+"""Build and render The Dance's environments in Blender.
 
 Run headless:
   /Applications/Blender.app/Contents/MacOS/Blender -b -P tools/blender/render_envs.py -- <repo_root> [env ...] [--samples N]

@@ -1,4 +1,4 @@
-// POWER PLAY game flow and views.
+// The Dance game flow and views.
 // Progress is derived entirely from `history`, so replaying a scene is just popping it.
 (function () {
   const { thinkers, thinkerOrder, skills, grades } = PP;
@@ -164,7 +164,7 @@
 
       <section class="wrap hook">
         <p class="hook-line">"I've been in that exact situation. What should I have done?"</p>
-        <p class="hook-sub">Every scene in POWER PLAY is something that has happened to you, or will. You watch it unfold, choose what to do, and see how the people in the room react. Then you see the game underneath.</p>
+        <p class="hook-sub">Every scene in The Dance is something that has happened to you, or will. You watch it unfold, choose what to do, and see how the people in the room react. Then you see the game underneath.</p>
       </section>
 
       <section class="wrap places">
@@ -211,7 +211,7 @@
       const used = LIST.filter(s => s.lens[0] === k).map(s => s.title);
       const also = LIST.filter(s => s.lens.slice(1).includes(k)).map(s => s.title);
       return `<article class="thinker ${t.grandfather ? 'is-grand' : ''}">
-        <header class="thinker-head"><p class="thinker-field">${t.field}</p><h3>${t.name}</h3>${t.grandfather ? `<p class="thinker-badge">Intellectual grandfather of POWER PLAY</p>` : ''}</header>
+        <header class="thinker-head"><p class="thinker-field">${t.field}</p><h3>${t.name}</h3>${t.grandfather ? `<p class="thinker-badge">Intellectual grandfather of The Dance</p>` : ''}</header>
         <p class="thinker-teaches">${t.short} teaches you ${t.teaches}.</p>
         <p>${t.idea}</p>
         <p class="thinker-ask"><span>The question to ask</span>${t.ask}</p>
@@ -510,7 +510,7 @@
     app.innerHTML = views[ui.view]();
     document.querySelectorAll('[data-nav]').forEach(a => a.setAttribute('aria-current', a.dataset.nav === ui.view ? 'page' : 'false'));
     const sc = ui.view === 'play' ? LIST[currentIndex()] : null;
-    document.title = (sc ? `${sc.title} · ` : ui.view === 'bench' ? 'The Bench · ' : ui.view === 'profile' ? 'Profile · ' : '') + 'POWER PLAY';
+    document.title = (sc ? `${sc.title} · ` : ui.view === 'bench' ? 'The Bench · ' : ui.view === 'profile' ? 'Profile · ' : '') + 'The Dance';
 
     if (ui.view === 'play') {
       if (ui.phase === 'result') { mountStage(LIST[history.length - 1], history.length - 1); settleResult(); renderPanel(); }

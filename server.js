@@ -57,4 +57,4 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => console.log(`POWER PLAY running on port ${PORT}`));
+server.listen(PORT, () => console.log(`The Dance running on port ${PORT}`));

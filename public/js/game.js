@@ -42,7 +42,6 @@
   let draft = { selected: null, clues: [] };
   let confirmReset = false;
   let stage = null;
-  let heroStage = null;
   const ui = { view: 'home', phase: 'intro', frozen: false, tab: 'outcome', runId: 0 };
 
   function load() {
@@ -82,7 +81,6 @@
 
   function teardown() {
     if (stage) { stage.destroy(); stage = null; }
-    if (heroStage) { heroStage.destroy(); heroStage = null; }
     ui.runId++;
   }
 
@@ -151,7 +149,7 @@
     const ep2 = PP.episodes[1];
     return `
       <section class="hero-cine">
-        <div class="hero-stage" id="hero-stage"></div>
+        <div class="hero-art"><img src="/img/hero-dance-floor.webp" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dance steps lead toward them, dice rest in the foreground, and a corridor of doorways recedes into haze toward a lit exit."></div>
         <div class="hero-over">
           <div class="wrap hero-over-in">
             <p class="eyebrow eyebrow-on-dark">Episode ${EP.number} · ${EP.title}</p>
@@ -516,28 +514,11 @@
       if (ui.phase === 'result') { mountStage(LIST[history.length - 1], history.length - 1); settleResult(); renderPanel(); }
       else playIntro();
     }
-    if (ui.view === 'home') startHero();
   }
 
   function settleResult() {
     const idx = history.length - 1, sc = LIST[idx], h = history[idx];
     stage.settle([...sc.stage.intro, ...sc.stage.options[h.key].outcomes[h.outcome].beats]);
-  }
-
-  function startHero() {
-    const mount = document.getElementById('hero-stage');
-    if (!mount) return;
-    const sc = LIST[0];
-    heroStage = new PP.Stage(mount, sc.stage, { ambient: true, label: `Illustrated grocery checkout with a cashier and an impatient shopper` });
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    heroStage.loop([
-      { cam: 'wide', wait: 3600 },
-      { set: { sigh: { mood: 'frustrated', act: 'sigh' } }, wait: 2600 },
-      { cam: 'maya', set: { maya: { mood: 'nervous', act: 'glance' } }, wait: 3400 },
-      { cam: 'register', wait: 2800 },
-      { cam: 'sigh', set: { sigh: { mood: 'skeptical' } }, wait: 3000 },
-      { cam: 'wide', set: { maya: { mood: 'smile' }, sigh: { mood: 'neutral' } }, wait: 3200 }
-    ]);
   }
 
   document.addEventListener('click', e => {

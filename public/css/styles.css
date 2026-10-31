@@ -244,7 +244,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 /* ───────── Home */
 .hero-cine { position: relative; background: var(--cine); color: var(--cine-ink); }
-.hero-cine .stage { aspect-ratio: 21 / 9; }
+.hero-art { position: relative; aspect-ratio: 21 / 9; max-height: 78vh; width: 100%; overflow: hidden; background: var(--cine); }
+.hero-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 60%; display: block; }
+@media (prefers-reduced-motion: no-preference) { .hero-art img { animation: drift 38s ease-in-out infinite alternate; transform-origin: 60% 70%; } }
+@keyframes drift { from { transform: scale(1); } to { transform: scale(1.07) translateX(-1%); } }
 .hero-over { position: absolute; inset: 0; display: flex; align-items: flex-end; padding-block: 40px clamp(28px, 4vw, 56px); background: linear-gradient(90deg, rgba(8,10,14,.86) 0%, rgba(8,10,14,.6) 38%, transparent 62%), linear-gradient(0deg, rgba(8,10,14,.55), transparent 40%); pointer-events: none; }
 .hero-over-in { display: grid; gap: 14px; max-width: 82rem; pointer-events: auto; }
 .hero-over-in > * { max-width: 34rem; }
@@ -561,7 +564,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 /* ───────── Narrow screens */
 @media (max-width: 900px) {
-  .hero-cine .stage { aspect-ratio: 16 / 9; }
+  .hero-art { aspect-ratio: 16 / 9; }
   .hero-over { position: static; padding-block: 24px 32px; background: var(--cine); }
   .place-grid { grid-template-columns: minmax(0, 1fr); }
   .place { grid-template-columns: minmax(0, 1fr); }
@@ -573,7 +576,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   .wordmark span { font-size: 0.85rem; }
   .wrap-stage { padding-left: 0; padding-right: 0; }
   .stage { aspect-ratio: 4 / 3; border-radius: 0; }
-  .hero-cine .stage { aspect-ratio: 4 / 3; }
+  .hero-art { aspect-ratio: 4 / 3; }
+  .hero-art img { object-position: 74% 70%; }
   .dialogue { margin-top: 0; border-radius: 0; border-inline: 0; }
   .tabs { flex-wrap: wrap; }
   .tab { padding: 0 12px; min-height: 36px; font-size: .8125rem; }

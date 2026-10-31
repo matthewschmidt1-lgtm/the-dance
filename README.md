@@ -76,7 +76,13 @@ Needs Blender 4.2+ (built and tested with 5.2):
 /Applications/Blender.app/Contents/MacOS/Blender -b -P tools/blender/render_envs.py -- "$PWD" --samples 128
 ```
 
-Add env names (`checkout desks kitchen conference street yard`) after `"$PWD"` to render only some. The script also rewrites `public/js/env-data.js`, projecting each character's standing spot through the real camera so feet land on the floor at the correct scale. If the renders are missing, the game falls back to hand-drawn SVG sets.
+The home page header ("The Dance Floor") is its own scene: two pieces in overlapping spotlights with a shared teal ring (mixed motives, mutual gain), dance steps (reciprocity), receding doorways (repeated games, and the exit as walking away) and dice (uncertainty). Render it with:
+
+```bash
+/Applications/Blender.app/Contents/MacOS/Blender -b -P tools/blender/render_hero.py -- "$PWD" --samples 160
+```
+
+For the game sets, add env names (`checkout desks kitchen conference street yard`) after `"$PWD"` to render only some. The script also rewrites `public/js/env-data.js`, projecting each character's standing spot through the real camera so feet land on the floor at the correct scale. If the renders are missing, the game falls back to hand-drawn SVG sets.
 
 ### Adding a scene
 

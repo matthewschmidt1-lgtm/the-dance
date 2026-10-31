@@ -316,17 +316,4 @@ PP.Stage = class {
     }).join('');
     this.root.querySelector('.pins').innerHTML = pins;
   }
-
-  // ───────── ambient loop for the home page
-
-  async loop(steps) {
-    while (this.alive) {
-      for (const s of steps) {
-        if (!this.alive) return;
-        if (s.set) Object.entries(s.set).forEach(([id, st]) => this.applyState(id, st));
-        if (s.cam) this.camera(s.cam);
-        await this.wait(s.wait || 3200);
-      }
-    }
-  }
 };

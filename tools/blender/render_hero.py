@@ -147,8 +147,9 @@ world.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.25
 sc.world = world
 
 # Checkerboard dance floor: one mesh, two materials, glossy.
-ivory_tile = mat('tile-a', '#cfc8b8', 0.22, coat=0.4)
-dark_tile = mat('tile-b', '#1d2a2c', 0.18, coat=0.5)
+# A satin sheen, not a mirror: a mirror floor reflects the bright corridor as a glowing pill by the dice.
+ivory_tile = mat('tile-a', '#cfc8b8', 0.38, coat=0.15)
+dark_tile = mat('tile-b', '#1d2a2c', 0.3, coat=0.25)
 bm = bmesh.new()
 N = 40
 for ix in range(-N // 2, N // 2):
@@ -202,8 +203,11 @@ def spot(name, loc, target, energy, color, size_deg, blend=0.35):
     return ob
 
 
-spot('spot-a', (-1.1, 0.9, 6.5), (-0.1, 1.6, 0), 2600, '#ffe7c4', 26)
-spot('spot-b', (2.2, 0.9, 6.5), (1.2, 1.6, 0), 2600, '#ffe7c4', 26)
+# Soft-edged pools that light the floor, not the haze: a hard pool edge or a lit cone
+# reads as a glowing pill beside the dice.
+for o in (spot('spot-a', (-1.1, 0.9, 6.5), (-0.1, 1.6, 0), 2800, '#ffe7c4', 30, 1.0),
+          spot('spot-b', (2.2, 0.9, 6.5), (1.2, 1.6, 0), 2800, '#ffe7c4', 30, 1.0)):
+    o.visible_volume_scatter = False
 spot('rim', (0.55, 7.5, 3.2), (0.55, 1.6, 0.8), 900, '#9fe6dd', 30, 0.6)
 
 # The shared ground: a thin teal ring inlaid where the pools overlap.
@@ -211,18 +215,6 @@ teal = mat('teal', '#0b7a87', 0.3, emit='#3fd0c4', strength=4.0)
 ring('focal', (0.55, 1.6, 0.003), 0.42, 0.03, teal)
 glow = mat('glow', '#0b7a87', 0.6, emit='#2bb7ad', strength=0.6)
 disc('focal-fill', (0.55, 1.6, 0.002), 0.39, glow)
-
-# Dance steps: a soft S-curve of marks from the foreground to the pieces.
-step = mat('step', '#cfeee9', 0.5, emit='#7fd8cf', strength=0.9)
-for i in range(9):
-    t = i / 8
-    x = -2.4 + t * 2.6 + math.sin(t * math.pi * 1.6) * 0.55
-    y = -2.6 + t * 3.6
-    side = 0.11 if i % 2 else -0.11
-    d = disc(f'step{i}', (x + side, y, 0.003), 0.085, step)
-    d.scale = (0.6, 1.55, 1)
-    h = disc(f'heel{i}', (x + side, y - 0.17, 0.003), 0.05, step)
-    d.rotation_euler = (0, 0, math.radians(-25 + t * 30))
 
 # Receding doorways: the same meeting, again and again.
 frame = mat('frame', '#2a3437', 0.6)

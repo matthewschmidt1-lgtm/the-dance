@@ -184,7 +184,7 @@
     const soon = PP.episodes.find(e => e.locked);
     return `
       <section class="hero-cine">
-        <div class="hero-art"><img src="/img/hero-dance-floor.webp?v=${PP.assetV}" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dance steps lead toward them, dice rest in the foreground, and a corridor of doorways recedes into a soft glow of haze."></div>
+        <div class="hero-art"><img src="/img/hero-dance-floor.webp?v=${PP.assetV}" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dice rest in the foreground, and a corridor of doorways recedes into a soft glow of haze."></div>
         <div class="hero-over">
           <div class="wrap hero-over-in">
             <p class="eyebrow eyebrow-on-dark">Episode ${curEp.number} · ${curEp.title}</p>

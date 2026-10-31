@@ -21,7 +21,16 @@ Three places, six scenes. Characters remember you across scenes.
 | 5 | Pick a Side | The Office | Barry Nalebuff |
 | 6 | The Fence | The Neighborhood | Robert Aumann |
 
-Episode 2 (*The Deal*: contractors and job offers) has its scenario content written in `public/js/scenarios.js` and is shown as "in development".
+## Episode 2: The Deal
+
+Two deals where the other side knows more than you, and the clock is theirs.
+
+| # | Scene | Place | Lens |
+|---|---|---|---|
+| 1 | The Change Order | Your Home (a bathroom with no floor) | Thomas Schelling |
+| 2 | The Offer | The Offer (Northfield's lobby) | John Nash |
+
+Episode 3 (*The Circle*: friends, family and the group chat) is shown as "in development".
 
 ## How each scene plays
 
@@ -29,12 +38,22 @@ Episode 2 (*The Deal*: contractors and job offers) has its scenario content writ
 2. **The situation plays out**: typed dialogue, camera push-ins on whoever is speaking, characters changing expression (11 moods), posture (15 poses) and gesturing (nod, head shake, flinch, sigh, lean, glance, walk).
 3. **Voices and speed**: characters, your lines and a narrator are spoken with the device's built-in voices, each character cast to a distinct natural voice. The speaker button turns voices off; the speed button cycles 0.75× to 1.5× and paces speech, typing and timing together. Both are remembered.
 4. **Slow Motion Strategy** (Slow-mo button, or press `P`): the scene freezes and desaturates over a strategy grid, numbered pins mark each person, and a panel shows what each wants, what you know, what's uncertain, details you can investigate, and where each option might lead. Resume, or replay from the start.
-5. **You choose a move.**
+5. **Guess before you choose.** First you make a read: what is this person after? Then you choose a move. The truth is revealed with the outcome, and accurate reads count toward *Reading incentives*.
 6. **The room reacts** in a short animated sequence. Results are partly random.
 7. **Analysis in four tabs**: *Outcome* (decision grade vs. result, now vs. later, trust changes), *The game* (payoff matrix with your cell highlighted, decision tree of every move's possible results, what reading the room would have shown), *The people* (relationship map, leverage scale, incentives), *The lens* (the thinkers' concepts, every move graded, the lesson).
 8. **Replay with another strategy**, or move on.
 
 Moves are graded with chess annotations (`!!` `!` `!?` `?!` `?`) on decision quality, never on outcome. The profile tracks ten measures, a strategic rating, your relationship network, and Annie Duke's decision-vs-result grid.
+
+## Your Dance
+
+After Episode 1, the profile opens with a mirror rather than a lesson:
+
+- **What the room saw.** Each person you met says, in one line, how they'd describe you after your choice.
+- **What your choices were buying.** Every move pursues something: knowing more, a fair deal, the long game, being right, winning the round, being liked, avoiding friction, or protecting your time. Ed Seykota's line applies: everybody gets what they want.
+- **How you read people.** Your guesses against the truth, including whether you lean too suspicious or too trusting.
+- **Three moments**, your best call, where luck covered for you (or let you down), and what someone will remember, each with a one-line margin note from Nash, Duke or Schelling.
+- **One question to take with you**, chosen from your weakest measure.
 
 ## What's animated, honestly
 
@@ -58,6 +77,7 @@ public/
   js/thinkers.js        the bench, skills, grades
   js/scenarios.js       scenario substance: options, grading, analysis
   js/scenes.js          staging: people, places, beats, reactions, matrices, leverage
+  js/insight.js         reads, what each move pursues, what people say about you, closing questions
   js/env-data.js        generated: where people stand in each render, camera targets
   js/art.js             character renderer (moods, poses) and environment layering
   js/stage.js           playback engine: camera, dialogue, freeze, skip

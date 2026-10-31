@@ -233,7 +233,7 @@ def project(p):
     return v.x * W, (1 - v.y) * H
 
 
-def spot(p):
+def _spot_point(p):
     x, y = project(p)
     _, top = project((p[0], p[1], p[2] + PERSON_M))
     return {'x': round(x, 1), 'y': round(y, 1), 's': round((y - top) / FIG_UNITS, 3)}
@@ -282,6 +282,8 @@ CINEMA = {
     'conference': dict(focus=(-0.4, 2.15, 1.0), fstop=2.4, haze=0.006, rim=((1.2, 4.6, 2.8), '#cfe8ff', 600), dim=0.35),
     'street':     dict(focus=(4.2, 3.0, 1.9), fstop=4.0, haze=0.007, rim=None, dim=0.7),
     'yard':       dict(focus=(1.0, 0.9, 1.4), fstop=4.0, haze=0.007, rim=None, dim=0.7),
+    'bathroom':   dict(focus=(0.35, 1.5, 1.4), fstop=2.4, haze=0.02, rim=((0.6, 2.9, 2.3), '#cfe8ff', 300), dim=0.4),
+    'lobby':      dict(focus=(0.0, 1.8, 1.4), fstop=2.4, haze=0.006, rim=((0.2, 5.4, 3.0), '#cfe8ff', 600), dim=0.45),
 }
 
 
@@ -310,6 +312,7 @@ def cinematic(env):
         area('rim', loc, 3.0, energy, col, sy=1.2)
         rim = bpy.data.objects['rim']
         rim.rotation_euler = (Vector(c['focus']) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
+        rim.visible_camera = False   # light the people, never appear in shot
     fog = bpy.data.materials.new('haze')
     fog.use_nodes = True
     nt = fog.node_tree
@@ -812,7 +815,115 @@ def env_yard():
     }
 
 
-ENVS = {'checkout': env_checkout, 'desks': env_desks, 'kitchen': env_kitchen, 'conference': env_conference, 'street': env_street, 'yard': env_yard}
+def env_bathroom():
+    """A bathroom mid-remodel: tile stripped, subfloor open, a dark patch of rot by the toilet flange."""
+    world('#d9d4cb', 0.4)
+    box('floor-under', (0, 1.5, -0.03), (10, 10, 0.02), mat('#6d6153', 0.9))
+    ply = mat('#b59a72', 0.8)
+    boxes('subfloor', [(x * 0.62 - 1.24, 1.5, 0, 0.6, 3.0, 0.02) for x in range(5)], ply)
+    # The rot: darker, softer patch of plywood around the flange.
+    rr = random.Random(4)
+    stain = [mat(c, 0.95) for c in ('#4a3626', '#3d2c20', '#55402c')]
+    for i in range(14):
+        a = rr.uniform(0, 2 * math.pi); d = rr.uniform(0, 0.55)
+        ball(f'rot{i}', (0.55 + math.cos(a) * d, 2.25 + math.sin(a) * d * 0.7, 0.024), rr.uniform(0.16, 0.3), stain[i % 3], scale=(1, 0.8, 0.012), sub=2)
+    cyl('flange', (0.55, 2.3, 0.024), 0.09, 0.03, mat('#cfd3d6', 0.3, 0.7))
+    cyl('flange-hole', (0.55, 2.3, 0.03), 0.055, 0.03, mat('#1a1a1a', 0.9))
+    # Walls: back wall half tiled, side wall stripped to the studs.
+    box('back-wall', (0, 3.05, 0), (3.6, 0.1, 2.6), mat('#e6e1d8', 0.85))
+    tile = mat('#f3f1ec', 0.2)
+    rows = [(x * 0.155 - 1.55 + (0.0775 if r % 2 else 0), 2.99, 0.02 + r * 0.078, 0.15, 0.02, 0.073) for r in range(15) for x in range(20)]
+    boxes('tiles', [t for t in rows if -1.6 < t[0] < 1.0], tile)
+    box('sheathing', (1.85, 2.2, 0), (0.04, 1.7, 2.6), mat('#a88d66', 0.85))
+    boxes('studs', [(1.75, y, 0, 0.09, 0.04, 2.6) for y in [1.5 + i * 0.4 for i in range(4)]], mat('#c9a57a', 0.8))
+    box('sill-plate', (1.75, 2.2, 0), (0.09, 1.7, 0.05), mat('#b8935f', 0.8))
+    box('drywall-r', (1.8, 0.6, 0), (0.08, 1.8, 2.6), mat('#dcd6cc', 0.9))
+    box('drywall-l', (-1.8, 1.5, 0), (0.08, 3.2, 2.6), mat('#dcd6cc', 0.9))
+    box('ceiling', (0, 1.5, 2.6), (4, 4, 0.05), mat('#e8e4dc', 0.9))
+    # Window with daylight.
+    box('window', (0.9, 3.0, 1.55), (0.6, 0.02, 0.55), mat('#b9c6cf', 0.4, emit='#c9d4dc', emit_strength=0.35))
+    box('window-frame', (0.9, 3.01, 1.5), (0.72, 0.03, 0.67), mat('#efeae0', 0.5))
+    wl = area('window-light', (0.9, 2.85, 1.8), 0.6, 120, '#eef4ff', rot=(math.radians(-90), 0, 0))  # faces into the room
+    wl.visible_camera = False
+    # Tub, pipes, construction gear.
+    box('tub', (-1.1, 2.3, 0), (1.3, 0.75, 0.55), mat('#f4f3ef', 0.15), bevel=0.04)
+    box('tub-in', (-1.1, 2.3, 0.15), (1.15, 0.6, 0.42), mat('#e6e5e0', 0.2))
+    boxes('pipes', [(-0.2, 2.97, 0.45, 0.03, 0.08, 0.03), (-0.05, 2.97, 0.45, 0.03, 0.08, 0.03)], mat('#b87333', 0.3, 0.8))
+    cyl('bucket', (1.25, 0.9, 0), 0.16, 0.36, mat('#e07b2a', 0.5))
+    boxes('tile-boxes', [(1.2, 2.2, 0, 0.45, 0.32, 0.14), (1.18, 2.2, 0.14, 0.45, 0.32, 0.14)], mat('#9c8a6e', 0.8))
+    for i, (x, z) in enumerate([(-1.3, 0.0), (-1.25, 0.08)]):
+        box(f'board{i}', (x, 0.9, z), (0.8, 0.25, 0.02), ply, rot=(0, 0, math.radians(20 + i * 8)))
+    cyl('lamp-pole', (-1.0, 0.7, 0), 0.015, 1.5, mat('#2b2f36', 0.4, 0.5))
+    box('lamp', (-1.0, 0.7, 1.5), (0.22, 0.12, 0.18), mat('#2b2f36', 0.4, 0.4))
+    box('lamp-face', (-0.92, 0.75, 1.52), (0.06, 0.1, 0.14), mat('#ffd34d', 0.4, emit='#fff1c2', emit_strength=3), rot=(0, 0, math.radians(40)))
+    spot('work-light', (-1.0, 0.65, 1.55), (0.5, 2.2, 0.0), 900, '#fff1d6', 70, 0.5)
+    # Doorframe in the foreground.
+    trim = mat('#efeae0', 0.5)
+    box('dust-sheet', (0.6, -0.6, 0), (0.9, 0.5, 0.01), mat('#d8d2c4', 0.95), 'fg')
+
+    camera((0.05, -2.4, 1.55), (0.15, 3, 1.1), 26)
+    return {
+        'spots': {'luis': spot((0.0, 1.25, 0.02))},
+        'cams': {'rot': point((0.5, 2.25, 0.05), 2.6), 'tub': point((-1.1, 2.3, 0.5), 2.0)},
+    }
+
+
+def spot_light(name, loc, target, energy, color, size_deg, blend=0.5):
+    ld = bpy.data.lights.new(name, 'SPOT')
+    ld.energy = energy
+    ld.color = hexc(color)[:3]
+    ld.spot_size = math.radians(size_deg)
+    ld.spot_blend = blend
+    ob = bpy.data.objects.new(name, ld)
+    coll('lights').objects.link(ob)
+    ob.location = loc
+    ob.rotation_euler = (Vector(target) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
+    return ob
+
+
+def spot(*args, **kw):
+    # Two meanings: spot(point) projects a standing position; spot(name, loc, target, ...) adds a spotlight.
+    if len(args) == 1 and not kw:
+        return _spot_point(args[0])
+    return spot_light(*args, **kw)
+
+
+def env_lobby():
+    """Northfield's lobby: warm wood slat wall, reception desk, big windows, a low table near you."""
+    world('#d8dde0', 0.6)
+    box('floor', (0, 3, -0.01), (16, 12, 0.01), mat('#a7a39c', 0.35))
+    box('back-wall', (0, 5.2, 0), (12, 0.2, 3.6), mat('#e7e3dc', 0.9))
+    boxes('slats', [(x * 0.14 - 2.4, 5.08, 0.0, 0.08, 0.06, 3.4) for x in range(35)], mat('#a87d55', 0.55))
+    box('logo-panel', (0.0, 5.0, 1.7), (2.2, 0.04, 0.5), mat('#1f2a2c', 0.4))
+    text('logo', 'NORTHFIELD', (0.0, 4.97, 1.95), 0.26, mat('#f4efe6', 0.4, emit='#f4efe6', emit_strength=0.8))
+    box('window-wall', (-4.6, 2.5, 0), (0.1, 6, 3.6), mat('#ffffff', 0.4, emit='#eef3f6', emit_strength=2.5))
+    boxes('mullions', [(-4.5, y, 0, 0.08, 0.08, 3.6) for y in range(0, 6)], mat('#3a3f45', 0.4, 0.5))
+    area('window-light', (-4.2, 2.5, 2.0), 3.0, 600, '#eef4ff', rot=(0, math.radians(-90), 0), sy=2.5)
+    box('reception', (-2.6, 3.6, 0), (2.0, 0.7, 1.05), mat('#2f3a3c', 0.5), bevel=0.02)
+    box('reception-top', (-2.6, 3.6, 1.05), (2.1, 0.8, 0.04), mat('#d9d4ca', 0.3))
+    for i, x in enumerate((2.4, 3.6)):
+        cyl(f'pot{i}', (x, 4.4, 0), 0.28, 0.6, mat('#3f4a52', 0.6))
+        ball(f'plant{i}', (x, 4.4, 1.35), 0.5, mat('#4f7d52', 0.85), scale=(1, 1, 1.8), sub=2)
+    for i, x in enumerate((-1.2, 0.0, 1.2)):
+        cyl(f'pendant{i}', (x, 2.5, 2.9), 0.22, 0.2, mat('#d9b98a', 0.4, 0.4), r2=0.08)
+        cyl(f'cord{i}', (x, 2.5, 3.1), 0.006, 0.6, mat('#2b2f36', 0.4))
+        ball(f'bulb{i}', (x, 2.5, 2.9), 0.06, mat('#fff', 0.5, emit='#fff1d6', emit_strength=8))
+    box('sofa', (2.6, 2.0, 0), (1.9, 0.8, 0.42), mat('#5f6b5c', 0.8), bevel=0.06)
+    box('sofa-back', (2.6, 2.35, 0.42), (1.9, 0.18, 0.4), mat('#5f6b5c', 0.8), bevel=0.06)
+    # A low table near you, in the foreground.
+    box('coffee-table', (-0.7, -0.6, 0.38), (1.2, 0.6, 0.05), mat('#8b6a4f', 0.35), 'fg', bevel=0.01)
+    boxes('coffee-legs', [(-1.2, -0.8, 0, 0.04, 0.04, 0.38), (-0.2, -0.8, 0, 0.04, 0.04, 0.38), (-1.2, -0.4, 0, 0.04, 0.04, 0.38), (-0.2, -0.4, 0, 0.04, 0.04, 0.38)], mat('#3a3d42', 0.4, 0.6), 'fg')
+    cyl('cup1', (-0.9, -0.6, 0.43), 0.045, 0.09, mat('#f0ebe2', 0.4), 'fg')
+    box('folder', (-0.5, -0.6, 0.43), (0.3, 0.22, 0.012), mat('#1f6f6a', 0.5), 'fg', rot=(0, 0, math.radians(-10)))
+
+    camera((0.0, -3.4, 1.55), (0.0, 3, 1.4), 28)
+    return {
+        'spots': {'sam': spot((-0.75, 1.55, 0)), 'alicia': spot((0.85, 1.85, 0))},
+        'cams': {'logo': point((0.0, 4.97, 1.95), 2.4)},
+    }
+
+
+ENVS = {'checkout': env_checkout, 'desks': env_desks, 'kitchen': env_kitchen, 'conference': env_conference, 'street': env_street, 'yard': env_yard, 'bathroom': env_bathroom, 'lobby': env_lobby}
 
 data = {}
 if os.path.exists(DATA):

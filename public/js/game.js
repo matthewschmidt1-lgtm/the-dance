@@ -4,9 +4,16 @@
   const { thinkers, thinkerOrder, skills, grades } = PP;
   const STORE_KEY = 'powerplay:ep1:v2';
   const START_RATING = 1200;
-  const EP = PP.episodes[0];
-  const LIST = EP.scenes.map(id => ({ ...PP.scenarios.find(s => s.id === id), stage: PP.scenes[id] }));
-  const placeOf = id => EP.places.find(p => p.scenes.includes(id));
+  const EPS = PP.episodes.filter(e => !e.locked);
+  const LIST = EPS.flatMap(ep => ep.scenes.map(id => ({ ...PP.scenarios.find(s => s.id === id), stage: PP.scenes[id], ep })));
+  const placeOf = id => EPS.flatMap(e => e.places).find(p => p.scenes.includes(id));
+  // Scene numbers restart in each episode.
+  const pos = i => { const sc = LIST[i], eps = LIST.filter(s => s.ep === sc.ep); return { n: eps.indexOf(sc) + 1, of: eps.length, ep: sc.ep }; };
+  const epEnd = i => !!LIST[i] && (!LIST[i + 1] || LIST[i + 1].ep !== LIST[i].ep);
+  const DANCE_AT = EPS[0].scenes.length; // "Your Dance" opens once the first episode is played
+  const READ_LABEL = { right: `Spot on`, part: `Partly`, suspicious: `Too suspicious`, naive: `Too trusting` };
+  const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+  const fresh = (clues = [], read = null) => ({ selected: null, clues, read });
   const RECURRING = ['dana', 'gary', 'jordan', 'priya', 'marcus'];
   const app = document.getElementById('app');
 
@@ -39,7 +46,7 @@
   // ───────────────────────── State
 
   let history = load();
-  let draft = { selected: null, clues: [] };
+  let draft = fresh();
   let confirmReset = false;
   let confirmScene = -1; // index of a played scene awaiting a second tap to replay
   let stage = null;
@@ -62,13 +69,20 @@
       const opt = sc.options.find(o => o.key === h.key);
       Object.entries(opt.s || {}).forEach(([k, v]) => { totals[k] += v; });
       totals.inf += Math.min(h.clues.length, 2) * 0.5;
+      const read = readOf(sc, h);
+      if (read) totals.inc += read.kind === 'right' ? 0.5 : read.kind === 'part' ? 0 : -0.5;
       Object.entries(opt.rel || {}).forEach(([k, v]) => { rel[k] = (rel[k] || 0) + v; });
       Object.assign(flags, opt.flags || {});
       const before = rating;
       rating += (opt.q - 2) * 40;
-      return { sc, opt, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating };
+      return { sc, opt, read, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating };
     });
     return { totals, rel, flags, rating, moves };
+  }
+  function readOf(sc, h) {
+    const R = (PP.insight.scenes[sc.id] || {}).read;
+    if (!R || h.read == null || !R.options[h.read]) return null;
+    return { ...R.options[h.read], R };
   }
   const skillScore = t => Math.max(0, Math.min(100, Math.round(50 + t * 3.5)));
   const text = (v, ctx) => (typeof v === 'function' ? v(ctx) : v);
@@ -99,11 +113,13 @@
   const pawnSvg = `<svg class="pawn" viewBox="0 0 40 48" aria-hidden="true"><circle cx="20" cy="10" r="7"/><path d="M13 20h14l-2.5 4c3 4 4.5 9 5 15H10.5c.5-6 2-11 5-15z"/><rect x="7" y="40" width="26" height="6" rx="2"/></svg>`;
 
   function strip(current, d) {
-    return `<ol class="file-strip" aria-label="Episode progress">${LIST.map((sc, i) => {
+    const ep = LIST[current].ep;
+    const mine = LIST.map((sc, i) => ({ sc, i })).filter(x => x.sc.ep === ep);
+    return `<ol class="file-strip" style="--n:${mine.length}" aria-label="Episode ${ep.number} progress">${mine.map(({ sc, i }, j) => {
       const m = d.moves[i];
-      const cls = ['sq', i % 2 ? 'sq-l' : 'sq-d', i === current ? 'is-current' : '', m ? 'is-done' : ''].join(' ');
-      const inner = i === current ? pawnSvg : m ? `<span class="sq-glyph">${grades[m.opt.q].glyph}</span>` : `<span class="sq-rank">${i + 1}</span>`;
-      return `<li class="${cls}" title="Scene ${i + 1}: ${sc.title}"><span class="sr">Scene ${i + 1}, ${sc.title}${m ? ', played' : ''}</span>${inner}</li>`;
+      const cls = ['sq', j % 2 ? 'sq-l' : 'sq-d', i === current ? 'is-current' : '', m ? 'is-done' : ''].join(' ');
+      const inner = i === current ? pawnSvg : m ? `<span class="sq-glyph">${grades[m.opt.q].glyph}</span>` : `<span class="sq-rank">${j + 1}</span>`;
+      return `<li class="${cls}" title="Scene ${j + 1}: ${sc.title}"><span class="sr">Scene ${j + 1}, ${sc.title}${m ? ', played' : ''}</span>${inner}</li>`;
     }).join('')}</ol>`;
   }
 
@@ -116,11 +132,14 @@
   function viewHome() {
     const d = derive(history);
     const n = history.length, done = n >= LIST.length;
-    const primary = done ? `<button class="btn btn-primary" data-act="profile">See your results</button>`
-      : n ? `<button class="btn btn-primary" data-act="play">Continue · Scene ${n + 1}</button>`
-        : `<button class="btn btn-primary" data-act="play">Play Episode 1</button>`;
+    const at = done ? null : pos(n);
+    const cont = !at ? '' : at.n === 1 ? `Play Episode ${at.ep.number}` : `Continue · Scene ${at.n}`;
+    const primary = done ? `<button class="btn btn-primary" data-act="profile">See your dance</button>`
+      : `<button class="btn btn-primary" data-act="play">${cont}</button>`;
+    const curEp = at ? at.ep : EPS[EPS.length - 1];
+    const words = ['', 'One', 'Two', 'Three', 'Four', 'Five'];
 
-    const places = EP.places.map(p => {
+    const placesOf = ep => ep.places.map(p => {
       const sc = LIST.find(s => s.id === p.preview);
       return `<article class="place">
         <div class="place-art">${staticScene(sc)}</div>
@@ -133,18 +152,22 @@
             if (i < n) {
               const asking = confirmScene === i;
               return `<li><button type="button" class="ps-btn ${asking ? 'is-asking' : ''}" data-act="scene" data-i="${i}">
-                <span class="ps-n">${i + 1}</span><span class="ps-title">${asking ? `Replay ${LIST[i].title}?` : LIST[i].title}</span>
+                <span class="ps-n">${pos(i).n}</span><span class="ps-title">${asking ? `Replay ${LIST[i].title}?` : LIST[i].title}</span>
                 ${asking ? `<span class="ps-note">${i < n - 1 ? 'Tap again. Later scenes reset.' : 'Tap again to replay.'}</span>` : `<span class="ps-g g${m.opt.q}" title="${grades[m.opt.q].name}">${grades[m.opt.q].glyph}</span><span class="ps-tag">Replay</span>`}
               </button></li>`;
             }
             if (i === n) {
-              return `<li><button type="button" class="ps-btn is-next" data-act="scene" data-i="${i}"><span class="ps-n">${i + 1}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-tag ps-tag-next">Up next</span></button></li>`;
+              return `<li><button type="button" class="ps-btn is-next" data-act="scene" data-i="${i}"><span class="ps-n">${pos(i).n}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-tag ps-tag-next">Up next</span></button></li>`;
             }
-            return `<li><span class="ps-btn is-locked" aria-disabled="true"><span class="ps-n">${i + 1}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-lock"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Unlocks after Scene ${i}</span></span></li>`;
+            return `<li><span class="ps-btn is-locked" aria-disabled="true"><span class="ps-n">${pos(i).n}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-lock"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Unlocks after ${LIST[i - 1].title}</span></span></li>`;
           }).join('')}</ul>
         </div>
       </article>`;
     }).join('');
+    const placesSec = ep => `<section class="wrap places">
+        <div class="section-head"><p class="eyebrow">Episode ${ep.number} · ${ep.title} · ${words[ep.places.length] || ep.places.length} places</p><h2>${ep.blurb}</h2></div>
+        <div class="place-grid place-grid-${ep.places.length}">${placesOf(ep)}</div>
+      </section>`;
 
     const cred = LIST.find(s => s.id === 'credit-taker');
     const pins = cred.stage.cast.map((c, i) => {
@@ -158,13 +181,13 @@
       return `<li class="${t.practitioner ? 'is-wide' : ''}"><button type="button" class="bench-card ${t.grandfather ? 'is-grand' : ''} ${t.practitioner ? 'is-practitioner' : ''}" data-thinker="${k}" aria-haspopup="dialog" style="--tc:${t.color}"><span class="bench-icon">${t.icon}</span>${t.grandfather ? `<span class="bench-badge">Intellectual grandfather</span>` : ''}${t.practitioner ? `<span class="bench-badge">The practitioner · Market Wizards</span>` : ''}<span class="bench-name">${t.name}</span><span class="bench-teaches">teaches you ${t.teaches}</span><span class="bench-more" aria-hidden="true">Read more</span></button></li>`;
     }).join('');
 
-    const ep2 = PP.episodes[1];
+    const soon = PP.episodes.find(e => e.locked);
     return `
       <section class="hero-cine">
         <div class="hero-art"><img src="/img/hero-dance-floor.webp?v=${PP.assetV}" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dance steps lead toward them, dice rest in the foreground, and a corridor of doorways recedes into a soft glow of haze."></div>
         <div class="hero-over">
           <div class="wrap hero-over-in">
-            <p class="eyebrow eyebrow-on-dark">Episode ${EP.number} · ${EP.title}</p>
+            <p class="eyebrow eyebrow-on-dark">Episode ${curEp.number} · ${curEp.title}</p>
             <h1 class="hero-title">You don't have to be the most powerful person in the room.</h1>
             <p class="hero-sub">You have to understand the room.</p>
             <div class="hero-actions">${primary}<button class="btn btn-ghost btn-on-dark" data-act="bench">Meet the thinkers</button></div>
@@ -177,10 +200,7 @@
         <p class="hook-sub">Every scene in The Dance is something that has happened to you, or will. You watch it unfold, choose what to do, and see how the people in the room react. Then you see the game underneath.</p>
       </section>
 
-      <section class="wrap places">
-        <div class="section-head"><p class="eyebrow">Episode 1 · Three places</p><h2>${EP.blurb}</h2></div>
-        <div class="place-grid">${places}</div>
-      </section>
+      ${placesSec(EPS[0])}
 
       <section class="band">
         <div class="wrap slowmo">
@@ -209,21 +229,23 @@
         <button class="btn btn-link" data-act="bench">Read what each one teaches →</button>
       </section>
 
-      <section class="wrap next-ep">
+      ${EPS.slice(1).map(placesSec).join('')}
+
+      ${soon ? `<section class="wrap next-ep">
         <div class="next-card">
           <span class="lock" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
-          <div><p class="eyebrow">Episode ${ep2.number} · In development</p><h3>${ep2.title}</h3><p>${ep2.blurb}</p></div>
+          <div><p class="eyebrow">Episode ${soon.number} · In development</p><h3>${soon.title}</h3><p>${soon.blurb}</p></div>
         </div>
-      </section>
+      </section>` : ''}
 
       <section class="wrap next-move" aria-labelledby="next-move-h">
         <div class="section-head"><p class="eyebrow">Your next move</p><h2 id="next-move-h">See the game without becoming the game.</h2></div>
         <div class="nm-grid">
           <button class="nm nm-play" data-act="${done ? 'profile' : 'play'}">
             <img class="nm-art" src="/img/next/play.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
-            <span class="nm-k">${done ? 'Episode complete' : n ? `Scene ${n + 1} of ${LIST.length}` : 'Start here'}</span>
-            <span class="nm-t">${done ? 'See your results' : n ? 'Continue playing' : 'Play Episode 1'}</span>
-            <span class="nm-d">${done ? 'Your rating, your ten measures, and who trusts you now.' : n ? `Pick up at ${LIST[n].title}.` : 'Six scenes across three places, starting at a grocery store checkout.'}</span>
+            <span class="nm-k">${done ? 'Every scene played' : n ? `Episode ${at.ep.number} · Scene ${at.n} of ${at.of}` : 'Start here'}</span>
+            <span class="nm-t">${done ? 'See your dance' : !n ? 'Play Episode 1' : at.n === 1 ? `Start Episode ${at.ep.number}` : 'Continue playing'}</span>
+            <span class="nm-d">${done ? 'What the room saw, what your choices were buying, and one question to take with you.' : n ? `Pick up at ${LIST[n].title}.` : `${LIST.length} scenes across two episodes, starting at a grocery store checkout.`}</span>
             <span class="nm-go" aria-hidden="true">→</span>
           </button>
           <button class="nm nm-bench" data-act="bench">
@@ -269,7 +291,7 @@
       <div class="section-head"><p class="eyebrow">The bench</p><h1>The thinkers behind the game</h1>
         <p class="lede">You won't be asked to memorize anything. Each scene puts one of these ideas in front of you as a situation, and the analysis afterward names it. Six thinkers built the theory, and a practitioner from the markets shows what it takes to live by it.</p></div>
       <div class="thinker-grid">${cards}</div>
-      <div class="page-actions"><button class="btn btn-primary" data-act="play">${history.length ? 'Back to the episode' : 'Play Episode 1'}</button></div>
+      <div class="page-actions"><button class="btn btn-primary" data-act="play">${history.length ? 'Back to the game' : 'Play Episode 1'}</button></div>
     </section>`;
   }
 
@@ -281,12 +303,12 @@
     const idx = currentIndex();
     const sc = LIST[idx];
     const d = derive(history.slice(0, idx));
-    const place = placeOf(sc.id);
+    const place = placeOf(sc.id), at = pos(idx);
     return `<section class="play">
       <div class="wrap play-head">
         ${strip(idx, derive(history))}
         <div class="play-meta">
-          <p class="meta">Episode 1 · Scene ${idx + 1} of ${LIST.length} · ${place.name}</p>
+          <p class="meta">Episode ${at.ep.number} · Scene ${at.n} of ${at.of} · ${place.name}</p>
           <div class="chips"><span class="chip">${sc.level}</span>${sc.lens.map((k, i) => `<span class="chip ${i ? '' : 'chip-lens'}">${i ? 'Also' : 'Lens'} · ${thinkers[k].short}</span>`).join('')}</div>
         </div>
       </div>
@@ -313,7 +335,7 @@
     ui.phase = 'intro'; ui.frozen = false;
     mountStage(sc, idx);
     renderPanel();
-    await stage.run(sc.stage.intro, { title: `<span>Scene ${idx + 1} · ${placeOf(sc.id).name}</span><strong>${sc.title}</strong>` });
+    await stage.run(sc.stage.intro, { title: `<span>${pos(idx).n === 1 ? `Episode ${sc.ep.number} · ` : ''}Scene ${pos(idx).n} · ${placeOf(sc.id).name}</span><strong>${sc.title}</strong>` });
     if (run !== ui.runId) return;
     ui.phase = 'decide';
     renderPanel();
@@ -371,17 +393,24 @@
       <input type="radio" name="move" id="move-${sc.id}-${o.key}" value="${o.key}" ${draft.selected === o.key ? 'checked' : ''}>
       <label for="move-${sc.id}-${o.key}" class="option"><span class="option-key">${o.key}</span><span class="option-text">${o.text}</span></label>
     </li>`).join('');
+    const R = (PP.insight.scenes[sc.id] || {}).read;
+    const read = R ? `<fieldset class="read"><legend class="read-q"><span class="read-k">First, your read</span>${R.q}</legend>
+        <ul class="read-opts">${R.options.map((o, i) => `<li><input type="radio" name="read" id="read-${sc.id}-${i}" value="${i}" ${draft.read === i ? 'checked' : ''}><label for="read-${sc.id}-${i}" class="read-opt">${o.t}</label></li>`).join('')}</ul>
+        <p class="read-note">You'll see how close you were after you move.</p></fieldset>` : '';
     return `<form id="decide-form" class="decide">
       <div class="decide-top">
-        <fieldset><legend class="decide-q">${sc.question}</legend><ul class="options">${options}</ul></fieldset>
+        ${read}
+        <fieldset><legend class="decide-q">${R ? `<span class="read-k">Then, your move</span>` : ''}${sc.question}</legend><ul class="options">${options}</ul></fieldset>
       </div>
       <div class="decide-bar">
         <button type="button" class="btn btn-ghost" data-act="freeze"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>Freeze and analyze</button>
-        <button type="submit" class="btn btn-primary" id="evaluate-btn" ${draft.selected ? '' : 'disabled'}>Make this move</button>
+        <button type="submit" class="btn btn-primary" id="evaluate-btn" ${ready(sc) ? '' : 'disabled'}>${!R || draft.read !== null ? 'Make this move' : 'Make your read first'}</button>
       </div>
       <p class="decide-hint">${draft.clues.length ? `You've read ${draft.clues.length} of ${sc.clues.length} details in the room.` : `Tip: freezing the scene lets you read the room before you commit.`} <button type="button" class="btn-link-sm" data-act="replay-intro">Watch the scene again</button></p>
     </form>`;
   }
+
+  const ready = sc => !!draft.selected && (draft.read !== null || !(PP.insight.scenes[sc.id] || {}).read);
 
   function panelFrozen(sc) {
     const cast = sc.stage.cast.map((c, i) => {
@@ -425,7 +454,7 @@
     const st = sc.stage.options[opt.key];
     const g = grades[opt.q];
     const a = sc.analysis;
-    const last = idx === LIST.length - 1;
+    const last = epEnd(idx);
     const ctxAfter = { rel: all.rel, flags: all.flags };
     const ratingDelta = move.ratingAfter - move.ratingBefore;
     const why = opt.q >= 3 && outcome.tone !== 'good' ? `A sound decision that didn't fully pay off this time. Keep making it. Over many tries, sound decisions come out ahead.`
@@ -439,7 +468,8 @@
     if (ui.tab === 'outcome') {
       const deltas = Object.entries(opt.s || {}).filter(([, v]) => v).sort((x, y) => y[1] - x[1])
         .map(([k, v]) => `<li class="delta ${v > 0 ? 'up' : 'down'}"><span>${v > 0 ? '+' : '−'}${Math.abs(v)}</span>${skills[k]}</li>`).join('')
-        + (move.clues.length ? `<li class="delta up"><span>+${Math.min(move.clues.length, 2) * 0.5}</span>${skills.inf} (read the room)</li>` : '');
+        + (move.clues.length ? `<li class="delta up"><span>+${Math.min(move.clues.length, 2) * 0.5}</span>${skills.inf} (read the room)</li>` : '')
+        + (move.read && move.read.kind !== 'part' ? `<li class="delta ${move.read.kind === 'right' ? 'up' : 'down'}"><span>${move.read.kind === 'right' ? '+' : '−'}0.5</span>${skills.inc} (your read)</li>` : '');
       const rels = Object.entries(opt.rel || {}).filter(([, v]) => v).map(([k, v]) => `<li class="relchip ${v > 0 ? 'up' : 'down'}">${PP.people[k].name} ${v > 0 ? 'trusts you more' : 'trusts you less'}</li>`).join('');
       body = `
         <div class="verdict">
@@ -450,6 +480,11 @@
             <p class="verdict-why">${why}</p>
           </div>
         </div>
+        ${move.read ? `<div class="read-reveal is-${move.read.kind}">
+          <p class="rr-k">Your read <span class="rr-tag">${READ_LABEL[move.read.kind]}</span></p>
+          <p class="rr-guess">“${move.read.t}”</p>
+          <p class="rr-truth">${move.read.R.truth}</p>
+        </div>` : ''}
         <ol class="timeline">
           <li><span class="tl-k">Right now</span><p>${outcome.text}</p></li>
           <li><span class="tl-k">Later</span><p>${text(opt.later, ctxAfter)}</p>${rels ? `<ul class="relchips">${rels}</ul>` : ''}</li>
@@ -488,9 +523,101 @@
       <div class="tabpanel" role="tabpanel" id="tp-${ui.tab}" aria-labelledby="tab-${ui.tab}">${body}</div>
       <div class="result-bar">
         <button class="btn btn-ghost" data-act="takeback">Replay with another strategy</button>
-        <button class="btn btn-primary" data-act="${last ? 'profile' : 'next'}">${last ? 'See your results' : `Next scene`}</button>
+        <button class="btn btn-primary" data-act="${last ? 'profile' : 'next'}">${last ? 'See your dance' : `Next scene`}</button>
       </div>
     </div>`;
+  }
+
+  // ───────────────────────── Your Dance
+  // A mirror, not a lesson: what the people saw, what the choices bought, three moments, one question.
+
+  function portrait(id, mood) {
+    const look = PP.people[id].look, h = look.h || 1;
+    return `<svg class="portrait" viewBox="-80 ${Math.round(-618 * h)} 160 ${Math.round(150 * h)}" aria-hidden="true">${PP.art.actor(id, look, { mood, pose: 'down' })}</svg>`;
+  }
+
+  function moments(d) {
+    const ms = d.moves.map((m, i) => ({ ...m, i, trust: Object.values(m.opt.rel || {}).reduce((a, v) => a + v, 0) }));
+    const taken = new Set();
+    const take = (list, pick) => { const m = list.filter(x => !taken.has(x.i)).sort(pick)[0]; if (m) taken.add(m.i); return m; };
+    const nameOf = m => PP.people[m.sc.stage.cast[0].id].name;
+    const out = [];
+
+    const best = take(ms.filter(m => m.opt.q >= 3), (a, b) => b.opt.q - a.opt.q || (b.outcome.tone === 'good') - (a.outcome.tone === 'good'));
+    if (best) out.push({ m: best, k: `Your best call`, by: 'nash',
+      note: `Given your move, ${nameOf(best)}'s best reply was also good for you. That's what an equilibrium feels like from the inside.` });
+
+    const luck = take(ms.filter(m => (m.opt.q <= 1 && m.outcome.tone === 'good') || (m.opt.q >= 3 && m.outcome.tone !== 'good')), (a, b) => Math.abs(b.opt.q - 2) - Math.abs(a.opt.q - 2))
+      || take(ms, (a, b) => a.opt.q - b.opt.q);
+    if (luck) {
+      const lucky = luck.opt.q <= 1 && luck.outcome.tone === 'good', unlucky = luck.opt.q >= 3 && luck.outcome.tone !== 'good';
+      out.push({ m: luck, k: lucky ? `Where luck covered for you` : unlucky ? `Where the dice let you down` : `The one to replay`, by: 'duke',
+        note: lucky ? `It worked, and that's the danger. A good result rewarded a weak decision, and it will tempt you to do it again.`
+          : unlucky ? `It didn't land, but the decision was sound. Judge the choice, not the draw, and make it again.`
+            : `This one wasn't the dice. The choice itself left the most on the table.` });
+    }
+
+    const echo = take(ms.filter(m => m.trust), (a, b) => Math.abs(b.trust) - Math.abs(a.trust));
+    if (echo) out.push({ m: echo, k: echo.trust > 0 ? `What they'll remember` : `What they'll hold onto`, by: 'schelling',
+      note: echo.trust > 0 ? `You'll see ${nameOf(echo)} again. In a game that repeats, what they expect of you next time is worth more than this round.`
+        : `This round wasn't the last. ${nameOf(echo)} trusts you less now, and that changes every move after it.` });
+    return out;
+  }
+
+  function yourDance(d, ranked) {
+    const I = PP.insight;
+    const said = d.moves.map(m => {
+      const v = ((I.scenes[m.sc.id] || {}).options || {})[m.opt.key];
+      if (!v) return '';
+      const mood = m.opt.q >= 3 ? 'smile' : m.opt.q === 2 ? 'neutral' : m.outcome.tone === 'good' ? 'awkward' : 'skeptical';
+      return `<li class="said"><span class="said-face">${portrait(v.verdict.who, mood)}</span>
+        <blockquote><p>“${v.verdict.line}”</p><footer><strong>${PP.people[v.verdict.who].name}</strong> · ${m.sc.title}</footer></blockquote></li>`;
+    }).join('');
+
+    const counts = {};
+    d.moves.forEach(m => (((I.scenes[m.sc.id] || {}).options || {})[m.opt.key] || { buys: [] }).buys.forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+    const buys = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const max = buys.length ? buys[0][1] : 1;
+    const buyBars = buys.map(([t, c]) => `<li><span class="buy-name">${I.tags[t]}</span><span class="buy-track" aria-hidden="true"><span class="buy-fill" style="width:${Math.round(c / max * 100)}%"></span></span><span class="buy-n">${c}</span></li>`).join('');
+
+    const reads = d.moves.filter(m => m.read);
+    const kinds = { right: 0, part: 0, suspicious: 0, naive: 0 };
+    reads.forEach(m => { kinds[m.read.kind]++; });
+    const readLine = !reads.length ? '' : kinds.suspicious >= 2 ? `You assumed bad intent ${kinds.suspicious} times when the room didn't support it. Most people are mostly trying to get through their day.`
+      : kinds.naive >= 1 && kinds.naive >= kinds.suspicious ? `You gave the benefit of the doubt where a quick check was cheap. Trust is a good default. Checking is a better one.`
+        : kinds.right + kinds.part / 2 >= reads.length * 0.7 ? `You read people well. You looked for what they needed before deciding who they were.`
+          : `Your reads were mixed. The details in each room usually said more than first impressions did.`;
+
+    const mo = moments(d).map(({ m, k, by, note }) => {
+      const t = thinkers[by];
+      return `<li class="moment">
+        <div class="mo-main"><p class="mo-k">${k}</p><h4>${m.sc.title}</h4><p class="mo-move"><span class="mo-key">${m.opt.key}</span>${m.opt.text}</p><p class="mo-out">${m.outcome.text}</p></div>
+        <aside class="mo-note" style="--tc:${t.color}"><span class="mo-icon">${t.icon}</span><p><strong>${t.short}</strong> ${note}</p></aside>
+      </li>`;
+    }).join('');
+
+    const weakest = ranked.length ? ranked[ranked.length - 1].k : 'inc';
+    return `<section class="dance" aria-labelledby="dance-h">
+      <div class="section-head"><p class="eyebrow">Your dance</p><h2 id="dance-h">What the room saw</h2>
+        <p class="lede">Every person you met formed an opinion. Here's what each of them would say about you.</p></div>
+      <svg width="0" height="0" class="defs-only" aria-hidden="true">${PP.art.DEFS}</svg>
+      <ul class="said-list">${said}</ul>
+      <div class="dance-grid">
+        <section class="card"><h3 class="block-h">What your choices were buying</h3>
+          <ul class="buys">${buyBars}</ul>
+          ${buys.length ? `<p class="buy-note">${I.buyNotes[buys[0][0]]}</p>` : ''}
+          <aside class="mo-note" style="--tc:${thinkers.seykota.color}"><span class="mo-icon">${thinkers.seykota.icon}</span><p><strong>${thinkers.seykota.short}</strong> Everybody gets what they want. Your choices show what that was.</p></aside>
+        </section>
+        <section class="card"><h3 class="block-h">How you read people</h3>
+          ${reads.length ? `<p class="read-score"><span class="rs-n">${kinds.right}</span><span class="rs-of">of ${reads.length} reads spot on${kinds.part ? `, ${kinds.part} partly` : ''}</span></p>
+          <ul class="read-kinds">${['suspicious', 'naive'].filter(k => kinds[k]).map(k => `<li class="is-${k}">${READ_LABEL[k]} · ${kinds[k]}</li>`).join('')}</ul>
+          <p class="read-line">${readLine}</p>` : `<p class="small">Your reads start with your next scene. Before each move you'll guess what the other person is after.</p>`}
+        </section>
+      </div>
+      <h3 class="block-h block-h-gap">Three moments</h3>
+      <ol class="moments">${mo}</ol>
+      <div class="carry"><p class="eyebrow">One question to take with you</p><p class="carry-q">${I.questions[weakest]}</p></div>
+    </section>`;
   }
 
   // ───────────────────────── Profile
@@ -502,6 +629,8 @@
       <p class="lede">Your profile builds from real choices: ten measures of strategic intelligence, how your relationships changed, and whether your good results came from good decisions.</p>
       <div class="page-actions"><button class="btn btn-primary" data-act="play">Play Episode 1</button></div></section>`;
     const done = n >= LIST.length;
+    const finished = epEnd(n - 1) ? LIST[n - 1].ep : null;
+    const at = done ? null : pos(n);
     const touched = Object.keys(skills).filter(k => d.moves.some(m => m.opt.s && m.opt.s[k] !== undefined) || (k === 'inf' && d.moves.some(m => m.clues.length)));
     const ranked = touched.map(k => ({ k, v: skillScore(d.totals[k]) })).sort((x, y) => y.v - x.v);
     const strengths = ranked.filter(r => r.v > 55).slice(0, 2);
@@ -519,11 +648,14 @@
 
     return `<section class="wrap page profile">
       <header class="profile-head">
-        <div><p class="eyebrow">${done ? 'Episode 1 complete' : `Scene ${n} of ${LIST.length} played`}</p>
-          <h1>${done ? 'You read the room.' : 'Your profile so far'}</h1>
-          <p class="lede">${done ? `You walked into six ordinary situations with no title and no special power. Here's how you played them.` : `Built from your actual choices. It sharpens as you play the remaining ${LIST.length - n} scene${LIST.length - n === 1 ? '' : 's'}.`}</p></div>
+        <div><p class="eyebrow">${done ? 'Every scene played' : finished ? `Episode ${finished.number} complete` : `${n} of ${LIST.length} scenes played`}</p>
+          <h1>${done ? 'You read the room.' : finished ? `${finished.title}, played.` : 'Your profile so far'}</h1>
+          <p class="lede">${done ? `You walked into ${NUM[LIST.length] || LIST.length} ordinary situations with no title and no special power. Here's how you played them.`
+            : finished ? `Here's what the room saw. Episode ${at.ep.number}, ${at.ep.title}, is waiting when you are.`
+              : `Built from your actual choices. It sharpens as you play the remaining ${LIST.length - n} scene${LIST.length - n === 1 ? '' : 's'}.`}</p></div>
         <div class="rating-card"><span class="rating-label">Strategic rating</span><span class="rating-num">${d.rating}</span><span class="rating-sub">Started at ${START_RATING}</span></div>
       </header>
+      ${n >= DANCE_AT ? yourDance(d, ranked) + `<h2 class="profile-sub">The numbers behind it</h2>` : ''}
       <div class="profile-grid">
         <section class="block card"><h2 class="block-h">Ten measures <span class="block-hint">50 is where everyone starts</span></h2><ul class="bars">${bars}</ul></section>
         <section class="block card"><h2 class="block-h">Decisions vs. results</h2><p class="small">Annie Duke's warning: don't grade a decision by how it turned out.</p>
@@ -543,8 +675,8 @@
         <section class="block card"><h2 class="block-h">Game record</h2><ol class="record">${record}</ol>
           <h2 class="block-h block-h-gap">Lenses you've played through</h2><ul class="lenses">${lensesMet.map(k => `<li>${thinkers[k].name}</li>`).join('')}</ul></section>
       </div>
-      <div class="page-actions">${done ? '' : `<button class="btn btn-primary" data-act="play">Continue · Scene ${n + 1}</button>`}
-        <button class="${done && !confirmReset ? 'btn btn-primary' : 'btn btn-ghost'} ${confirmReset ? 'is-danger' : ''}" data-act="reset">${confirmReset ? 'Tap again to erase this run' : done ? 'Play Episode 1 again' : 'Start over'}</button></div>
+      <div class="page-actions">${done ? '' : `<button class="btn btn-primary" data-act="play">${at.n === 1 ? `Play Episode ${at.ep.number} · ${at.ep.title}` : `Continue · Scene ${at.n}`}</button>`}
+        <button class="${done && !confirmReset ? 'btn btn-primary' : 'btn btn-ghost'} ${confirmReset ? 'is-danger' : ''}" data-act="reset">${confirmReset ? 'Tap again to erase this run' : done ? 'Play again from the start' : 'Start over'}</button></div>
     </section>`;
   }
 
@@ -617,10 +749,10 @@
       case 'resume': stage && stage.resume(); break;
       case 'to-decision': toDecision(); break;
       case 'replay-intro': draft.selected = null; playIntro(); break;
-      case 'next': draft = { selected: null, clues: [] }; ui.phase = 'intro'; render(); window.scrollTo({ top: 0 }); break;
+      case 'next': draft = fresh(); ui.phase = 'intro'; render(); window.scrollTo({ top: 0 }); break;
       case 'takeback': {
         const last = history.pop(); save();
-        draft = { selected: null, clues: last.clues.slice() };
+        draft = fresh(last.clues.slice(), last.read ?? null);
         ui.phase = 'decide';
         app.innerHTML = viewPlay();
         toDecision();
@@ -636,12 +768,12 @@
         }
         confirmScene = -1;
         if (i < history.length) { history = history.slice(0, i); save(); }
-        draft = { selected: null, clues: [] }; ui.phase = 'intro'; go('play');
+        draft = fresh(); ui.phase = 'intro'; go('play');
         break;
       }
       case 'reset':
         if (!confirmReset) { confirmReset = true; render(); app.querySelector('[data-act="reset"]').focus(); return; }
-        confirmReset = false; history = []; draft = { selected: null, clues: [] }; save(); ui.phase = 'intro'; go('play');
+        confirmReset = false; history = []; draft = fresh(); save(); ui.phase = 'intro'; go('play');
         break;
     }
   });
@@ -654,22 +786,23 @@
   });
 
   document.addEventListener('change', e => {
-    if (e.target.name !== 'move') return;
-    draft.selected = e.target.value;
+    if (e.target.name !== 'move' && e.target.name !== 'read') return;
+    if (e.target.name === 'move') draft.selected = e.target.value;
+    else draft.read = Number(e.target.value);
     const btn = document.getElementById('evaluate-btn');
-    if (btn) btn.disabled = false;
+    if (btn) { btn.disabled = !ready(LIST[history.length]); btn.textContent = draft.read === null && (PP.insight.scenes[LIST[history.length].id] || {}).read ? 'Make your read first' : 'Make this move'; }
   });
 
   document.addEventListener('submit', e => {
     if (e.target.id !== 'decide-form') return;
     e.preventDefault();
-    if (!draft.selected) return;
+    if (!ready(LIST[history.length])) return;
     if (stage && stage.paused) stage.resume();
     const sc = LIST[history.length];
     const opt = sc.options.find(o => o.key === draft.selected);
-    history.push({ id: sc.id, key: opt.key, outcome: pickOutcome(opt), clues: draft.clues.slice() });
+    history.push({ id: sc.id, key: opt.key, outcome: pickOutcome(opt), clues: draft.clues.slice(), read: draft.read });
     save();
-    draft = { selected: null, clues: [] };
+    draft = fresh();
     document.querySelector('.play-head').innerHTML = document.querySelector('.play-head').innerHTML.replace(/<ol class="file-strip"[\s\S]*?<\/ol>/, strip(history.length - 1, derive(history)));
     document.getElementById('stage-mount').scrollIntoView({ behavior: 'smooth', block: 'start' });
     playReaction();

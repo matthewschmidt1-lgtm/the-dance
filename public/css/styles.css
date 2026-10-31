@@ -963,3 +963,7 @@ button.ps-btn:hover { background: var(--accent-soft); }
 .who-trust { font-size: var(--t-sm); font-weight: 600; margin-top: 2px; }
 .who-trust.up { color: var(--good); } .who-trust.down { color: var(--bad); }
 .their .their-note { font-size: var(--t-sm); color: var(--muted); margin-top: 4px; }
+/* The three episodes read as one group: a shared heading, then each episode's places. */
+.ep-intro { padding-block: clamp(48px, 7vw, 80px) 0; }
+.ep-intro + .places { padding-top: clamp(20px, 3vw, 32px); }
+.next-ep { padding-bottom: clamp(16px, 3vw, 32px); }

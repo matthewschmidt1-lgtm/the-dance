@@ -315,7 +315,28 @@
         <p class="hook-sub">Every scene in The Dance is something that has happened to you, or will. You watch it unfold, choose what to do, and see how the people in the room react. Then you see the game underneath.</p>
       </section>
 
-      ${placesSec(EPS[0])}
+      <section class="wrap ep-intro">
+        <div class="section-head"><p class="eyebrow">The episodes</p><h2>Three episodes, one game. Each room asks more of you than the last.</h2></div>
+      </section>
+      ${EPS.map(placesSec).join('')}
+
+      ${soon ? `<section class="wrap next-ep">
+        <div class="next-card">
+          <span class="lock" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
+          <div><p class="eyebrow">Episode ${soon.number} · In development</p><h3>${soon.title}</h3><p>${soon.blurb}</p></div>
+        </div>
+      </section>` : ''}
+
+      <section class="mk-band" aria-labelledby="mk-band-h">
+        <div class="mk-band-art" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
+        <div class="wrap mk-band-in">
+          <p class="eyebrow eyebrow-on-dark">Playing the Odds · Inspired by Market Wizards</p>
+          <h2 id="mk-band-h">The Trader's Mind</h2>
+          <p class="mk-band-sub">You don't have to predict the future. You have to survive it.</p>
+          <ul class="mk-band-tests">${TRACKS.market.list.map(sc => `<li><strong>${sc.title}</strong><span>${sc.tests}</span></li>`).join('')}</ul>
+          <button class="btn btn-primary" data-act="market">Enter The Trader's Mind</button>
+        </div>
+      </section>
 
       <section class="band">
         <div class="wrap slowmo">
@@ -343,26 +364,6 @@
         </dialog>
         <button class="btn btn-link" data-act="bench">Read what each one teaches →</button>
       </section>
-
-      ${EPS.slice(1).map(placesSec).join('')}
-
-      <section class="mk-band" aria-labelledby="mk-band-h">
-        <div class="mk-band-art" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
-        <div class="wrap mk-band-in">
-          <p class="eyebrow eyebrow-on-dark">Playing the Odds · Inspired by Market Wizards</p>
-          <h2 id="mk-band-h">The Trader's Mind</h2>
-          <p class="mk-band-sub">You don't have to predict the future. You have to survive it.</p>
-          <ul class="mk-band-tests">${TRACKS.market.list.map(sc => `<li><strong>${sc.title}</strong><span>${sc.tests}</span></li>`).join('')}</ul>
-          <button class="btn btn-primary" data-act="market">Enter The Trader's Mind</button>
-        </div>
-      </section>
-
-      ${soon ? `<section class="wrap next-ep">
-        <div class="next-card">
-          <span class="lock" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
-          <div><p class="eyebrow">Episode ${soon.number} · In development</p><h3>${soon.title}</h3><p>${soon.blurb}</p></div>
-        </div>
-      </section>` : ''}
 
       <section class="wrap next-move" aria-labelledby="next-move-h">
         <div class="section-head"><p class="eyebrow">Your next move</p><h2 id="next-move-h">See the game without becoming part of the game.</h2></div>

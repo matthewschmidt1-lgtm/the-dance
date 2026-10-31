@@ -1,6 +1,6 @@
 """Render the three "next move" icons as glossy clay objects on transparent backgrounds.
 
-  play    a teal pawn            (your next move)
+  play    an ivory pawn          (your next move)
   bench   a stack of three books (the thinkers)
   profile a three-step podium    (your record)
 
@@ -109,9 +109,9 @@ def setup():
     w.node_tree.nodes['Background'].inputs['Strength'].default_value = 0.9
     sc.world = w
     # Soft studio: big key from upper left, fill from right, rim from behind.
-    for name, loc, size, energy, col in [('key', (-2.4, -2.2, 3.4), 2.6, 520, '#fff4e6'),
-                                         ('fill', (2.8, -1.6, 1.6), 3.0, 160, '#e6f3ff'),
-                                         ('rim', (0.6, 2.8, 2.6), 1.6, 380, '#ffffff')]:
+    for name, loc, size, energy, col in [('key', (-2.4, -2.2, 3.4), 2.6, 520, '#ffecd2'),
+                                         ('fill', (2.8, -1.6, 1.6), 3.0, 160, '#d8ecea'),
+                                         ('rim', (0.6, 2.8, 2.6), 1.6, 380, '#e4f4f2')]:
         ld = bpy.data.lights.new(name, 'AREA')
         ld.energy = energy
         ld.size = size
@@ -138,27 +138,28 @@ def render(name):
     print('icon', name)
 
 
-# Play: a teal pawn on a little coral disc.
+# Colours echo the header: fog teal, lamplit walnut, stone, and the ivory and ebony pieces.
+# Play: an ivory pawn on a fog-teal disc.
 setup()
 pawn = [(0.36, 0.0), (0.36, 0.07), (0.30, 0.11), (0.28, 0.17), (0.20, 0.23), (0.15, 0.33), (0.125, 0.62), (0.115, 0.78),
         (0.2, 0.82), (0.2, 0.87), (0.1, 0.91), (0.085, 0.95), (0.15, 1.01), (0.18, 1.09), (0.18, 1.15), (0.15, 1.23), (0.09, 1.28), (0.0, 1.30)]
-lathe('pawn', pawn, clay('teal', '#10b6a4', 0.28), (0, 0, 0.06))
-lathe('disc', [(0.62, 0.0), (0.62, 0.05), (0.58, 0.07), (0.0, 0.07)], clay('coral', '#ff6e4e', 0.35), (0, 0, 0))
+lathe('pawn', pawn, clay('ivory', '#ece4d2', 0.22), (0, 0, 0.06))
+lathe('disc', [(0.62, 0.0), (0.62, 0.05), (0.58, 0.07), (0.0, 0.07)], clay('fog', '#2c5c58', 0.3), (0, 0, 0))
 render('play')
 
-# Bench: three books, slightly fanned, coral / butter / teal.
+# Bench: three books, slightly fanned, walnut / parchment / verdigris.
 setup()
-for i, (col, w, d, rot) in enumerate([('#ff6e4e', 1.25, 0.86, 4), ('#ffc23a', 1.15, 0.8, -7), ('#10b6a4', 1.05, 0.74, 10)]):
+for i, (col, w, d, rot) in enumerate([('#7a5234', 1.25, 0.86, 4), ('#c4a46e', 1.15, 0.8, -7), ('#3d6e68', 1.05, 0.74, 10)]):
     h = 0.2
-    rbox(f'book{i}', (0, 0, h / 2 + i * (h + 0.005)), (w, d, h), clay(f'c{i}', col, 0.34), bevel=0.035).rotation_euler = (0, 0, math.radians(rot))
-    pages = rbox(f'pages{i}', (0.04, -0.012, h / 2 + i * (h + 0.005)), (w - 0.06, d - 0.02, h - 0.05), clay(f'p{i}', '#fbf6ea', 0.6), bevel=0.01)
+    rbox(f'book{i}', (0, 0, h / 2 + i * (h + 0.005)), (w, d, h), clay(f'c{i}', col, 0.42), bevel=0.035).rotation_euler = (0, 0, math.radians(rot))
+    pages = rbox(f'pages{i}', (0.04, -0.012, h / 2 + i * (h + 0.005)), (w - 0.06, d - 0.02, h - 0.05), clay(f'p{i}', '#efe7d6', 0.65), bevel=0.01)
     pages.rotation_euler = (0, 0, math.radians(rot))
-lathe('apple', [(0.0, 0.0), (0.12, 0.02), (0.17, 0.09), (0.16, 0.17), (0.1, 0.22), (0.0, 0.2)], clay('red', '#ea3f3a', 0.25), (0.2, 0.05, 0.615))
+lathe('apple', [(0.0, 0.0), (0.12, 0.02), (0.17, 0.09), (0.16, 0.17), (0.1, 0.22), (0.0, 0.2)], clay('russet', '#8e3a28', 0.35), (0.2, 0.05, 0.615))
 render('bench')
 
-# Profile: a three-step podium with a small sphere on top.
+# Profile: a stone podium with an ebony sphere on top.
 setup()
-for x, h, col in [(-0.55, 0.42, '#ffc23a'), (0.0, 0.7, '#10b6a4'), (0.55, 0.28, '#ff6e4e')]:
-    rbox(f'step{x}', (x, 0, h / 2), (0.52, 0.6, h), clay(f's{x}', col, 0.32), bevel=0.05)
-lathe('ball', [(0.0, 0.0), (0.12, 0.02), (0.17, 0.08), (0.18, 0.15), (0.16, 0.24), (0.1, 0.29), (0.0, 0.31)], clay('ivory', '#fbf3e2', 0.25), (0, 0, 0.7))
+for x, h, col in [(-0.55, 0.42, '#cfc8b8'), (0.0, 0.7, '#4e5a5a'), (0.55, 0.28, '#a89a84')]:
+    rbox(f'step{x}', (x, 0, h / 2), (0.52, 0.6, h), clay(f's{x}', col, 0.45), bevel=0.05)
+lathe('ball', [(0.0, 0.0), (0.12, 0.02), (0.17, 0.08), (0.18, 0.15), (0.16, 0.24), (0.1, 0.29), (0.0, 0.31)], clay('ebony', '#26282a', 0.18), (0, 0, 0.7))
 render('profile')

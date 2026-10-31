@@ -23,9 +23,9 @@
   --cine-ink: #f2f3f5;
   --cine-accent: #66d4cc;
   --you: #f2c46d;
-  --nm-play-a: #dff5f0; --nm-play-b: #bfeae2; --nm-play-ink: #07524a;
-  --nm-bench-a: #ffece4; --nm-bench-b: #ffd3c3; --nm-bench-ink: #8a2c14;
-  --nm-prof-a: #fff4d9; --nm-prof-b: #ffe3a3; --nm-prof-ink: #6e4a00;
+  --nm-play-a: #e2ecea; --nm-play-b: #c3d8d4; --nm-play-ink: #1b4a47;
+  --nm-bench-a: #f4ece0; --nm-bench-b: #e5d5bb; --nm-bench-ink: #5c3e22;
+  --nm-prof-a: #eceae4; --nm-prof-b: #d6d4cc; --nm-prof-ink: #3a3a35;
 
   --f-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
   --f-read: 'Source Serif 4', Georgia, 'Times New Roman', serif;
@@ -48,7 +48,7 @@
     --sq-light: #2b303a; --sq-dark: #4b5363;
     --good: #5cc98f; --good-soft: #15291f; --mixed: #e0aa4a; --mixed-soft: #2c2414;
     --bad: #f08a80; --bad-soft: #321a19; --focus: #4cc9c0;
-    --nm-play-a: #12302d; --nm-play-b: #0d4741; --nm-play-ink: #a6f0e5; --nm-bench-a: #34201b; --nm-bench-b: #4d2a1f; --nm-bench-ink: #ffc7b4; --nm-prof-a: #33291a; --nm-prof-b: #4a3a17; --nm-prof-ink: #ffe0a0;
+    --nm-play-a: #11201f; --nm-play-b: #17302e; --nm-play-ink: #a3d4cd; --nm-bench-a: #261f17; --nm-bench-b: #382c1f; --nm-bench-ink: #e8cfa8; --nm-prof-a: #1e1f1d; --nm-prof-b: #2c2d2a; --nm-prof-ink: #d8d6cc;
     color-scheme: dark;
   }
 }
@@ -58,7 +58,7 @@
   --sq-light: #2b303a; --sq-dark: #4b5363;
   --good: #5cc98f; --good-soft: #15291f; --mixed: #e0aa4a; --mixed-soft: #2c2414;
   --bad: #f08a80; --bad-soft: #321a19; --focus: #4cc9c0;
-  --nm-play-a: #12302d; --nm-play-b: #0d4741; --nm-play-ink: #a6f0e5; --nm-bench-a: #34201b; --nm-bench-b: #4d2a1f; --nm-bench-ink: #ffc7b4; --nm-prof-a: #33291a; --nm-prof-b: #4a3a17; --nm-prof-ink: #ffe0a0;
+  --nm-play-a: #11201f; --nm-play-b: #17302e; --nm-play-ink: #a3d4cd; --nm-bench-a: #261f17; --nm-bench-b: #382c1f; --nm-bench-ink: #e8cfa8; --nm-prof-a: #1e1f1d; --nm-prof-b: #2c2d2a; --nm-prof-ink: #d8d6cc;
   color-scheme: dark;
 }
 
@@ -379,7 +379,7 @@ button.ps-btn:hover { background: var(--accent-soft); }
 .nm-art { width: min(100%, 15rem); height: auto; aspect-ratio: 1; justify-self: center; margin: -4px 0 -10px; -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%); mask-image: radial-gradient(closest-side, #000 62%, transparent 100%); }
 .nm-k { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--k); }
 .nm-t { font-size: var(--t-xl); font-weight: 780; font-stretch: 106%; line-height: 1.15; }
-.nm-d { color: var(--k); opacity: .86; font-size: var(--t-sm); line-height: 1.5; max-width: 30ch; }
+.nm-d { color: var(--k); opacity: .86; font-size: var(--t-sm); line-height: 1.5; max-width: 30ch; padding-right: 48px; }
 .nm-go { position: absolute; right: 20px; bottom: 20px; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--k); color: var(--a); font-size: 1.1rem; box-shadow: 0 6px 12px -4px rgba(0,0,0,.35); }
 .nm:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,.6), inset 0 -10px 24px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.08), 0 22px 40px -16px rgba(0,0,0,.42); }
 .nm:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }

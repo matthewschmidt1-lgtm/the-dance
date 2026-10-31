@@ -736,7 +736,16 @@ button.ps-btn:hover { background: var(--accent-soft); }
   .site-nav { gap: 0; }
   .site-nav a { padding: 8px 5px; font-size: 0.8125rem; }
 }
-@media (max-width: 340px) { .wordmark span { display: none; } }
+/* The name never hides: it keeps its width, and the nav shrinks, then scrolls sideways if it must. */
+.wordmark { flex-shrink: 0; }
+.site-nav { min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.site-nav::-webkit-scrollbar { display: none; }
+@media (max-width: 360px) {
+  .wordmark { gap: 6px; }
+  .wordmark svg { width: 15px; height: 15px; }
+  .wordmark span { font-size: 0.72rem; font-stretch: 100%; }
+  .site-nav a { padding: 8px 4px; font-size: 0.75rem; }
+}
 @media (max-width: 520px) { .nav-the { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {

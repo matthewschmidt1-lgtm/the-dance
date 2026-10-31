@@ -239,7 +239,7 @@
       </section>` : ''}
 
       <section class="wrap next-move" aria-labelledby="next-move-h">
-        <div class="section-head"><p class="eyebrow">Your next move</p><h2 id="next-move-h">See the game without becoming the game.</h2></div>
+        <div class="section-head"><p class="eyebrow">Your next move</p><h2 id="next-move-h">See the game without becoming part of the game.</h2></div>
         <div class="nm-grid">
           <button class="nm nm-play" data-act="${done ? 'profile' : 'play'}">
             <img class="nm-art" src="/img/next/play.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">

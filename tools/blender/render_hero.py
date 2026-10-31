@@ -35,6 +35,7 @@ def mat(name, color, rough=0.5, metal=0.0, emit=None, strength=0.0, coat=0.0):
     p.inputs['Metallic'].default_value = metal
     if coat and 'Coat Weight' in p.inputs:
         p.inputs['Coat Weight'].default_value = coat
+        p.inputs['Coat Roughness'].default_value = 0.06
     if emit:
         p.inputs['Emission Color'].default_value = lin(emit)
         p.inputs['Emission Strength'].default_value = strength
@@ -116,6 +117,10 @@ sc = bpy.context.scene
 sc.render.engine = 'CYCLES'
 sc.cycles.samples = SAMPLES
 sc.cycles.use_denoising = True
+# Clean glossy highlights: no caustic fireflies, which the denoiser smears into blotches.
+sc.cycles.caustics_reflective = False
+sc.cycles.caustics_refractive = False
+sc.cycles.blur_glossy = 1.0
 sc.render.resolution_x, sc.render.resolution_y = W, H
 try:
     prefs = bpy.context.preferences.addons['cycles'].preferences
@@ -158,10 +163,27 @@ floor.location = (-0.5, 0, 0)
 # The two pieces: same shape, opposite colours, facing each other.
 profile = [(0.36, 0.0), (0.36, 0.06), (0.30, 0.10), (0.28, 0.16), (0.20, 0.22), (0.15, 0.32), (0.12, 0.62), (0.11, 0.80),
            (0.19, 0.84), (0.19, 0.88), (0.10, 0.92), (0.08, 0.96), (0.14, 1.02), (0.17, 1.10), (0.17, 1.16), (0.14, 1.24), (0.08, 1.29), (0.0, 1.31)]
-ivory = mat('ivory', '#ece4d2', 0.28, coat=0.6)
-ebony = mat('ebony', '#1a1d21', 0.24, coat=0.7)
-a = lathe('piece-ivory', profile, ivory, (-0.15, 1.6, 0))
-b = lathe('piece-ebony', profile, ebony, (1.25, 1.6, 0))
+# Glossy lacquer, like the home page icons: a smooth base under a clear, sharp coat.
+ivory = mat('ivory', '#ece4d2', 0.2, coat=1.0)
+ebony = mat('ebony', '#202327', 0.16, coat=1.0)
+
+
+def smooth_profile(pts, n=6):
+    # Catmull-Rom through the profile points, so the silhouette curves instead of kinking.
+    out = []
+    P = [pts[0]] + pts + [pts[-1]]
+    for i in range(1, len(P) - 2):
+        p0, p1, p2, p3 = P[i - 1], P[i], P[i + 1], P[i + 2]
+        for k in range(n):
+            t = k / n
+            out.append(tuple(0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t * t + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t ** 3) for j in (0, 1)))
+    out.append(pts[-1])
+    return [(max(r, 0.0), z) for r, z in out]
+
+
+profile = smooth_profile(profile)
+a = lathe('piece-ivory', profile, ivory, (-0.15, 1.6, 0), segs=128)
+b = lathe('piece-ebony', profile, ebony, (1.25, 1.6, 0), segs=128)
 # A slight lean toward each other: the dance.
 a.rotation_euler = (0, math.radians(4), 0)
 b.rotation_euler = (0, math.radians(-4), 0)

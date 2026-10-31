@@ -113,8 +113,8 @@ window.PP = window.PP || {};
         assumptions: `That "multiple offers" means a war. That winning is the goal.`,
         controlled: `Your ceiling, your contingencies, and how much you found out first.`,
         couldnt: `The other buyers.`,
-        concept: { thinker: 'nash', name: `Bid your value, not your hope`, body: `In an auction, your best bid depends on what you expect others to bid and what the house is really worth to you. Setting the ceiling first, roof included, is a best response to not knowing.` },
-        second: { thinker: 'duke', name: `The winner's curse`, body: `When many people estimate a value, the winner is usually the one who overestimated most. Decide in advance what would make winning a loss.` },
+        concept: { thinker: 'nash', term: `Auction theory`, name: `Bid your value, not your hope`, body: `In an auction, your best bid depends on what you expect others to bid and what the house is really worth to you. Setting the ceiling first, roof included, is a best response to not knowing.` },
+        second: { thinker: 'duke', term: `Winner's curse`, name: `Winning often means you overestimated most`, body: `When many people estimate a value, the winner is usually the one who overestimated most. Decide in advance what would make winning a loss.` },
         better: `C with the roof in the cap. If you learned the market was quiet, a patient low offer.`,
         lesson: `Decide what winning is worth before the bidding starts. The room will try to change your mind.`
       }
@@ -215,8 +215,8 @@ window.PP = window.PP || {};
         assumptions: `That a counter means you're valued. That your word to a new employer doesn't count yet.`,
         controlled: `Whether you kept your word, and what you asked to see in writing.`,
         couldnt: `Ellen's plans, and HR's.`,
-        concept: { thinker: 'schelling', name: `Commitment`, body: `Schelling showed that a commitment's power comes from not being able to back out of it. A promise you'll break for a better offer isn't a commitment, and everyone you deal with afterward learns that.` },
-        second: { thinker: 'aumann', name: `Reputation in a repeated game`, body: `A career is a long repeated game in a small world. How you leave a job is information about you, and it travels.` },
+        concept: { thinker: 'schelling', term: `Commitment device`, name: `A promise only counts if you won't back out of it`, body: `Schelling showed that a commitment's power comes from not being able to back out of it. A promise you'll break for a better offer isn't a commitment, and everyone you deal with afterward learns that.` },
+        second: { thinker: 'aumann', term: `Reputation`, name: `How you leave travels ahead of you`, body: `A career is a long repeated game in a small world. How you leave a job is information about you, and it travels.` },
         better: `B. If Ellen's counter checks out and you'd truly rather stay, C: in writing, before you call Northfield.`,
         lesson: `Counteroffers are usually about the next three months, not the next three years. Check before you believe one.`
       }
@@ -307,8 +307,8 @@ window.PP = window.PP || {};
         assumptions: `That a one-time sale has no future. That what Kim doesn't ask about doesn't count.`,
         controlled: `What you told her.`,
         couldnt: `The weather, and what she brought.`,
-        concept: { thinker: 'aumann', name: `Reputation`, body: `Even a one-time sale sits inside a repeated game: the street, the app, Ruth. Honesty is rational when your reputation is part of what you're selling.` },
-        second: { thinker: 'duke', name: `Resulting, again`, body: `If hiding it worked, it still wasn't a good decision. If disclosing cost you the sale, it still was.` },
+        concept: { thinker: 'aumann', term: `Market for lemons`, name: `When one side knows more, honesty has to be believable`, body: `Even a one-time sale sits inside a repeated game: the street, the app, Ruth. Honesty is rational when your reputation is part of what you're selling.` },
+        second: { thinker: 'duke', term: `Resulting`, name: `A good outcome doesn't make a decision good`, body: `If hiding it worked, it still wasn't a good decision. If disclosing cost you the sale, it still was.` },
         better: `A, said specifically. Or D, if you can spare the week.`,
         lesson: `When you're the one who knows more, make the truth easy to believe. It's also the strategic move.`
       }
@@ -416,8 +416,8 @@ window.PP = window.PP || {};
         assumptions: `That the monthly payment is the number that matters. That a bundle is simpler.`,
         controlled: `Which number you negotiated first, and what you compared it with.`,
         couldnt: `The dealer's margins, and his manager.`,
-        concept: { thinker: 'nalebuff', name: `Change the game`, body: `Nalebuff and Brandenburger's advice: don't just play the game you're handed. Splitting one bundled negotiation into separate ones, each with an outside alternative, changes the game in your favor.` },
-        second: { thinker: 'schelling', name: `The walk-away`, body: `Your power in a negotiation is what you can do if it fails. A pre-approval and a trade-in quote are walk-aways you can show.` },
+        concept: { thinker: 'nalebuff', term: `Unbundling`, name: `Split one bundled deal into separate ones`, body: `Nalebuff and Brandenburger's advice: don't just play the game you're handed. Splitting one bundled negotiation into separate ones, each with an outside alternative, changes the game in your favor.` },
+        second: { thinker: 'schelling', term: `BATNA`, name: `Your best alternative if the deal fails is your real power`, body: `Your power in a negotiation is what you can do if it fails. A pre-approval and a trade-in quote are walk-aways you can show.` },
         better: `B, with the pre-approval and the instant offer in hand.`,
         lesson: `Never negotiate the monthly payment. Negotiate each number against an alternative you can walk to.`
       }

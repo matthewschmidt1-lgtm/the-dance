@@ -989,3 +989,4 @@ button.ps-btn:hover { background: var(--accent-soft); }
   .ep-progress { grid-column: 2; justify-self: start; }
   .ep-num { width: 44px; height: 44px; font-size: 1.5rem; border-radius: 12px; }
 }
+.concept-plain { font-family: var(--f-read); font-style: italic; color: var(--muted); margin: -2px 0 8px; }

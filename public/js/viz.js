@@ -35,7 +35,7 @@ PP.viz = (function () {
       const hit = row === ri && col === ci;
       const best = m.best && m.best[0] === ri && m.best[1] === ci;
       const eq = m.eq && m.eq[0] === ri && m.eq[1] === ci;
-      const tags = [hit ? '<span class="mx-tag">You landed here</span>' : '', best ? '<span class="mx-tag mx-tag-best">Best for both</span>' : '', eq ? '<span class="mx-tag mx-tag-eq">Stable if you meet once</span>' : ''].join('');
+      const tags = [hit ? '<span class="mx-tag">You landed here</span>' : '', best ? '<span class="mx-tag mx-tag-best">Pareto optimal · best for both</span>' : '', eq ? '<span class="mx-tag mx-tag-eq">Nash equilibrium · stable if you meet once</span>' : ''].join('');
       return `<td class="${hit ? 'is-hit' : ''} ${best ? 'is-best' : ''} ${eq ? 'is-eq' : ''}">
         <span class="mx-pay"><span class="mx-you">${a}</span><span class="mx-sep">/</span><span class="mx-them">${b}</span></span>
         ${tags}

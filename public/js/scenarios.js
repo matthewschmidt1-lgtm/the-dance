@@ -93,8 +93,8 @@ PP.scenarios = [
       assumptions: `That the store was wrong, and that someone above Maya was needed to fix it.`,
       controlled: `Your tone, how certain you sounded, and when you raised it.`,
       couldnt: `Store policy, the line's patience, and what the tag actually said.`,
-      concept: { name: `Decision quality is not outcome`, thinker: 'duke', body: `Duke calls the habit of judging a choice by how it turned out "resulting." Arguing loudly and being right is still a poor decision, because it risked a public loss on a fact you hadn't checked. Asking calmly and being wrong is still a good one.` },
-      second: { name: `Make the cooperative move cheap`, thinker: 'schelling', body: `Schelling studied how you shape someone's choice by changing what each option costs them. Offering the service desk made helping you easy and saying no blame-free. Maya's best reply became the one you wanted.` },
+      concept: { term: `Resulting`, name: `Judge the decision, not how it turned out`, thinker: 'duke', body: `Duke calls the habit of judging a choice by how it turned out "resulting." Arguing loudly and being right is still a poor decision, because it risked a public loss on a fact you hadn't checked. Asking calmly and being wrong is still a good one.` },
+      second: { term: `Face-saving exits`, name: `Make the cooperative move cheap`, thinker: 'schelling', body: `Schelling studied how you shape someone's choice by changing what each option costs them. Offering the service desk made helping you easy and saying no blame-free. Maya's best reply became the one you wanted.` },
       better: `Option C, or E if the line pressure felt heavy. Both keep the question small and keep your facts honest.`,
       lesson: `The person in front of you often has more discretion than the person above them. Make helping you easy.`
     }
@@ -187,8 +187,8 @@ PP.scenarios = [
       assumptions: `That the choice was yes or no. Most requests have a "yes, if" or a "yes, when."`,
       controlled: `What you asked, what you offered, and on what terms.`,
       couldnt: `Dana's workload, Ellen's management style, and whether Dana says thanks.`,
-      concept: { name: `Reciprocity beats both extremes`, thinker: 'axelrod', body: `In Axelrod's computer tournaments, Tit for Tat won: cooperate first, then do what the other side did last time. Strategies that never pushed back got exploited, and strategies that defected first got stuck in mutual defection. Asking what the task involves and trading help for help is the same idea: cooperative, conditional, and easy for Dana to read.` },
-      second: { name: `This is a repeated game`, thinker: 'aumann', body: `Aumann showed that repeated interactions follow different logic than one-offs. Your answer to Dana is also your answer to her next five requests.` },
+      concept: { term: `Tit for tat`, name: `Reciprocity beats both always-yes and always-no`, thinker: 'axelrod', body: `In Axelrod's computer tournaments, Tit for Tat won: cooperate first, then do what the other side did last time. Strategies that never pushed back got exploited, and strategies that defected first got stuck in mutual defection. Asking what the task involves and trading help for help is the same idea: cooperative, conditional, and easy for Dana to read.` },
+      second: { term: `Repeated game`, name: `You'll meet again, so the future shapes today`, thinker: 'aumann', body: `Aumann showed that repeated interactions follow different logic than one-offs. Your answer to Dana is also your answer to her next five requests.` },
       better: `Option C. Gather information first, then say yes on terms you can keep.`,
       lesson: `Before you answer a request, find out what it actually is.`
     }
@@ -269,8 +269,8 @@ PP.scenarios = [
       assumptions: `That the spot is yours, and that four days means forever.`,
       controlled: `Whether to ask, how to ask, and in public or in private.`,
       couldnt: `Gary's driveway schedule and what the law says about public parking.`,
-      concept: { name: `Focal points`, thinker: 'schelling', body: `Schelling observed that people coordinate on obvious, unspoken solutions, like "park in front of your own house," without ever agreeing to them. These focal points are powerful, but they only work when everyone can see them. A newcomer can't.` },
-      second: { name: `The first move sets the tone`, thinker: 'axelrod', body: `Axelrod found that strategies that opened by cooperating did best over time. With a new neighbor, your first move is most of what they'll know about you.` },
+      concept: { term: `Focal point`, name: `The answer everyone expects without discussing it`, thinker: 'schelling', body: `Schelling observed that people coordinate on obvious, unspoken solutions, like "park in front of your own house," without ever agreeing to them. These focal points are powerful, but they only work when everyone can see them. A newcomer can't.` },
+      second: { term: `Nice strategies`, name: `The first move sets the tone`, thinker: 'axelrod', body: `Axelrod found that strategies that opened by cooperating did best over time. With a new neighbor, your first move is most of what they'll know about you.` },
       better: `Option B. One friendly, curious conversation.`,
       lesson: `Before defending a right, check that it exists. Often what you have is a norm, and norms spread by explaining, not by enforcing.`
     }
@@ -375,8 +375,8 @@ PP.scenarios = [
       assumptions: `That Jordan is a villain, and that a moment of lost credit is permanent.`,
       controlled: `Your timing, your tone, and whether you correct the record publicly or privately.`,
       couldnt: `Jordan's motives, Ellen's style, and what was already said.`,
-      concept: { name: `Best response`, thinker: 'nash', body: `Nash's insight is to evaluate each move by the other players' best reply. A public correction invites Jordan to defend himself and Ellen to shut it down. A good question gives Ellen a reason to look at you, and gives Jordan nothing to fight.` },
-      second: { name: `Intent is uncertain`, thinker: 'duke', body: `You can't know if Jordan meant it. Duke would ask: which response works reasonably well whether he's scheming or just scared? C and B both do.` },
+      concept: { term: `Best response`, name: `Choose the move that works given what they'll do`, thinker: 'nash', body: `Nash's insight is to evaluate each move by the other players' best reply. A public correction invites Jordan to defend himself and Ellen to shut it down. A good question gives Ellen a reason to look at you, and gives Jordan nothing to fight.` },
+      second: { term: `Probabilistic thinking`, name: `You can't know intent yet, so hold beliefs loosely`, thinker: 'duke', body: `You can't know if Jordan meant it. Duke would ask: which response works reasonably well whether he's scheming or just scared? C and B both do.` },
       better: `C in the room, then B or D afterward. The strongest response here is a sequence, not a single move.`,
       lesson: `When you can't control the moment, control the record.`
     }
@@ -469,8 +469,8 @@ PP.scenarios = [
       assumptions: `That "today" leaves no time to verify, and that a fixed bid means no changes, ever.`,
       controlled: `Whether you verified, and what you asked for in writing.`,
       couldnt: `The rot, the crew's schedule, and the price of plywood.`,
-      concept: { name: `Commitments and deadlines`, thinker: 'schelling', body: `Schelling showed that a deadline shifts bargaining power toward whoever sets it, as long as the other side believes it. The response isn't to ignore the deadline. It's to meet it on your terms: verify fast, approve in writing.` },
-      second: { name: `What does information cost?`, thinker: 'duke', body: `Duke asks how much it would cost to know more. Looking at the floor took a minute. A second contractor took three weeks. Choose the cheapest check that resolves the uncertainty.` },
+      concept: { term: `Hold-up problem`, name: `Deadlines and commitments shift who has leverage`, thinker: 'schelling', body: `Schelling showed that a deadline shifts bargaining power toward whoever sets it, as long as the other side believes it. The response isn't to ignore the deadline. It's to meet it on your terms: verify fast, approve in writing.` },
+      second: { term: `Value of information`, name: `Check when checking is cheap`, thinker: 'duke', body: `Duke asks how much it would cost to know more. Looking at the floor took a minute. A second contractor took three weeks. Choose the cheapest check that resolves the uncertainty.` },
       better: `Option C. You kept the schedule and the right to verify.`,
       lesson: `Urgency is a negotiating position. Meet the deadline, but don't skip the check.`
     }
@@ -568,8 +568,8 @@ PP.scenarios = [
       assumptions: `That the options were Priya's plan or Marcus's plan, and that money already spent on the old tool should decide anything. That money is gone either way. The only question is what the next dollar buys.`,
       controlled: `What criteria you proposed, and whether you represented anyone else's private views.`,
       couldnt: `Ellen's final call, the budget, and two weeks of history between Priya and Marcus.`,
-      concept: { name: `Expand the pie before splitting it`, thinker: 'nalebuff', body: `Co-opetition, from Nalebuff and Brandenburger, asks whether rivals can create value together before they fight over shares. Priya cares most about the broken modules. Marcus cares most about spending before March. Fixing the two modules behind 62% of tickets now and the rest later gives each most of what they value at little cost to the other.` },
-      second: { name: `An equilibrium everyone keeps`, thinker: 'nash', body: `A Nash equilibrium is an outcome where nobody gains by changing only their own move. After a win-lose call, the loser gains by reopening it at every budget meeting. Under the phased plan, Priya has her rebuild and Marcus has March protected, so neither gains by reopening it. That is why it holds.` },
+      concept: { term: `Value creation`, name: `Expand the pie before splitting it`, thinker: 'nalebuff', body: `Co-opetition, from Nalebuff and Brandenburger, asks whether rivals can create value together before they fight over shares. Priya cares most about the broken modules. Marcus cares most about spending before March. Fixing the two modules behind 62% of tickets now and the rest later gives each most of what they value at little cost to the other.` },
+      second: { term: `Nash equilibrium`, name: `An arrangement no one wants to break`, thinker: 'nash', body: `A Nash equilibrium is an outcome where nobody gains by changing only their own move. After a win-lose call, the loser gains by reopening it at every budget meeting. Under the phased plan, Priya has her rebuild and Marcus has March protected, so neither gains by reopening it. That is why it holds.` },
       better: `Option D, ideally shared with Priya and Marcus before Friday so each can test the criteria and suggest changes.`,
       lesson: `When two people ask you to pick a side, see if you can change the question.`
     }
@@ -671,8 +671,8 @@ PP.scenarios = [
       assumptions: `That fair means 50/50, that "I didn't ask for it" settles the matter, or that this is a one-time deal. It isn't. There will be a next time.`,
       controlled: `Your counteroffer and whether you said it directly.`,
       couldnt: `Gary's dog, the cost of cedar, and how your first meeting went.`,
-      concept: { name: `A prisoner's dilemma, rescued by repetition`, thinker: 'aumann', body: `If you and Gary met only once, holding out would be each person's best move whatever the other did, so neither would pay and the fence would fall. That is a prisoner's dilemma: the stable outcome is worse for both. Aumann's work on repeated games showed that when people expect to keep meeting and care enough about the future, cooperation can hold up with no one enforcing it, because holding out today costs you every favor after. Axelrod later called this pull the shadow of the future.` },
-      second: { name: `Pay for what you value`, thinker: 'nalebuff', body: `When each person pays for what they value, the deal can happen at all. Gary gets the six feet his dog needs, you pay only for a fence you'd choose anyway, and nobody has to win an argument about whose preferences count.` },
+      concept: { term: `Prisoner's dilemma`, name: `Both do better by trusting, but each is tempted not to. Repetition rescues it`, thinker: 'aumann', body: `If you and Gary met only once, holding out would be each person's best move whatever the other did, so neither would pay and the fence would fall. That is a prisoner's dilemma: the stable outcome is worse for both. Aumann's work on repeated games showed that when people expect to keep meeting and care enough about the future, cooperation can hold up with no one enforcing it, because holding out today costs you every favor after. Axelrod later called this pull the shadow of the future.` },
+      second: { term: `Fair division`, name: `Each side pays for what it values`, thinker: 'nalebuff', body: `When each person pays for what they value, the deal can happen at all. Gary gets the six feet his dog needs, you pay only for a fence you'd choose anyway, and nobody has to win an argument about whose preferences count.` },
       better: `Option C. Agree on the shared need, separate the upgrade, say it directly.`,
       lesson: `In a relationship that repeats, the best deal is one both sides would choose again.`
     }
@@ -763,8 +763,8 @@ PP.scenarios = [
       assumptions: `That the first number is final, or that a bigger threat gets a bigger number.`,
       controlled: `Your anchor, your honesty, and what you offered in return.`,
       couldnt: `Their budget, their other candidates, and whether the other company makes an offer.`,
-      concept: { name: `Bargaining depends on alternatives`, thinker: 'nash', body: `Nash's bargaining solution shows that how a deal is split depends on what each side gets if talks fail. Your real alternative was weak, staying at $85,000, but theirs was weak too: no hire before launch. Naming what you can offer them shifts the split honestly.` },
-      second: { name: `Credible commitments`, thinker: 'schelling', body: `A threat only works if the other side believes you'd carry it out. Bluffs and ultimatums above the published range fail that test. Truthful information does not.` },
+      concept: { term: `Nash bargaining`, name: `Your walk-away options decide the split`, thinker: 'nash', body: `Nash's bargaining solution shows that how a deal is split depends on what each side gets if talks fail. Your real alternative was weak, staying at $85,000, but theirs was weak too: no hire before launch. Naming what you can offer them shifts the split honestly.` },
+      second: { term: `Credible threats`, name: `A threat only works if they believe you'd carry it out`, thinker: 'schelling', body: `A threat only works if the other side believes you'd carry it out. Bluffs and ultimatums above the published range fail that test. Truthful information does not.` },
       better: `Option C. Anchor with their own range, offer what they value, ask for time honestly.`,
       lesson: `Know both sides' alternatives, say true things about them, and never risk the whole offer to win the last few thousand.`
     }

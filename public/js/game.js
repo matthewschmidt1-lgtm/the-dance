@@ -619,7 +619,8 @@
 
   function lensBody(sc, opt, opts = sc.options) {
     const a = sc.analysis;
-    const concept = c => { const t = thinkers[c.thinker]; return `<article class="concept ${t.grandfather ? 'is-grand' : ''}"><p class="concept-who">${t.name} · ${t.field}</p><h3>${c.name}</h3><p>${c.body}</p></article>`; };
+    // Formal term first, so players learn the words; the plain meaning sits under it.
+    const concept = c => { const t = thinkers[c.thinker]; return `<article class="concept ${t.grandfather ? 'is-grand' : ''}"><p class="concept-who">${t.name} · ${t.field}</p><h3>${c.term || c.name}</h3>${c.term ? `<p class="concept-plain">${c.name}</p>` : ''}<p>${c.body}</p></article>`; };
     const others = opts.map(o => `<li class="other ${o.key === opt.key ? 'is-mine' : ''}"><span class="other-glyph g${o.q}" title="${grades[o.q].name}">${grades[o.q].glyph}</span><span class="other-text"><strong>${o.key}.</strong> ${fill(o.text)}${o.key === opt.key ? ' <em>(your move)</em>' : ''}</span></li>`).join('');
     return `<div class="concepts">${concept(a.concept)}${concept(a.second)}</div>
         <dl class="analysis">${[['Where the leverage was', a.leverage], ['What information was missing', a.missing], ['Assumptions you might have made', a.assumptions]].map(([k, v]) => `<div class="arow"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>

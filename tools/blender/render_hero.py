@@ -5,7 +5,7 @@ Symbols, not words:
   two pieces, two spotlights  partly shared, partly conflicting interests (Schelling)
   teal glow where light overlaps  value that only exists together (Nalebuff)
   curve of dance steps        moves answered by moves (Axelrod)
-  receding doorways           the same meeting again and again; the lit exit is walking away (Aumann)
+  receding doorways           the same meeting again and again; the glow beyond is walking away (Aumann)
   dice in the foreground      you never know everything (Duke)
 
 Run:
@@ -218,16 +218,15 @@ for i in range(7):
     ld.size = 2.0
     o = link(bpy.data.objects.new(f'door{i}', ld))
     o.location = (0.55, y - 0.4, 3.4)
-# The exit glows softly through the haze rather than burning to white.
-exit_light = mat('exit', '#e8dcc6', 0.5, emit='#f3dfbf', strength=1.6)
-ld = bpy.data.lights.new('exit-glow', 'AREA')
-ld.energy = 260
-ld.color = lin('#f3dfbf')[:3]
-ld.size = 2.0
+# The exit is only light: a warm glow blooming through the haze at the end of the corridor,
+# with a dark back wall, so there is no hard bright shape to pull the eye.
+box('exit', (0.55, 6.0 + 7 * 3.6 + 1.5, 1.8), (2.3, 0.05, 3.6), mat('exit', '#1d2527', 0.8))
+ld = bpy.data.lights.new('exit-glow', 'POINT')
+ld.energy = 140
+ld.color = lin('#e9c79a')[:3]
+ld.shadow_soft_size = 1.2
 eg = link(bpy.data.objects.new('exit-glow', ld))
-eg.location = (0.55, 6.0 + 7 * 3.6 - 0.6, 1.8)
-eg.rotation_euler = (math.radians(-90), 0, 0)
-box('exit', (0.55, 6.0 + 7 * 3.6, 1.8), (2.3, 0.05, 3.6), exit_light)
+eg.location = (0.55, 6.0 + 7 * 3.6 - 0.8, 1.9)
 
 # Dice at rest in the foreground.
 die = mat('die', '#f2efe8', 0.25, coat=0.5)

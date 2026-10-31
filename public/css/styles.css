@@ -97,6 +97,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .site-nav a { color: var(--muted); text-decoration: none; font-size: var(--t-sm); font-weight: 560; padding: 8px 10px; border-radius: 8px; white-space: nowrap; }
 .site-nav a:hover { color: var(--ink); background: var(--surface); }
 .site-nav a[aria-current="page"] { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+body.on-home::before { background: var(--cine); }
+body.on-home .site-head { background: color-mix(in srgb, var(--cine) 94%, transparent); border-bottom-color: rgba(255,255,255,.08); }
+body.on-home .wordmark { color: var(--cine-ink); }
+body.on-home .wordmark svg { fill: var(--cine-ink); }
+body.on-home .wordmark .wm-l { fill: var(--cine-accent); }
+body.on-home .site-nav a { color: rgba(242,243,245,.74); }
+body.on-home .site-nav a:hover { color: #fff; background: rgba(255,255,255,.08); }
+body.on-home .site-nav a:focus-visible { outline-color: var(--cine-accent); }
 
 /* ───────── Type helpers */
 .eyebrow { font-family: var(--f-mono); font-size: var(--t-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }

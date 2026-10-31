@@ -544,6 +544,10 @@
     const views = { home: viewHome, bench: viewBench, play: viewPlay, profile: viewProfile };
     app.innerHTML = views[ui.view]();
     document.querySelectorAll('[data-nav]').forEach(a => a.setAttribute('aria-current', a.dataset.nav === ui.view ? 'page' : 'false'));
+    // The home page opens on a dark image, so its nav bar and the phone's browser bar go dark to match.
+    document.body.classList.toggle('on-home', ui.view === 'home');
+    const light = document.querySelector('meta[name="theme-color"][media*="light"]');
+    if (light) light.content = ui.view === 'home' ? '#0e1014' : '#f6f1e7';
     const sc = ui.view === 'play' ? LIST[currentIndex()] : null;
     document.title = (sc ? `${sc.title} · ` : ui.view === 'bench' ? 'The Bench · ' : ui.view === 'profile' ? 'Profile · ' : '') + 'The Dance';
 

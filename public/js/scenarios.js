@@ -521,15 +521,15 @@ PP.scenarios = [
       else if (g <= -1) p.push(`An email arrives from Gary. It's formal, starts with "Regarding the shared boundary," and attaches a contractor quote.`);
       else p.push(`Gary catches you at the mailbox. "Got a minute? It's about the fence."`);
       p.push(`The old wood fence between your yards is leaning. Gary wants a new 6-foot cedar fence, quoted at <strong>$4,800</strong>, and proposes splitting it 50/50.`);
-      p.push(`You'd have been fine with a $600 repair to the old one.`);
+      p.push(`You'd have been fine with a $600 repair to the old one. But the old fence won't last the summer, and whoever waits longest gets the other to pay.`);
       return p;
     },
     cast: [
       { name: `Gary`, role: `Next-door neighbor`, archetype: `Depends on your history`, power: `Proximity`, note: `You'll be next to each other for years. How he approached you reflects how your first meeting went.` },
       { name: `Ruth`, role: `Neighbor across the street`, archetype: `The Connector`, power: `Social capital`, note: `Has seen three fences come and go on this block.` }
     ],
-    known: [`The fence is on the shared property line.`, `Gary's quote is $4,800, so $2,400 each.`, `A repair would cost about $600.`],
-    unknown: [`Why Gary wants six feet of cedar.`, `What local rules say about shared fences.`, `Whether Gary can afford it alone.`],
+    known: [`The fence is on the shared property line.`, `Gary's quote is $4,800, so $2,400 each.`, `A repair would cost about $600.`, `If nobody acts, the old fence falls and both yards are open.`],
+    unknown: [`Why Gary wants six feet of cedar.`, `What local rules say about shared fences.`, `Whether Gary would pay alone, or wait you out.`],
     clues: [
       { label: `Look up your county's guidance`, text: `Shared boundary fences are generally a joint responsibility when both owners benefit, but upgrades beyond what's needed are often negotiated separately. Disputes go to community mediation first. (Rules vary by place; check yours.)` },
       { label: `Ask Ruth`, text: `"Gary got a rescue dog, a big one. It jumped the old fence twice. That's why he wants six feet."` }
@@ -540,15 +540,19 @@ PP.scenarios = [
         key: 'A', text: `"Sure, 50/50 sounds fair."`,
         q: 2, s: { coo: 2, neg: -2, bnd: -1, inf: -1 }, rel: { gary: 1 },
         outcomes: [{ p: 1, tone: 'mixed', text: `You pay $2,400 for a fence that's mostly solving Gary's dog problem. It's a nice fence.` }],
-        later: ctx => (ctx.rel.gary || 0) >= 1
-          ? `Gary's grateful, and he'll remember it. Generosity inside a good relationship is rarely wasted. But you overpaid, and you didn't ask why.`
-          : `It keeps the peace. But with a cool relationship, generosity is more likely to be read as a pushover than a gesture.`
+        later: ctx => ((ctx.rel.gary || 0) >= 1
+          ? `Gary's grateful, and he'll remember it. But you overpaid, and you didn't ask why.`
+          : `It keeps the peace. With a cool relationship, generosity can be read as a pushover rather than a gesture.`) +
+          ` Next spring, the oak on Gary's side drops branches on your roof. He has the trimmer out before you ask. He's returning the move you made.`
       },
       {
         key: 'B', text: `"I didn't ask for a new fence. You can pay for it."`,
         q: 1, s: { bnd: 2, coo: -2, lng: -2, com: -1 }, rel: { gary: -2 },
-        outcomes: [{ p: 1, tone: 'bad', text: `Gary builds the fence himself. It's beautiful, six feet tall, and every time you see it, you remember the conversation. So does he.` }],
-        later: `You protected $2,400 and spent goodwill you'll need the next time a tree falls, a pipe bursts, or a package goes missing.`
+        outcomes: [
+          { p: 0.45, tone: 'good', text: `Gary pays for the whole fence himself. It's beautiful, six feet tall, and it cost you nothing. Every time you see it, you remember the conversation. So does he.` },
+          { p: 0.55, tone: 'bad', text: `Gary shrugs. "Then I guess we both wait." Nobody builds anything. In June the old fence falls over, and the dog finds your garden.` }
+        ],
+        later: `Holding out pays once. Next spring, the oak on Gary's side needs trimming over your roof. "Your roof, your problem," he says, and you pay the $900 alone. In a game that repeats, the other side answers the move you made last time.`
       },
       {
         key: 'C', text: `"I'm in for a new fence. Can we price a 4-foot pine option too? I'll split that 50/50, and if you want 6-foot cedar for the dog, you cover the difference."`,
@@ -557,13 +561,13 @@ PP.scenarios = [
           { p: 0.8, tone: 'good', text: `Pine is $2,200. You pay $1,100, Gary pays $3,700 for the cedar he actually wants. He thinks it's completely fair. So do you.` },
           { p: 0.2, tone: 'mixed', text: `Gary's a bit stung at first. "I thought we'd split it." By the weekend he's come around: "Honestly, that's fair. The dog's my problem."` }
         ],
-        later: `You found the arrangement neither of you would want to break: a fair base split, and each paying for what they value. That's what makes it last.`
+        later: `You found the arrangement neither of you would want to break: a fair base split, and each paying for what they value. Next spring, when the oak needs trimming, Gary splits the cost without being asked. Cooperation that's returned keeps getting returned.`
       },
       {
         key: 'D', text: `"Let me think about it." Then don't bring it up again.`,
         q: 0, s: { com: -2, reg: 1, lng: -2, bnd: -1 }, rel: { gary: -2 },
-        outcomes: [{ p: 1, tone: 'bad', text: `Three weeks of silence. Gary asks twice more, then stops asking. The dog gets out again and digs up your garden.` }],
-        later: `Avoidance isn't a neutral move in a repeated game. Gary read silence as a no, delivered without the respect of saying it.`
+        outcomes: [{ p: 1, tone: 'bad', text: `Three weeks of silence. Gary asks twice more, then stops asking. In June the old fence falls, and the dog digs up your garden.` }],
+        later: `Stalling is holding out without saying so. Gary read silence as a no, and next spring he answers your texts about the oak just as slowly.`
       },
       {
         key: 'E', text: `Ask Ruth to help mediate.`,
@@ -576,14 +580,14 @@ PP.scenarios = [
       }
     ],
     analysis: {
-      game: `A repeated game between neighbors. You'll make dozens of decisions with Gary over the years. This fence is less about $2,400 than about what kind of neighbors you'll be.`,
+      game: `A prisoner's dilemma inside a repeated game. Played once, holding out pays for each of you, so nobody builds. Played over years of shared trees, pipes and packages, holding out costs more than it saves.`,
       incentives: `Gary needs to contain his dog. You need a working fence at a fair price. Those overlap on the base fence and diverge on the upgrade.`,
       leverage: `Shared responsibility for the boundary, and the long future you share. Gary has every reason to keep you happy.`,
       missing: `Why Gary wanted six feet of cedar. Once you knew it was the dog, the fair split became obvious.`,
-      assumptions: `That fair means 50/50, or that "I didn't ask for it" settles the matter.`,
+      assumptions: `That fair means 50/50, that "I didn't ask for it" settles the matter, or that this is a one-time deal. It isn't. There will be a next time.`,
       controlled: `Your counteroffer and whether you said it directly.`,
       couldnt: `Gary's dog, the cost of cedar, and how your first meeting went.`,
-      concept: { name: `Cooperation without an enforcer`, thinker: 'aumann', body: `Aumann's work on repeated games showed that when people expect to keep meeting and care enough about the future, cooperation can hold up with no one enforcing it. Axelrod later called this pull the shadow of the future. Your history with Gary shaped how he approached you today, and today shapes the next ten years.` },
+      concept: { name: `A prisoner's dilemma, rescued by repetition`, thinker: 'aumann', body: `If you and Gary met only once, holding out would be each person's best move whatever the other did, so neither would pay and the fence would fall. That is a prisoner's dilemma: the stable outcome is worse for both. Aumann's work on repeated games showed that when people expect to keep meeting and care enough about the future, cooperation can hold up with no one enforcing it, because holding out today costs you every favor after. Axelrod later called this pull the shadow of the future.` },
       second: { name: `Pay for what you value`, thinker: 'nalebuff', body: `When each person pays for what they value, the deal can happen at all. Gary gets the six feet his dog needs, you pay only for a fence you'd choose anyway, and nobody has to win an argument about whose preferences count.` },
       better: `Option C. Agree on the shared need, separate the upgrade, say it directly.`,
       lesson: `In a relationship that repeats, the best deal is one both sides would choose again.`

@@ -34,13 +34,15 @@ PP.viz = (function () {
       const [a, b] = m.cells[ri][ci];
       const hit = row === ri && col === ci;
       const best = m.best && m.best[0] === ri && m.best[1] === ci;
-      return `<td class="${hit ? 'is-hit' : ''} ${best ? 'is-best' : ''}">
+      const eq = m.eq && m.eq[0] === ri && m.eq[1] === ci;
+      const tags = [hit ? '<span class="mx-tag">You landed here</span>' : '', best ? '<span class="mx-tag mx-tag-best">Best for both</span>' : '', eq ? '<span class="mx-tag mx-tag-eq">Stable if you meet once</span>' : ''].join('');
+      return `<td class="${hit ? 'is-hit' : ''} ${best ? 'is-best' : ''} ${eq ? 'is-eq' : ''}">
         <span class="mx-pay"><span class="mx-you">${a}</span><span class="mx-sep">/</span><span class="mx-them">${b}</span></span>
-        ${hit ? '<span class="mx-tag">You landed here</span>' : best ? '<span class="mx-tag mx-tag-best">Best for both</span>' : ''}
+        ${tags}
       </td>`;
     }).join('')}</tr>`).join('');
     return `<div class="mx-wrap"><table class="mx"><caption class="sr">Payoff matrix</caption><thead>${head}</thead><tbody>${body}</tbody></table></div>
-      <p class="viz-note"><strong>${m.you} / ${m.them}</strong>, scored 0–3 for how well each side does. The highlighted cell is where neither side gains by switching alone, and here it is also best for both. ${m.note}</p>`;
+      <p class="viz-note"><strong>${m.you} / ${m.them}</strong>, scored ${m.eq ? '0–4' : '0–3'} for how well each side does. ${m.eq ? 'The stable cell is where neither side gains by switching alone. Here it is worse for both than the best cell, which is what makes this a prisoner\'s dilemma.' : 'The highlighted cell is where neither side gains by switching alone, and here it is also best for both.'} ${m.note}</p>`;
   }
 
   // People around you, edges colored by trust. `deltas` pulse the edges that just changed.

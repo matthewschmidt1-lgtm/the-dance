@@ -485,17 +485,24 @@ PP.scenes = {
       { cam: 'dog', caption: `Behind the fence, a very large dog studies it with professional interest.` }
     ],
     options: {
-      A: { line: `Sure, fifty-fifty sounds fair.`, preview: `Keeps the peace. You pay half of something you didn't need.`, row: 0,
+      A: { line: `Sure, fifty-fifty sounds fair.`, preview: `Keeps the peace. You pay half of an upgrade you didn't need.`, row: 0,
         outcomes: [{ col: 0, beats: [
           { who: 'gary', mood: 'happy', act: 'jump', say: `Great! I'll call the guy.` },
           { cam: 'dog', caption: `It's a very nice fence. It mostly solves Gary's dog problem.` }
         ] }] },
-      B: { line: `I didn't ask for a new fence. You can pay for it.`, preview: `Protects $2,400. Spends goodwill you'll need later.`, row: 2,
-        outcomes: [{ col: 1, beats: [
-          { who: 'gary', mood: 'frustrated', pose: 'crossed', say: `Right. Okay.` },
-          { cam: 'fence', caption: `Gary builds it himself. Six feet, beautiful. Every time you see it, you'll both remember this.` }
-        ] }] },
-      C: { line: `I'm in for a new fence. Can we price a four-foot pine option? I'll split that, and if you want six-foot cedar for the dog, you cover the difference.`, preview: `Separates the shared need from his extra. He may have expected half.`, row: 1,
+      B: { line: `I didn't ask for a new fence. You can pay for it.`, preview: `Might save $2,400 today. Gary might hold out too, and there's always a next time.`, row: 1,
+        outcomes: [
+          { col: 0, beats: [
+            { who: 'gary', mood: 'frustrated', pose: 'crossed', say: `Right. Okay.` },
+            { cam: 'fence', caption: `Gary pays for all of it. Six feet, beautiful, free to you. Every time you see it, you'll both remember this.` }
+          ] },
+          { col: 1, beats: [
+            { who: 'gary', mood: 'skeptical', pose: 'crossed', say: `Then I guess we both wait.` },
+            { cam: 'fence', caption: `Nobody builds anything. In June, the old fence falls over.` },
+            { cam: 'garden', caption: `The dog finds your garden.` }
+          ] }
+        ] },
+      C: { line: `I'm in for a new fence. Can we price a four-foot pine option? I'll split that, and if you want six-foot cedar for the dog, you cover the difference.`, preview: `Chips in on the shared need, separates his extra. He may have expected half.`, row: 0,
         outcomes: [
           { col: 0, beats: [
             { who: 'gary', mood: 'thinking', pose: 'thinking', say: `Pine's twenty-two hundred…` },
@@ -508,19 +515,19 @@ PP.scenes = {
             { who: 'gary', mood: 'smile', say: `Honestly? That's fair.` }
           ] }
         ] },
-      D: { caption: `"Let me think about it." Then you never bring it up again.`, preview: `No awkward conversation today. Silence is still an answer.`, row: 2,
+      D: { caption: `"Let me think about it." Then you never bring it up again.`, preview: `No awkward conversation today. Silence is still an answer.`, row: 1,
         outcomes: [{ col: 1, beats: [
           { caption: `Three weeks of silence.` },
           { who: 'gary', mood: 'sad', say: `Guess that's a no, then.` },
-          { cam: 'garden', caption: `The dog gets out again. It finds your garden.` }
+          { cam: 'garden', caption: `In June the old fence falls. The dog finds your garden.` }
         ] }] },
-      E: { caption: `You ask Ruth to help mediate.`, preview: `Brings in someone neutral. Can feel like an ambush.`, row: 1,
+      E: { caption: `You ask Ruth to help mediate.`, preview: `Brings in someone neutral. Can feel like an ambush.`, row: 0,
         outcomes: [
           { col: 0, beats: [
             { who: 'ruth', mood: 'smile', say: `Last fence on this street cost twenty-one hundred. Each of you pays for what you want.` },
             { who: 'gary', mood: 'smile', act: 'nod', say: `Can't argue with Ruth.` }
           ] },
-          { col: 1, beats: [
+          { col: 0, beats: [
             { who: 'gary', mood: 'skeptical', pose: 'crossed', say: `I didn't think we needed a referee.` },
             { cam: 'fence', caption: `The deal gets done. Stiffly.` }
           ] }
@@ -528,11 +535,12 @@ PP.scenes = {
     },
     matrix: {
       you: `You`, them: `Gary`,
-      rows: [`Accept as offered`, `Split the need, not the extras`, `Refuse or stall`],
-      cols: [`Cooperates next time`, `Keeps score`],
-      cells: [[[2, 3], [1, 3]], [[3, 3], [2, 2]], [[2, 0], [0, 0]]],
-      best: [1, 0],
-      note: `In a repeated game, the arrangement that lasts is one both people would choose again. Splitting the base and paying for your own extras is that arrangement.`
+      rows: [`Chip in your share`, `Hold out, let Gary pay`],
+      cols: [`Chips in`, `Holds out`],
+      cells: [[[3, 3], [0, 4]], [[4, 0], [1, 1]]],
+      best: [0, 0],
+      eq: [1, 1],
+      note: `Played once, holding out is each person's best move whatever the other does, so you both land in the stable cell: no fence, and a dog in your garden. Both chipping in is better for both. Only the years of being neighbors make it hold.`
     },
     leverage: {
       you: [`Shared responsibility for the boundary`, `You don't need six feet`, `Years of future favors`],

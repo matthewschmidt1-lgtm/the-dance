@@ -68,7 +68,7 @@ PP.Stage = class {
     }
   }
 
-  destroy() { this.alive = false; cancelAnimationFrame(this.raf); if (this.waiter) this.waiter.res(); }
+  destroy() { this.alive = false; cancelAnimationFrame(this.raf); this.root.classList.remove('is-running'); if (this.waiter) this.waiter.res(); }
 
   // ───────── clock
 

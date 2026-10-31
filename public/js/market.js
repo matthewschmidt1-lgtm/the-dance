@@ -293,7 +293,7 @@ window.PP = window.PP || {};
         },
         {
           key: 'B', text: `Buy only the idea that fits your edge ({edge}), at normal size. Pass on the rest.`, exposure: 'normal',
-          q: 4, s: { jdg: 2, inf: 2, bnd: 1, str: 1 }, cap: { str: 2, psy: 1 },
+          q: ctx => ctx.rules && ctx.rules.edge === 'patience' ? 3 : 4, s: { jdg: 2, inf: 2, bnd: 1, str: 1 }, cap: { str: 2, psy: 1 },
           outcomes: [
             { p: 0.65, tone: 'good', fin: 3, text: `Your one trade works the way your trades are supposed to. Up $3,000 over three weeks. The other three ideas do what coin flips do.` },
             { p: 0.35, tone: 'mixed', fin: -1, text: `Your automatic sell order takes you out for a $1,000 loss. It was a good trade that didn't work. You'd take it again.` }
@@ -303,7 +303,8 @@ window.PP = window.PP || {};
         },
         {
           key: 'C', text: `Buy nothing today. None of it is good enough.`, exposure: 'none',
-          q: 3, s: { jdg: 1, reg: 2, bnd: 1 }, cap: { psy: 1, time: -1 },
+          // For a patient trader, a slow Thursday with no obvious setup is exactly when to wait.
+          q: ctx => ctx.rules && ctx.rules.edge === 'patience' ? 4 : 3, s: { jdg: 1, reg: 2, bnd: 1 }, cap: { psy: 1, time: -1 },
           outcomes: [
             { p: 0.5, tone: 'good', fin: 0, text: `You don't trade. NOVA misses earnings and Tessel keeps falling. A quiet, profitable day of doing nothing.` },
             { p: 0.5, tone: 'mixed', fin: 0, text: `You don't trade. Keel's deal closes on schedule, and anyone who bought at $28.60 makes 5%. Waiting is right, until it becomes a habit.` }

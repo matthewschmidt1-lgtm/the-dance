@@ -38,8 +38,10 @@ PP.scenarios = [
     question: `What do you do?`,
     options: [
       {
-        key: 'A', text: `"That's wrong. The shelf says $8.49. I'm not paying that."`,
-        q: 1, s: { reg: -2, com: -1, coo: -1, bnd: 1 },
+        key: 'A', text: `"The shelf said $8.49, and I know you can override small amounts. Can you just ring it at that?"`,
+        needs: [0], vague: { q: 1, text: `"That's not right. The shelf said $8.49, so that's what I'll pay."` },
+        their: `Maya can't override over $5 without calling Dev, and a line is watching her. A flat demand leaves her two moves: give in under pressure or call for backup. Neither is fast.`,
+        q: 2, s: { reg: -2, com: -1, coo: -1, bnd: 1 },
         outcomes: [
           { p: 0.6, tone: 'good', text: `Maya flushes and calls Dev. Six minutes later he confirms the tag was right and overrides it. You saved $3.50. You were right this time, and the whole lane watched Maya get nervous.` },
           { p: 0.4, tone: 'bad', text: `Maya calls Dev. Six minutes later he walks back with the tag: it was for the 500 ml bottle. You pay $11.99 with five people watching.` }
@@ -47,13 +49,17 @@ PP.scenarios = [
         later: `Maya remembers you. Next time she'll be polite and careful, which is not the same as being on your side.`
       },
       {
-        key: 'B', text: `Pay the $11.99 and let it go.`,
+        key: 'B', text: `Pay the $11.99. Three dollars isn't worth holding up the line.`,
+        their: `Maya's real worries were the line and getting blamed. You solved both for her, at your own expense, without finding out whether you had to.`,
         q: 2, s: { jdg: 1, reg: 1, bnd: -1 },
         outcomes: [{ p: 1, tone: 'mixed', text: `The line keeps moving. You're out $3.50, or possibly nothing, since you never found out if the tag was for this bottle.` }],
         later: `Fine as a conscious choice: your time has a price too. It only becomes a pattern problem if "let it go" is your default every time money is involved.`
       },
       {
-        key: 'C', text: `"I think the tag said $8.49, though it might've been for the smaller bottle. Is that quick to check, or should I sort it out at the service desk so I don't hold up the line?"`,
+        key: 'C', text: `"The tag might've been for the smaller bottle. Quick to check, or should I sort it out at the desk?"`,
+        their: `You gave Maya two ways to help that cost her nothing: a fix she's allowed to make, or a clean handoff to the desk. Her best reply was whichever was easier, and both worked for you.`,
+        needs: [1],
+        vague: { s: { com: 2, reg: 1, inc: 1, jdg: 1, coo: 1 }, later: `You gave Maya an easy path and took the line's pressure off her. You never mentioned the bottle size, so you were still half sure you were right.`, text: `"The shelf said $8.49. Is that quick to check, or should I sort it out at the desk?"`, q: 3, pv: [0.6, 0.4] },
         q: 4, s: { com: 2, inf: 2, reg: 1, inc: 2, jdg: 1, coo: 1 },
         outcomes: [
           { p: 0.7, tone: 'good', text: `Maya visibly relaxes. "I'll ring it at the shelf price and flag it for Dev. If it's wrong, that's on us." You're out the door in thirty seconds.` },
@@ -62,13 +68,15 @@ PP.scenarios = [
         later: `You named your uncertainty, gave Maya an easy path, and took the line's pressure off her. She had the discretion, and you made using it painless.`
       },
       {
-        key: 'D', text: `"Can I speak to a manager, please?"`,
+        key: 'D', text: `"Could you get a manager, please? I'd like this fixed properly rather than rushed."`,
+        their: `Asking for a manager over $3.50 tells Maya you don't think she can handle it, and it costs everyone behind you five minutes. She had no reason to go out of her way after that.`,
         q: 1, s: { inc: -1, coo: -1, str: -1, bnd: 1 },
         outcomes: [{ p: 1, tone: 'mixed', text: `Maya pages Dev. Four minutes pass. Dev overrides the price without checking anything, mostly to clear the lane. You got the price, and Maya looks like she failed at something.` }],
         later: `Escalating skipped the person who could have helped. Next time you're in Lane 4, you're "the manager customer."`
       },
       {
-        key: 'E', text: `Pay now, then take the receipt to customer service on the way out.`,
+        key: 'E', text: `Pay now so the line can move, keep the receipt, and stop at customer service on the way out.`,
+        their: `Maya stays out of it, and the service desk exists for exactly this. You traded a few minutes of your own time for no friction at all.`,
         q: 3, s: { reg: 2, jdg: 1, inf: 1, coo: 1 },
         outcomes: [
           { p: 0.6, tone: 'good', text: `You check the shelf on the way out. The tag was right. Customer service refunds the $3.50 in under a minute.` },
@@ -119,20 +127,24 @@ PP.scenarios = [
     question: `How do you reply?`,
     options: [
       {
-        key: 'A', text: `"Of course, I'll take care of it."`,
+        key: 'A', text: `"Sure, send it over. I'll make it work."`,
+        their: `Dana is overloaded, and you've said yes before. From her side, asking you again is the cheapest move she has, and today it worked again.`,
         q: 2, s: { coo: 2, bnd: -2, lng: -1, inf: -1 }, rel: { dana: 1 }, flags: { danaPattern: 'always-yes' },
         outcomes: [{ p: 1, tone: 'mixed', text: `Dana sends three hearts. You work until 9 pm on Thursday to fit it in, and your Henley summary goes in at 11:58 am Friday.` }],
         later: `Two weeks later Dana asks again. This time the message is shorter, and there's no "any chance." Unconditional cooperation teaches people what to expect from you.`
       },
       {
-        key: 'B', text: `"Sorry, can't. I've got my own deadline."`,
+        key: 'B', text: `"I've covered for you twice this quarter, so I'm going to pass on this one."`,
+        needs: [1], vague: { text: `"I can't this time. I've got Henley due Friday."` },
+        their: `A flat no protects your Friday. Dana hears a door closing without knowing why, and she still has to solve her problem somewhere else.`,
         q: 2, s: { bnd: 2, coo: -1, com: -1, inf: -1 }, rel: { dana: -1 },
         outcomes: [{ p: 1, tone: 'mixed', text: `Dana replies "no worries!!" She's noticeably cooler at Friday's standup.` }],
         later: `Your time is protected. But you learned nothing about why Dana keeps asking, and you may have turned away someone who was genuinely stuck.`
       },
       {
-        key: 'C', text: `"What does it involve, and when do you need it by? I'm on Henley until Friday noon."`,
-        q: 4, s: { inf: 2, neg: 2, com: 2, bnd: 1, coo: 1 }, rel: { dana: 1 }, flags: { danaPattern: 'trade' },
+        key: 'C', text: `"What's involved, and when do you need it? I'm on Henley until Friday noon."`,
+        their: `A question costs Dana nothing to answer and shows you're open but not free. Her best reply was to shrink the ask to fit your schedule, which is what most people do when you ask.`,
+        q: ctx => ctx.clues.includes(0) ? 3 : 4, s: { inf: 2, neg: 2, com: 2, bnd: 1, coo: 1 }, rel: { dana: 1 }, flags: { danaPattern: 'trade' },
         outcomes: [
           { p: 0.8, tone: 'good', text: `Dana explains: the numbers exist, they just need formatting, about two hours. You offer Friday afternoon. She offers to cover your Monday standup notes. Done.` },
           { p: 0.2, tone: 'mixed', text: `Dana goes quiet, then says she'll "figure it out." It turns out the section was most of the report. Asking saved you a weekend.` }
@@ -140,7 +152,8 @@ PP.scenarios = [
         later: `You helped on terms you could keep, and Dana learned that asking you works when she's specific. That's the start of a stable working relationship.`
       },
       {
-        key: 'D', text: `"I can, if you ask Ellen to move something off my plate."`,
+        key: 'D', text: `"I can, if you ask Ellen to take something off my plate."`,
+        their: `It's a fair trade, but it asks Dana to go to her manager about your workload. That's a cost she didn't plan on, so it often stalls.`,
         q: 2, s: { neg: 1, bnd: 2, inc: 1, com: -1 },
         outcomes: [
           { p: 0.5, tone: 'mixed', text: `Dana asks Ellen. Ellen, an Avoider, says "work it out between you." You end up doing it anyway, a day late.` },
@@ -149,13 +162,16 @@ PP.scenarios = [
         later: `A legitimate condition, but routed through the person least likely to decide anything.`
       },
       {
-        key: 'E', text: `"Sounds like you're overloaded. Want to go to Ellen together?"`,
-        q: 2, s: { inc: 1, coo: 1, com: 1, neg: -1 }, rel: { dana: 0 },
+        key: 'E', text: `"Ellen just gave you that onboarding, didn't she? Want to raise it with her together?"`,
+        their: `Going to Ellen together fixes the real problem, Dana's load, but it puts her on the spot in front of her boss. Some people welcome that. Others hear it as being managed.`,
+        needs: [0],
+        vague: { q: 2, s: { coo: 1, com: 1, neg: -1 }, later: `Kind instinct, wrong first step. You proposed a fix before you knew what Dana was actually dealing with.`, text: `"Sounds like you're swamped. Want to raise it with Ellen together?"` },
+        q: 4, s: { inc: 2, coo: 2, com: 1, inf: 1 }, rel: { dana: 0 },
         outcomes: [
           { p: 0.6, tone: 'mixed', text: `Dana hesitates. She doesn't want Ellen to think she's struggling. "It's fine, I'll manage." She manages, badly.` },
           { p: 0.4, tone: 'good', text: `Dana agrees. Ellen, cornered by two people at once, actually moves the onboarding deadline.` }
         ],
-        later: `Kind instinct, wrong first step. You proposed a fix before you understood the problem.`
+        later: `You found the real cause, Ellen's new assignment, and offered to take it to the source together. Whether Dana was ready for that was up to her. It was the right problem to solve.`
       }
     ],
     analysis: {
@@ -200,13 +216,15 @@ PP.scenarios = [
     question: `What's your move?`,
     options: [
       {
-        key: 'A', text: `Leave a note on his windshield: "Please don't park in my spot."`,
+        key: 'A', text: `Leave a polite note on his windshield asking him to use his own driveway.`,
+        their: `Gary's driveway was being resealed, so he couldn't. A note from a stranger reads as an accusation, and there's no way to answer it except by feeling judged.`,
         q: 1, s: { com: -2, reg: -1, inf: -1, lng: -1 }, rel: { gary: -2 },
         outcomes: [{ p: 1, tone: 'bad', text: `Gary moves the truck. Then he knocks, note in hand: "Didn't realize you owned the street." It's polite. It's also cold.` }],
         later: `You claimed a right you don't have, in writing, to someone you'll live beside for years. Notes feel low-risk to send and land harder than you intend.`
       },
       {
-        key: 'B', text: `Walk over, say hi, and mention you usually park there. Ask if it's a temporary thing.`,
+        key: 'B', text: `Walk over, introduce yourself, and ask about the truck.`,
+        their: `Gary is new and had no idea the block has an unwritten system. A friendly question let him explain the reseal and offer to move, which cost him nothing and started you off as neighbors.`,
         q: 4, s: { com: 2, inf: 2, reg: 1, coo: 2, lng: 2 }, rel: { gary: 2 },
         outcomes: [
           { p: 0.8, tone: 'good', text: `"Oh no, sorry! My driveway's being resealed, it's done Tuesday. I had no idea there was a system." He moves the truck that afternoon and offers you a coffee.` },
@@ -215,20 +233,25 @@ PP.scenarios = [
         later: `You learned the facts, taught the norm without accusing anyone, and made a first impression that will matter later.`
       },
       {
-        key: 'C', text: `Park in front of his house to make a point.`,
+        key: 'C', text: `It's a public street, so park in front of his house for a few days. Fair's fair.`,
+        needs: [0], vague: { text: `Park in front of his house for a few days so he gets the idea.` },
+        their: `Gary didn't know there was a message to get. From his side, a stranger started a feud for no reason, and his best reply was to stop being friendly.`,
         q: 0, s: { reg: -2, coo: -2, lng: -2, str: -1 }, rel: { gary: -3 },
         outcomes: [{ p: 1, tone: 'bad', text: `Gary doesn't get the point. He just thinks you're strange. Ruth saw the whole thing and mentions it at the block party.` }],
         later: `That was the urge to get even, dressed up as a plan. Retaliation only works as a signal if the other person understands what it's a reply to. Gary didn't, so you paid for a move he never noticed.`
       },
       {
-        key: 'D', text: `Say nothing. Park down the block until it sorts itself out.`,
-        q: 2, s: { reg: 1, bnd: -1, inf: -1 }, rel: { gary: 0 },
+        key: 'D', text: `Say nothing. His driveway's only being resealed this week, so park down the block until it's done.`,
+        needs: [1], vague: { text: `Say nothing, and park down the block until it sorts itself out.`, q: 2, s: { reg: 1, bnd: -1, inf: -1 }, later: `It worked, by luck. Had it not been temporary, you'd be three weeks into quiet resentment with someone who doesn't know anything is wrong.` },
+        their: `Gary never learns anything was wrong. It does resolve itself when the reseal ends, but you gave up the chance to start the relationship on your terms.`,
+        q: 3, s: { reg: 1, inf: 1, jdg: 1 }, rel: { gary: 0 },
         outcomes: [{ p: 1, tone: 'mixed', text: `On Wednesday the truck moves back to Gary's driveway. Problem solved by itself. You carried groceries half a block for a week.` }],
-        later: `It worked, by luck. Had it not been temporary, you'd be three weeks into quiet resentment with someone who doesn't know anything is wrong.`
+        later: `You knew it was only a week, so waiting cost you a short walk. It also cost you the chance to meet Gary on good terms, and you'll be dealing with him again.`
       },
       {
-        key: 'E', text: `Post about it on the neighborhood app.`,
-        q: 0, s: { com: -2, reg: -1, coo: -2, lng: -2 }, rel: { gary: -3 },
+        key: 'E', text: `Ask on the neighborhood app whether anyone knows who owns the white truck.`,
+        their: `Gary sees his truck discussed in public before he's met anyone. Even a mild post reads as a complaint, and that first impression is the one he keeps.`,
+        q: 1, s: { com: -2, reg: -1, coo: -2, lng: -2 }, rel: { gary: -3 },
         outcomes: [{ p: 1, tone: 'bad', text: `Twenty-two replies. Someone posts a photo of the truck. Gary's new to the app and to the street. He sees it.` }],
         later: `You escalated a private, one-sentence conversation into a public referendum on a new neighbor.`
       }
@@ -281,16 +304,20 @@ PP.scenarios = [
     question: `What do you do?`,
     options: [
       {
-        key: 'A', text: `Publicly point out that you developed the work.`,
+        key: 'A', text: `"Actually, I built 31 of those 38 slides. The version history shows it. Happy to walk through it."`,
+        needs: [0], vague: { text: `"Actually, I built most of that analysis. Happy to walk everyone through how it works."` },
+        their: `Jordan's review is Thursday, and he can't afford to look like he took your work. Corrected in public, his best reply is to defend himself, and the room watches the two of you instead of the analysis.`,
+        shaped: ctx => (ctx.rel.dana || 0) > 0 ? `Dana trusts you after Just This Once. Her nodding along made the room more likely to believe you: about 70% instead of 50%.` : (ctx.rel.dana || 0) < 0 ? `Dana is cool on you after Just This Once. Her silence made the room more likely to doubt you: about 65% instead of 50%.` : null,
         q: 1, s: { reg: -1, com: -1, bnd: 2, lng: -1, str: -1 }, rel: { jordan: -2 },
         outcomes: [
-          { p: 0.5, tone: 'mixed', text: `"Actually, I built most of that." The room goes quiet. Ellen says "Let's take that offline." You're right, and you're now part of an awkward moment.` },
-          { p: 0.5, tone: 'bad', text: `Jordan says "It was a team effort, obviously." Ellen moves on quickly. You look like you cared more about credit than the work.` }
+          { p: ctx => (ctx.rel.dana || 0) > 0 ? 0.7 : (ctx.rel.dana || 0) < 0 ? 0.35 : 0.5, tone: 'mixed', text: `"Actually, I built most of that." The room goes quiet. Ellen says "Let's take that offline." You're right, and you're now part of an awkward moment.` },
+          { p: ctx => (ctx.rel.dana || 0) > 0 ? 0.3 : (ctx.rel.dana || 0) < 0 ? 0.65 : 0.5, tone: 'bad', text: `Jordan says "It was a team effort, obviously." Ellen moves on quickly. You look like you cared more about credit than the work.` }
         ],
         later: `The need to be seen as right, right now, made this move. Jordan is now an adversary, and Ellen filed the moment under "conflict" rather than "contribution."`
       },
       {
-        key: 'B', text: `Say nothing in the meeting. Address it with Jordan privately afterward.`,
+        key: 'B', text: `Stay quiet now, and talk to Jordan privately right after the meeting.`,
+        their: `In private, Jordan can fix it without losing face, which is what a scared person most wants. It also means nobody else saw your work today.`,
         q: 3, s: { reg: 2, com: 1, coo: 1, bnd: 1 }, rel: { jordan: 1 },
         outcomes: [
           { p: 0.6, tone: 'good', text: `Jordan is embarrassed. "I froze up. I'll fix it." He sends the team an email crediting your analysis by name.` },
@@ -299,7 +326,8 @@ PP.scenarios = [
         later: `You gave Jordan a private way to correct course. Whether he takes it tells you a lot about him.`
       },
       {
-        key: 'C', text: `Ask a question that naturally establishes your involvement: "Jordan, when I built the regional model I wondered about the Q2 outliers. Should we include them?"`,
+        key: 'C', text: `Ask Jordan a question that shows you built it: "Should we include the Q2 outliers I flagged?"`,
+        their: `Your question gave Jordan an easy, face-saving reply: credit you while answering. Refusing would have exposed him, so his best reply was to share the stage.`,
         q: 4, s: { str: 2, com: 2, reg: 1, inc: 1, bnd: 1 }, rel: { jordan: 0 },
         outcomes: [
           { p: 0.75, tone: 'good', text: `Ellen looks at you. "You built the model?" "Most of it, yes." Ellen asks you to walk through slide 12. Jordan, to his credit, hands you the clicker.` },
@@ -308,8 +336,14 @@ PP.scenarios = [
         later: `You established ownership as a fact without accusing anyone. The tone mattered: asked with curiosity, it reads as collaboration. Asked with an edge, it reads as a jab.`
       },
       {
-        key: 'D', text: `Document your contributions and talk to Ellen about ownership.`,
-        q: 3, s: { inf: 2, bnd: 1, lng: 2, reg: 1, com: -1 },
+        key: 'D', text: `Bring the file's version history to Ellen after the meeting and ask how ownership should show.`,
+        their: `Ellen avoids conflict, but a record is hard to wave away. The version history let her act without having to decide who was lying.`,
+        needs: [0],
+        vague: { s: { bnd: 1, reg: 1, com: -1 }, later: `You raised it the right way, but with nothing in hand. The version history was one click away.`, text: `Talk to Ellen afterward about who did most of the work.`, q: 2, their: `Ellen avoids conflict. Without evidence, her easiest reply was to call it a team effort and move on.`, outcomes: [
+              { p: 0.35, tone: 'good', text: `Ellen listens and promises to keep an eye on it. Without anything to show her, it's your word against Jordan's.` },
+              { p: 0.65, tone: 'mixed', text: `Ellen says "I'm sure it was a team effort" and changes the subject. You had nothing to show her.` }
+            ] },
+        q: 4, s: { inf: 2, bnd: 1, lng: 2, reg: 1, com: -1 },
         outcomes: [
           { p: 0.7, tone: 'good', text: `You bring Ellen the version history, framed around clarity: "I want to make sure my work is visible for review season." Ellen thanks you. She'd assumed it was joint work.` },
           { p: 0.3, tone: 'mixed', text: `Ellen, an Avoider, says "I'm sure it was a team effort" and changes the subject. The documentation is still yours to keep.` }
@@ -317,7 +351,8 @@ PP.scenarios = [
         later: `Slower and less satisfying than a public moment, but you built a record that lasts.`
       },
       {
-        key: 'E', text: `Let it go this time, but change how you collaborate with Jordan.`,
+        key: 'E', text: `Let it go this time, and put your name on every slide from now on.`,
+        their: `Jordan learns that taking credit cost him nothing. You protect next time, but this time's work stays his in Ellen's mind.`,
         q: 2, s: { reg: 2, lng: 1, bnd: -1, com: -1 },
         outcomes: [{ p: 1, tone: 'mixed', text: `You put your name on future slide footers and send recap emails after each working session. Today's credit is gone.` }],
         later: `Smart systems going forward. But Ellen's impression of who drove this project is now set, and impressions are hard to revise.`
@@ -365,7 +400,9 @@ PP.scenarios = [
     question: `What do you say to Luis?`,
     options: [
       {
-        key: 'A', text: `"Okay, go ahead. Just keep the crew here."`,
+        key: 'A', text: `"I've seen the rot myself, and it's real. Go ahead, and keep the crew here."`,
+        needs: [1], vague: { text: `"Go ahead. I trust you, and I need the crew here."` },
+        their: `Luis is probably honest, but nothing you said made honesty his best move. Approving on the spot makes padding free.`,
         q: 1, s: { coo: 1, jdg: -1, inf: -2, neg: -2 },
         outcomes: [
           { p: 0.6, tone: 'mixed', text: `The work is done well. The final invoice shows $2,600 for materials and labor you never saw itemized. It was probably fair. You'll never know.` },
@@ -374,13 +411,17 @@ PP.scenarios = [
         later: `Luis learned that urgency works on you.`
       },
       {
-        key: 'B', text: `"No. The bid was fixed. That's your risk."`,
+        key: 'B', text: `"The bid was fixed, so the rot is your cost, not mine."`,
+        their: `Section 7 of your contract says otherwise, and Luis knows it. His best reply was to stop until you put it in writing, so he did.`,
         q: 1, s: { bnd: 2, inf: -2, inc: -1, coo: -2 },
         outcomes: [{ p: 1, tone: 'bad', text: `Luis points to Section 7 of the contract. He's polite, but he pulls the crew. Your floor stays open for three weeks.` }],
         later: `You held a line your own contract didn't support. Being firm on a wrong premise is still a wrong premise.`
       },
       {
-        key: 'C', text: `"Show me the damage, then send a written change order with the itemized cost. I can approve it tonight."`,
+        key: 'C', text: `"Show me the damage and send a written change order, itemized. I can sign tonight."`,
+        their: `Asking to see it and get it in writing costs an honest contractor nothing and makes padding a losing move. You also met his deadline, so his best reply was to document it and keep the crew.`,
+        needs: [0],
+        vague: { s: { inf: 1, neg: 1, bnd: 1, com: 2, jdg: 1 }, later: `You met his deadline and asked to check. Section 7 already gave you exactly this process, and you didn't know to name it.`, text: `"Show me the damage, and send me the cost in writing. I'll decide tonight."`, q: 3, pv: [0.6, 0.4] },
         q: 4, s: { inf: 2, neg: 2, bnd: 1, com: 2, jdg: 2, inc: 1 },
         outcomes: [
           { p: 0.7, tone: 'good', text: `Luis walks you through it and sends a change order at 4 pm: $1,940 at documented cost plus 15%. You sign it at 6. The crew starts Thursday.` },
@@ -389,7 +430,8 @@ PP.scenarios = [
         later: `You met his deadline and kept your right to check. Luis now knows you read contracts, which shapes every future conversation about money.`
       },
       {
-        key: 'D', text: `"I want a second opinion before I approve anything."`,
+        key: 'D', text: `"I'd like a second opinion from another contractor before I approve anything extra."`,
+        their: `A second opinion is fair, but Luis's crew can't wait. His best reply was to move them to another job, so the check cost you time.`,
         q: 2, s: { inf: 2, jdg: 0, coo: -1, lng: -1 },
         outcomes: [
           { p: 0.5, tone: 'mixed', text: `The second contractor can come Monday and says the price is fair. The crew has left. You lose three weeks to save nothing.` },
@@ -398,7 +440,8 @@ PP.scenarios = [
         later: `Information has a cost. Sometimes it's worth paying, but here a cheaper version of the same check was available on the spot.`
       },
       {
-        key: 'E', text: `"Do it at the original price, or I'm leaving a one-star review."`,
+        key: 'E', text: `"Do it at the original price, or I'll have to leave an honest review about how this went."`,
+        their: `A threat you'd be wrong to carry out gives Luis no reason to bend. His best reply was to do exactly what the contract says and nothing more.`,
         q: 0, s: { reg: -2, com: -2, coo: -2, lng: -2, neg: -1 },
         outcomes: [{ p: 1, tone: 'bad', text: `Luis's tone changes. "Then we'll finish the contracted work only." He tiles over a documented-and-declined rot repair, with your refusal in writing.` }],
         later: `A threat you'd be wrong to carry out is not leverage. Luis simply stopped trusting you.`
@@ -454,37 +497,50 @@ PP.scenarios = [
     question: `What do you tell Ellen?`,
     options: [
       {
-        key: 'A', text: `"I'm with Priya. A rebuild is the right call."`,
+        key: 'A', text: `"I'm with Priya. Patching it again just delays the rebuild we'll need anyway."`,
+        their: `Ellen's real worry is spending before March. A rebuild sounds expensive, so unless she's offered a cheaper path, her best reply is to side with the budget.`,
+        shaped: ctx => (ctx.rel.jordan || 0) < 0 ? `Jordan is wary of you after The Credit Taker, and he's close to Marcus. His backing Marcus made a rebuild less likely to win: about 25% instead of 40%.` : (ctx.rel.jordan || 0) > 0 ? `Jordan owes you after The Credit Taker. His good word for the rebuild raised its chances: about 50% instead of 40%.` : null,
         q: 2, s: { com: 1, coo: -1, inc: -1, str: -1 }, rel: { priya: 2, marcus: -2 },
         outcomes: [
-          { p: 0.4, tone: 'good', text: `Ellen approves the rebuild. Priya is grateful. Marcus is not, and budgets get tight in March.` },
-          { p: 0.6, tone: 'bad', text: `Ellen hears "rebuild" and thinks "budget." She sides with Marcus. You backed the losing side and Marcus knows it.` }
+          { p: ctx => (ctx.rel.jordan || 0) < 0 ? 0.25 : (ctx.rel.jordan || 0) > 0 ? 0.5 : 0.4, tone: 'good', text: `Ellen approves the rebuild. Priya is grateful. Marcus is not, and budgets get tight in March.` },
+          { p: ctx => (ctx.rel.jordan || 0) < 0 ? 0.75 : (ctx.rel.jordan || 0) > 0 ? 0.5 : 0.6, tone: 'bad', text: `Ellen hears "rebuild" and thinks "budget." She sides with Marcus. You backed the losing side and Marcus knows it.` }
         ],
         later: `You picked a person, not a solution. Taking sides turned a technical question into a loyalty test.`
       },
       {
-        key: 'B', text: `"Marcus has more experience. I'd go with him."`,
+        key: 'B', text: `"Ellen, the March budget review is what matters here. Patching is the safe call."`,
+        needs: [1], vague: { text: `"Marcus has seen more of these projects. I'd trust his call."` },
+        their: `Marcus wins and Priya stops asking for your view. Ellen gets a decision, but not one tied to the March budget she's worried about.`,
         q: 1, s: { inc: -1, str: -1, com: -1, jdg: -1 }, rel: { marcus: 1, priya: -2 },
         outcomes: [{ p: 1, tone: 'mixed', text: `Ellen goes with the patch. Marcus nods at you. Priya stops asking for your input. Ticket volume barely changes.` }],
         later: `You deferred to seniority rather than evidence. Priya, who had the expertise, learned you won't stand with the facts.`
       },
       {
-        key: 'C', text: `"Honestly, I'd rather stay out of it."`,
+        key: 'C', text: `"They both make good points. I don't think it's my call."`,
+        their: `Ellen asked because she wanted help deciding. Staying out left her with the fight, and both sides with no reason to count on you.`,
         q: 1, s: { reg: 1, coo: -1, str: -2, com: -1 },
         outcomes: [{ p: 1, tone: 'mixed', text: `Ellen looks mildly disappointed. Friday is a stalemate. She delays the decision a month, which is what Avoiders do when nobody gives them a path.` }],
         later: `Neutrality felt safe, but Ellen asked for your view. Declining cost you some of her trust.`
       },
       {
-        key: 'D', text: `"What if we agree on what matters first: cost before March, ticket volume, risk. By that test, we could rebuild the two worst modules now and the rest after the budget review."`,
+        key: 'D', text: `"Rebuild the two modules behind most of the tickets now, and the rest after the March budget review."`,
+        their: `Ellen needed something she could defend before March, and Priya and Marcus each needed not to lose. A phased plan tied to the tickets and the budget gave all three a reason to say yes.`,
+        shaped: ctx => (ctx.rel.jordan || 0) < 0 ? `Jordan is wary of you after The Credit Taker, and he's close to Marcus, so your plan met more pushback: about 55% instead of 75% landed well.` : (ctx.rel.jordan || 0) > 0 ? `Jordan owes you after The Credit Taker. Backing your plan in front of Marcus raised its chances: about 85% instead of 75%.` : null,
+        needs: [0, 1],
+        vague: { s: { str: 1, coo: 2, neg: 1, com: 1 }, later: `You moved the fight from people to process. Without the ticket numbers and Ellen's March worry, the process had nothing to stand on yet.`, text: `"Could we agree on what matters first, then decide? Maybe a partial rebuild."`, q: 3, their: `Ellen needed something she could defend before March. A process with no numbers gave her nothing concrete to take upstairs.`, outcomes: [
+              { p: 0.45, tone: 'good', text: `Ellen likes the idea of criteria and asks you to come back with specifics. A week later the team settles on a phased rebuild.` },
+              { p: 0.55, tone: 'mixed', text: `Without numbers, it sounds like splitting the difference. Marcus calls it a rebuild with extra steps, and Ellen tables it.` }
+            ] },
         q: 4, s: { str: 2, inc: 2, coo: 2, neg: 2, com: 1, lng: 1 }, rel: { priya: 1, marcus: 1 },
         outcomes: [
-          { p: 0.75, tone: 'good', text: `Ellen lights up. A decision that doesn't feel like picking a winner. Priya gets her rebuild, phased. Marcus gets his budget. Both of them think it was partly their idea.` },
-          { p: 0.25, tone: 'mixed', text: `Marcus pushes back hard on Friday. Ellen adopts your criteria but takes another week. Still, the argument is now about evidence, not egos.` }
+          { p: ctx => (ctx.rel.jordan || 0) < 0 ? 0.55 : (ctx.rel.jordan || 0) > 0 ? 0.85 : 0.75, tone: 'good', text: `Ellen lights up. A decision that doesn't feel like picking a winner. Priya gets her rebuild, phased. Marcus gets his budget. Both of them think it was partly their idea.` },
+          { p: ctx => (ctx.rel.jordan || 0) < 0 ? 0.45 : (ctx.rel.jordan || 0) > 0 ? 0.15 : 0.25, tone: 'mixed', text: `Marcus pushes back hard on Friday. Ellen adopts your criteria but takes another week. Still, the argument is now about evidence, not egos.` }
         ],
         later: `You moved the fight from people to criteria. Phasing is also a small bet first: if fixing the two worst modules doesn't cut tickets, you learn that cheaply, before the whole budget is spent. Both sides can say yes without losing.`
       },
       {
-        key: 'E', text: `Tell Ellen privately what each of them said to you.`,
+        key: 'E', text: `Give Ellen your honest view in private afterward, with the full picture of where each of them stands.`,
+        their: `Ellen gets information, but she also learns you repeat private conversations. Marcus and Priya find out, as people always do.`,
         q: 1, s: { coo: -2, lng: -2, com: -1, inc: 1 }, rel: { priya: -1, marcus: -1 },
         outcomes: [{ p: 1, tone: 'bad', text: `Ellen appreciates the intel. A week later, she repeats something Marcus said to you. He figures out where she heard it.` }],
         later: `You became the channel for private conversations. People will stop having them with you.`
@@ -537,7 +593,8 @@ PP.scenarios = [
     question: `How do you respond?`,
     options: [
       {
-        key: 'A', text: `"Sure, 50/50 sounds fair."`,
+        key: 'A', text: `"Sure, 50/50 sounds fair. Let's get it done."`,
+        their: `Gary gets the fence he wants at half price, mostly for his dog. His best reply was to say thanks, and he did.`,
         q: 2, s: { coo: 2, neg: -2, bnd: -1, inf: -1 }, rel: { gary: 1 },
         outcomes: [{ p: 1, tone: 'mixed', text: `You pay $2,400 for a fence that's mostly solving Gary's dog problem. It's a nice fence.` }],
         later: ctx => ((ctx.rel.gary || 0) >= 1
@@ -546,35 +603,48 @@ PP.scenarios = [
           ` Next spring, the oak on Gary's side drops branches on your roof. He has the trimmer out before you ask. He's returning the move you made.`
       },
       {
-        key: 'B', text: `"I didn't ask for a new fence. You can pay for it."`,
-        q: 1, s: { bnd: 2, coo: -2, lng: -2, com: -1 }, rel: { gary: -2 },
+        key: 'B', text: `"County guidance says upgrades get negotiated separately. If you want six-foot cedar, it's on you."`,
+        needs: [0], vague: { q: 1, text: `"The old fence works fine for me. If you want a new one, I'd expect you to cover it."` },
+        their: `Gary needs a taller fence for his dog either way. Whether he pays alone or waits you out depends mostly on how much goodwill there is between you.`,
+        shaped: ctx => (ctx.rel.gary || 0) >= 2 ? `Gary liked you after The Spot, so he was far more willing to just pay for it himself: about 70% instead of 45%.` : (ctx.rel.gary || 0) <= -2 ? `Gary remembers how The Spot went. With no goodwill to spend, he was much more likely to dig in: about 85% instead of 55%.` : null,
+        q: 2, s: { bnd: 2, coo: -2, lng: -2, com: -1 }, rel: { gary: -2 },
         outcomes: [
-          { p: 0.45, tone: 'good', text: `Gary pays for the whole fence himself. It's beautiful, six feet tall, and it cost you nothing. Every time you see it, you remember the conversation. So does he.` },
-          { p: 0.55, tone: 'bad', text: `Gary shrugs. "Then I guess we both wait." Nobody builds anything. In June the old fence falls over, and the dog finds your garden.` }
+          { p: ctx => (ctx.rel.gary || 0) >= 2 ? 0.7 : (ctx.rel.gary || 0) <= -2 ? 0.15 : 0.45, tone: 'good', text: `Gary pays for the whole fence himself. It's beautiful, six feet tall, and it cost you nothing. Every time you see it, you remember the conversation. So does he.` },
+          { p: ctx => (ctx.rel.gary || 0) >= 2 ? 0.3 : (ctx.rel.gary || 0) <= -2 ? 0.85 : 0.55, tone: 'bad', text: `Gary shrugs. "Then I guess we both wait." Nobody builds anything. In June the old fence falls over, and the dog finds your garden.` }
         ],
         later: `Holding out pays once. Next spring, the oak on Gary's side needs trimming over your roof. "Your roof, your problem," he says, and you pay the $900 alone. In a game that repeats, the other side answers the move you made last time.`
       },
       {
-        key: 'C', text: `"I'm in for a new fence. Can we price a 4-foot pine option too? I'll split that 50/50, and if you want 6-foot cedar for the dog, you cover the difference."`,
+        key: 'C', text: `"Let's split a basic 4-foot fence. If you want 6-foot cedar for the dog, you cover the rest."`,
+        their: `Gary's reason for six feet was his dog. Naming it showed you understood his side, so paying the difference felt fair to him rather than imposed.`,
+        shaped: ctx => (ctx.rel.gary || 0) >= 2 ? `Gary liked you after The Spot, so he was more likely to take the offer in good faith: about 90% instead of 80%.` : (ctx.rel.gary || 0) <= -2 ? `Gary remembers how The Spot went, so he was more likely to look for the catch: about 60% instead of 80% went smoothly.` : null,
+        needs: [1],
+        vague: { s: { neg: 2, coo: 1, com: 1, lng: 1, bnd: 1 }, later: `A fair structure, offered without knowing why Gary wanted six feet. Fair and understood are not the same thing.`, text: `"Let's split a basic 4-foot fence. If you want 6-foot cedar, you cover the rest."`, q: 3, their: `Gary's reason for six feet was his dog. Without knowing that, your offer sounded like you didn't care why, so it landed as cheap rather than fair.`, outcomes: [
+              { p: 0.55, tone: 'good', text: `Pine is $2,200. You split it, and Gary pays the difference for cedar. He agrees, though he clearly thinks you're being a bit tight.` },
+              { p: 0.45, tone: 'mixed', text: `Gary bristles. "It's not a luxury, it's for the dog." He pays the difference, but the conversation leaves a mark.` }
+            ] },
         q: 4, s: { neg: 2, coo: 2, inc: 2, com: 2, lng: 2, bnd: 1 }, rel: { gary: 2 },
         outcomes: [
-          { p: 0.8, tone: 'good', text: `Pine is $2,200. You pay $1,100, Gary pays $3,700 for the cedar he actually wants. He thinks it's completely fair. So do you.` },
-          { p: 0.2, tone: 'mixed', text: `Gary's a bit stung at first. "I thought we'd split it." By the weekend he's come around: "Honestly, that's fair. The dog's my problem."` }
+          { p: ctx => (ctx.rel.gary || 0) >= 2 ? 0.9 : (ctx.rel.gary || 0) <= -2 ? 0.6 : 0.8, tone: 'good', text: `Pine is $2,200. You pay $1,100, Gary pays $3,700 for the cedar he actually wants. He thinks it's completely fair. So do you.` },
+          { p: ctx => (ctx.rel.gary || 0) >= 2 ? 0.1 : (ctx.rel.gary || 0) <= -2 ? 0.4 : 0.2, tone: 'mixed', text: `Gary's a bit stung at first. "I thought we'd split it." By the weekend he's come around: "Honestly, that's fair. The dog's my problem."` }
         ],
         later: `You found the arrangement neither of you would want to break: a fair base split, and each paying for what they value. Next spring, when the oak needs trimming, Gary splits the cost without being asked. Cooperation that's returned keeps getting returned.`
       },
       {
-        key: 'D', text: `"Let me think about it." Then don't bring it up again.`,
+        key: 'D', text: `"Let me think about it and get back to you."`,
+        their: `Gary waits for an answer that never comes. To him, silence is a no without the courtesy of saying it.`,
         q: 0, s: { com: -2, reg: 1, lng: -2, bnd: -1 }, rel: { gary: -2 },
         outcomes: [{ p: 1, tone: 'bad', text: `Three weeks of silence. Gary asks twice more, then stops asking. In June the old fence falls, and the dog digs up your garden.` }],
         later: `Stalling is holding out without saying so. Gary read silence as a no, and next spring he answers your texts about the oak just as slowly.`
       },
       {
-        key: 'E', text: `Ask Ruth to help mediate.`,
+        key: 'E', text: `Ask Ruth, who knows you both and the street, to help the two of you work out something fair.`,
+        their: `Ruth is fair and knows the street. Whether Gary welcomes her or feels ambushed depends on whether he already trusts you.`,
+        shaped: ctx => (ctx.rel.gary || 0) >= 2 ? `Gary trusted you after The Spot, so Ruth was more likely to feel like help than a referee: about 65% instead of 50%.` : (ctx.rel.gary || 0) <= -2 ? `After The Spot, Gary was more likely to read Ruth as backup you brought: about 65% instead of 50%.` : null,
         q: 2, s: { coo: 1, inf: 1, com: -1, bnd: 0 }, rel: { gary: -1 },
         outcomes: [
-          { p: 0.5, tone: 'good', text: `Ruth knows exactly what the last fence cost and gently suggests each of you pay for what you want. It works.` },
-          { p: 0.5, tone: 'mixed', text: `Gary feels ambushed. "I didn't think we needed a referee." The deal gets done, but stiffly.` }
+          { p: ctx => (ctx.rel.gary || 0) >= 2 ? 0.65 : (ctx.rel.gary || 0) <= -2 ? 0.35 : 0.5, tone: 'good', text: `Ruth knows exactly what the last fence cost and gently suggests each of you pay for what you want. It works.` },
+          { p: ctx => (ctx.rel.gary || 0) >= 2 ? 0.35 : (ctx.rel.gary || 0) <= -2 ? 0.65 : 0.5, tone: 'mixed', text: `Gary feels ambushed. "I didn't think we needed a referee." The deal gets done, but stiffly.` }
         ],
         later: `Mediation is useful when direct conversation fails. Using it first can signal that you don't trust the other person.`
       }
@@ -621,13 +691,15 @@ PP.scenarios = [
     question: `What do you say to Sam?`,
     options: [
       {
-        key: 'A', text: `"That's great, I accept!"`,
+        key: 'A', text: `"That sounds great. I'm happy to accept."`,
+        their: `Sam's job is to fill the role within budget. You accepted the opening number, so Northfield's best reply was to say yes and move on.`,
         q: 1, s: { neg: -2, inf: -1, jdg: -1, coo: 1 },
         outcomes: [{ p: 1, tone: 'mixed', text: `Sam is delighted. You start at $92,000. Six months later you learn a peer hired the same month started at $101,000.` }],
         later: `Fear of losing the offer answered for you. Asking would have cost a few awkward seconds. Not asking costs you every year, because each raise is a percentage of this number.`
       },
       {
-        key: 'B', text: `"I have another offer at $105,000. Can you match it?"`,
+        key: 'B', text: `"I have another offer at $105,000. Can you match it so I can say yes to you?"`,
+        their: `Recruiters hear this a lot. Sam's best reply is to ask to see it, and you can't show what doesn't exist.`,
         q: 0, s: { com: -2, lng: -2, neg: -1, jdg: -2 },
         outcomes: [
           { p: 0.5, tone: 'bad', text: `Sam asks, pleasantly, if you can share the offer in writing so they can "move quickly." You can't. The conversation gets a lot cooler.` },
@@ -636,7 +708,13 @@ PP.scenarios = [
         later: `A fake offer is a false claim about your alternative. It only works until someone asks to see it, so its credibility was always borrowed. And when it works, it teaches you a habit that eventually fails publicly.`
       },
       {
-        key: 'C', text: `"I'm excited about this. The posted range goes to $110,000, and I can start before your November launch. Could we get to $102,000? I'm also interviewing elsewhere next week, so could we make the deadline Tuesday?"`,
+        key: 'C', text: `"Your range goes to $110k and I can start before launch. Could we do $102k, decided by Tuesday?"`,
+        their: `Alicia needs someone before November, and the posted range gave them room. You asked for something they could justify and offered what they needed, so meeting you partway was their best reply.`,
+        needs: [0],
+        vague: { s: { neg: 1, com: 2, jdg: 1 }, later: `You asked, which most people don't. Without their posted range, you asked for a favor rather than making a case.`, text: `"I'm excited about this. Is there any room on the number, something closer to $100k?"`, q: 3, their: `Sam needs a reason to take to Alicia. Asking for room without pointing to their posted range gave Sam little to argue with, so a small bump was the easy reply.`, outcomes: [
+              { p: 0.45, tone: 'good', text: `Sam checks with Alicia and comes back at $96,000. Better than $92,000, though you never mentioned their posted range.` },
+              { p: 0.55, tone: 'mixed', text: `Sam says there's a little room: $94,000. Without a reason Sam could take to Alicia, that was all there was.` }
+            ] },
         q: 4, s: { neg: 2, inf: 2, com: 2, inc: 2, str: 2, jdg: 1 },
         outcomes: [
           { p: 0.65, tone: 'good', text: `Sam checks with Alicia. They come back at $99,000 plus a $3,000 signing bonus, and the deadline moves to Tuesday.` },
@@ -645,7 +723,9 @@ PP.scenarios = [
         later: `You anchored with real data, told the truth about your alternatives, and offered something they valued: speed. That's a negotiation both sides can feel good about.`
       },
       {
-        key: 'D', text: `"I need $115,000 or I'm walking."`,
+        key: 'D', text: `"You need someone before launch, and I can start right away. To make the move I'd need $115,000."`,
+        needs: [1], vague: { text: `"To make the move worthwhile I'd need $115,000. Otherwise I'm happy staying where I am."` },
+        their: `That's above their posted ceiling of $110,000. Sam can't go there, so the best reply is to let you stay where you are, unless Alicia is desperate.`,
         q: 1, s: { neg: -1, coo: -2, reg: -1, bnd: 1 },
         outcomes: [
           { p: 0.6, tone: 'bad', text: `It's above their posted range. Sam says they'll "keep you in mind for future roles." You're now negotiating with your current employer, who doesn't know you were looking.` },
@@ -654,7 +734,8 @@ PP.scenarios = [
         later: `You put a $7,000 raise on the table to chase a few thousand more. Even when it works, you took a large risk for a small gain. Never risk the whole deal for the last slice of it.`
       },
       {
-        key: 'E', text: `"Thank you. Could I have until next Wednesday to decide?"`,
+        key: 'E', text: `"Thank you, this is exciting. Could I have until next Wednesday to think it through properly?"`,
+        their: `A little more time is cheap for them to give. Without a reason to change the number, Sam gives you Monday and the same offer.`,
         q: 2, s: { reg: 1, jdg: 1, neg: -1, inf: 0 },
         outcomes: [{ p: 1, tone: 'mixed', text: `Sam agrees to Monday. You have more time but the same number. The other company doesn't make an offer.` }],
         later: `More time is useful only if you use it to change your alternatives or your information. Here, it changed neither.`

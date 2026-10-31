@@ -75,7 +75,7 @@ PP.scenes = {
       { who: 'maya', mood: 'nervous', act: 'glance', say: `Is… everything okay?` }
     ],
     options: {
-      A: { line: `That's wrong. The shelf says $8.49. I'm not paying that.`, preview: `Fast and clear. Also public, and based on a memory you haven't checked.`, row: 1,
+      A: { line: `The shelf said $8.49, and I know you can override small amounts. Can you just ring it at that?`, vague: { line: `That's not right. The shelf said $8.49, so that's what I'll pay.` }, preview: `Clear and quick, if the tag was right. Public, and Maya may not be allowed to fix it.`, row: 1,
         outcomes: [
           { col: 0, beats: [
             { who: 'maya', mood: 'nervous', act: 'jump', say: `Oh! Um. Okay. I'll call Dev.` },
@@ -94,7 +94,7 @@ PP.scenes = {
             { cam: 'wide', caption: `You pay $11.99 with five people watching.`, set: { maya: { mood: 'awkward' } } }
           ] }
         ] },
-      B: { caption: `You let it go and tap your card.`, preview: `No friction, no delay. You never find out who was right.`, row: null,
+      B: { caption: `You let it go and tap your card.`, preview: `No friction and no delay. You never find out who was right.`, row: null,
         outcomes: [
           { beats: [
             { cam: 'register', caption: `$11.99. Approved.` },
@@ -102,7 +102,7 @@ PP.scenes = {
             { who: 'sigh', mood: 'neutral', say: `(under his breath) Finally.` }
           ] }
         ] },
-      C: { line: `I think the tag said $8.49, though it might've been for the smaller bottle. Is that quick to check, or should I sort it out at the service desk so I don't hold up the line?`, preview: `Keeps it small and honest. Depends on Maya's goodwill.`, row: 0,
+      C: { line: `The tag might've been for the smaller bottle. Quick to check, or should I sort it out at the desk?`, vague: { line: `The shelf said $8.49. Is that quick to check, or should I sort it out at the desk?` }, preview: `Gives Maya an easy way to help. Takes a few seconds of the line's time.`, row: 0,
         outcomes: [
           { col: 0, beats: [
             { who: 'maya', mood: 'surprised', act: 'jump', say: `Oh! Honestly?` },
@@ -118,7 +118,7 @@ PP.scenes = {
             { caption: `You are very glad you asked nicely.` }
           ] }
         ] },
-      D: { line: `Can I speak to a manager, please?`, preview: `Brings in authority. Skips the person who could help right now.`, row: 1,
+      D: { line: `Could you get a manager, please? I'd like this fixed properly rather than rushed.`, preview: `Brings in someone with authority. Slows everyone down and skips the person in front of you.`, row: 1,
         outcomes: [
           { col: 0, beats: [
             { who: 'maya', mood: 'nervous', act: 'glance', say: `Sure… Dev? Lane four?` },
@@ -129,7 +129,7 @@ PP.scenes = {
             { who: 'maya', mood: 'sad', caption: `Maya looks like she failed a test nobody told her about.` }
           ] }
         ] },
-      E: { caption: `You pay now and keep the receipt.`, preview: `Takes the pressure off the line. Costs you two minutes later.`, row: 0,
+      E: { caption: `You pay now so the line can move, and keep the receipt.`, preview: `Takes the pressure off the line. Costs you a few minutes later.`, row: 0,
         outcomes: [
           { col: 0, beats: [
             { who: 'maya', mood: 'smile', say: `Thanks for being patient!` },
@@ -177,18 +177,18 @@ PP.scenes = {
       { caption: `Maybe flattery. Maybe she means it.` }
     ],
     options: {
-      A: { line: `Of course, I'll take care of it.`, preview: `Instant goodwill. Sets a pattern, and costs you Thursday night.`, row: 0,
+      A: { line: `Sure, send it over. I'll make it work.`, preview: `Instant goodwill. Costs you Thursday night, and maybe sets a pattern.`, row: 0,
         outcomes: [{ col: 1, beats: [
           { who: 'dana', mood: 'happy', act: 'jump', say: `You're a lifesaver!` },
           { who: 'dana', move: { spot: 'dana_start' }, cam: 'monitor', caption: `She's gone before you've finished nodding. You look at the Henley file.` },
           { caption: `It is going to be a long night.` }
         ] }] },
-      B: { line: `Sorry, can't. I've got my own deadline.`, preview: `Protects your time. You learn nothing about why she's asking.`, row: 2,
+      B: { line: `I've covered for you twice this quarter, so I'm going to pass on this one.`, vague: { line: `I can't this time. I've got Henley due Friday.` }, preview: `Protects your deadline. You learn nothing about why she's asking.`, row: 2,
         outcomes: [{ col: 1, beats: [
           { who: 'dana', mood: 'awkward', act: 'glance', say: `Oh! No worries. Totally.` },
           { who: 'dana', move: { spot: 'dana_start' }, cam: 'wide', caption: `At Friday's standup, Dana is noticeably cooler.` }
         ] }] },
-      C: { line: `What does it involve, and when do you need it by? I'm on Henley until Friday noon.`, preview: `Costs you nothing to ask. Might complicate a simple yes.`, row: 1,
+      C: { line: `What's involved, and when do you need it? I'm on Henley until Friday noon.`, preview: `Buys you information before you commit. She may hear it as a soft no.`, row: 1,
         outcomes: [
           { col: 0, beats: [
             { who: 'dana', mood: 'thinking', pose: 'thinking', say: `Honestly? The numbers exist. They just need formatting. Two hours, tops.` },
@@ -202,7 +202,7 @@ PP.scenes = {
             { cam: 'monitor', caption: `One question just saved your weekend.` }
           ] }
         ] },
-      D: { line: `I can, if you ask Ellen to move something off my plate.`, preview: `A fair condition, routed through someone who avoids decisions.`, row: 1,
+      D: { line: `I can, if you ask Ellen to take something off my plate.`, preview: `A fair trade. It depends on Ellen, who avoids these conversations.`, row: 1,
         outcomes: [
           { col: 1, beats: [
             { who: 'dana', mood: 'nervous', say: `Ellen? Um. Okay.` },
@@ -215,7 +215,7 @@ PP.scenes = {
             { who: 'dana', mood: 'happy', cam: 'wide', caption: `A fair trade, approved by the person who assigns the work.` }
           ] }
         ] },
-      E: { line: `Sounds like you're overloaded. Want to go to Ellen together?`, preview: `A kind instinct. Proposes a fix before you understand the problem.`, row: 1,
+      E: { line: `Ellen just gave you that onboarding, didn't she? Want to raise it with her together?`, vague: { line: `Sounds like you're swamped. Want to raise it with Ellen together?` }, preview: `Goes after the real cause. Puts Dana on the spot with her boss.`, row: 1,
         outcomes: [
           { col: 1, beats: [
             { who: 'dana', mood: 'nervous', act: 'shake', say: `Oh, no. I don't want Ellen thinking I can't handle it.` },
@@ -262,7 +262,7 @@ PP.scenes = {
       { if: ctx => (ctx.rel.dana || 0) > 0, who: 'dana', mood: 'skeptical', caption: `Dana catches your eye. She knows those slides were yours.` }
     ],
     options: {
-      A: { line: `Actually, I built most of that analysis.`, preview: `Corrects the record now. Puts Ellen in an awkward spot and Jordan on the defensive.`, row: 0,
+      A: { line: `Actually, I built 31 of those 38 slides. The version history shows it. Happy to walk through it.`, vague: { line: `Actually, I built most of that analysis. Happy to walk everyone through how it works.` }, preview: `Corrects the record now. Puts Ellen in an awkward spot and Jordan on the defensive.`, row: 0,
         outcomes: [
           { col: 0, beats: [
             { cam: 'wide', caption: `The room goes very quiet.`, set: { ellen: { mood: 'awkward' }, jordan: { mood: 'surprised', act: 'jump' }, dana: { mood: 'surprised' } } },
@@ -275,7 +275,7 @@ PP.scenes = {
             { cam: 'wide', caption: `You were right. You also looked like you cared more about credit than the work.` }
           ] }
         ] },
-      B: { caption: `You say nothing. After the meeting, you catch Jordan in the hallway.`, preview: `Gives Jordan a private way to fix it. Ellen's impression stays as it is for now.`, row: 1,
+      B: { caption: `You say nothing. After the meeting, you catch Jordan in the hallway.`, preview: `Gives Jordan a private way to fix it. Nobody else saw your work today.`, row: 1,
         outcomes: [
           { col: 1, beats: [
             { cam: 'jordan', set: { ellen: { mood: 'neutral' } } },
@@ -287,7 +287,7 @@ PP.scenes = {
             { cam: 'ellen', caption: `Nothing changes in Ellen's mind.` }
           ] }
         ] },
-      C: { line: `Jordan, when I built the regional model I wondered about the Q2 outliers. Should we include them?`, preview: `Establishes ownership as a fact, with no accusation. Tone is everything.`, row: 1,
+      C: { line: `Jordan, should we include the Q2 outliers I flagged when I built the regional model?`, preview: `Puts your work on the record without a fight. Easy to miss if nobody's listening closely.`, row: 1,
         outcomes: [
           { col: 1, beats: [
             { who: 'ellen', mood: 'surprised', act: 'jump', say: `You built the model?` },
@@ -301,7 +301,7 @@ PP.scenes = {
             { who: 'ellen', mood: 'thinking', caption: `The meeting moves on. Your claim is on the record, quietly.` }
           ] }
         ] },
-      D: { caption: `You stay quiet, pull the version history, and book fifteen minutes with Ellen.`, preview: `Slow and unglamorous. Builds a record that lasts.`, row: 1,
+      D: { caption: `You stay quiet, pull the version history, and book fifteen minutes with Ellen.`, vague: { caption: `You stay quiet and book fifteen minutes with Ellen.`, outcomes: [{ beats: [{ who: 'ellen', mood: 'neutral', say: `I'll keep an eye on it.` }, { cam: 'wide', caption: `Without anything to show her, it's your word against Jordan's.` }] }, { beats: [{ who: 'ellen', mood: 'awkward', say: `I'm sure it was a team effort.` }, { cam: 'wide', caption: `You had nothing to show her.` }] }] }, preview: `Slow, and depends on Ellen. Builds a record that outlasts the meeting.`, row: 1,
         outcomes: [
           { col: 1, beats: [
             { who: 'ellen', mood: 'thinking', say: `Thirty-one of thirty-eight slides.` },
@@ -312,7 +312,7 @@ PP.scenes = {
             { cam: 'wide', caption: `She changes the subject. You still have the record.` }
           ] }
         ] },
-      E: { caption: `You let it go. Next time, your name goes on every slide.`, preview: `Protects the future. Today's credit is gone.`, row: null,
+      E: { caption: `You let it go. From now on, your name goes on every slide.`, preview: `Protects next time. Today's credit stays with Jordan.`, row: null,
         outcomes: [{ beats: [
           { who: 'jordan', mood: 'confident', pose: 'point', say: `Next slide.` },
           { who: 'ellen', mood: 'happy', act: 'nod', caption: `Ellen's impression of who drove this project is now set.` }
@@ -354,7 +354,7 @@ PP.scenes = {
       { who: 'tom', act: 'glance', cam: 'tom', caption: `In the corner, Tom from operations is very busy not listening.` }
     ],
     options: {
-      A: { line: `I'm with Priya. A rebuild is the right call.`, preview: `Clear and loyal. Turns a technical question into a vote on people.`, row: 0,
+      A: { line: `I'm with Priya. Patching it again just delays the rebuild we'll need anyway.`, preview: `Clear and loyal. Turns a technical question into a vote on people.`, row: 0,
         outcomes: [
           { col: 1, beats: [
             { who: 'priya', mood: 'happy', pose: 'down' },
@@ -367,18 +367,18 @@ PP.scenes = {
             { who: 'priya', mood: 'sad', cam: 'wide', caption: `Ellen sides with Marcus. You backed the losing side, and Marcus knows it.` }
           ] }
         ] },
-      B: { line: `Marcus has more experience. I'd go with him.`, preview: `Safe with the senior person. Priya hears that facts lost to rank.`, row: 0,
+      B: { line: `Ellen, the March budget review is what matters here. Patching is the safe call.`, vague: { line: `Marcus has seen more of these projects. I'd trust his call.` }, preview: `Safe with the senior person. Priya hears that facts lost to rank.`, row: 0,
         outcomes: [{ col: 1, beats: [
           { who: 'marcus', mood: 'happy', act: 'nod' },
           { who: 'priya', mood: 'frustrated', say: `Noted.` },
           { cam: 'wide', caption: `Ellen goes with the patch. Ticket volume barely changes.` }
         ] }] },
-      C: { line: `Honestly, I'd rather stay out of it.`, preview: `No enemies today. Ellen asked, and you didn't answer.`, row: 1,
+      C: { line: `They both make good points. I don't think it's my call.`, preview: `No enemies today. Ellen asked, and you didn't answer.`, row: 1,
         outcomes: [{ col: 1, beats: [
           { who: 'ellen', mood: 'sad', say: `Oh. Okay.` },
           { cam: 'wide', caption: `Friday is a stalemate. Ellen delays the decision a month.`, set: { priya: { mood: 'skeptical' }, marcus: { mood: 'skeptical' } } }
         ] }] },
-      D: { line: `What if we agree on what matters first: cost before March, ticket volume, risk? By that test, we rebuild the two worst modules now and the rest after the budget review.`, preview: `Changes the question. Needs both of them to engage with criteria.`, row: 2,
+      D: { line: `What if we rebuild the two modules behind most of the tickets now, and the rest after the March budget review?`, vague: { line: `Could we agree on what matters first, then decide? Maybe a partial rebuild.`, outcomes: [{ beats: [{ who: 'ellen', mood: 'thinking', say: `I like that. Come back with specifics.` }, { cam: 'wide', caption: `A week later, the team settles on a phased rebuild.` }] }, { beats: [{ who: 'marcus', mood: 'skeptical', say: `That's a rebuild with extra steps.` }, { who: 'ellen', mood: 'neutral', say: `Let's park it for now.` }] }] }, preview: `Gives both sides part of what they want. Someone may call it a compromise.`, row: 2,
         outcomes: [
           { col: 0, beats: [
             { who: 'ellen', mood: 'surprised', say: `That's… actually a decision I can make.` },
@@ -393,7 +393,7 @@ PP.scenes = {
             { cam: 'wide', caption: `Slower. But the argument is now about evidence, not egos.` }
           ] }
         ] },
-      E: { caption: `Later, you tell Ellen privately what each of them said to you.`, preview: `Ellen gets useful information. You become the leak.`, row: null,
+      E: { caption: `Later, you give Ellen your view in private, with the full picture of where each of them stands.`, preview: `Ellen gets the full picture. People find out what you repeat.`, row: null,
         outcomes: [{ col: 1, beats: [
           { who: 'ellen', mood: 'smile', say: `That's very helpful to know.` },
           { who: 'marcus', mood: 'frustrated', act: 'glance', cam: 'marcus', caption: `A week later, Ellen repeats something Marcus told you. He figures out where she heard it.` }
@@ -431,13 +431,13 @@ PP.scenes = {
       { who: 'ruth', mood: 'skeptical', act: 'glance', caption: `Across the street, Ruth is watering a plant that does not need watering.` }
     ],
     options: {
-      A: { caption: `You tuck a note under his wiper: "Please don't park in my spot."`, preview: `Feels low-risk to send. Lands hard, in writing, in week three.`, row: 2,
+      A: { caption: `You tuck a polite note under his wiper, asking him to use his own driveway.`, preview: `Low effort, no confrontation. A note from a stranger can read as an accusation.`, row: 2,
         outcomes: [{ col: 1, beats: [
           { cam: 'truck', caption: `An hour later, the truck is gone.` },
           { who: 'gary', mood: 'skeptical', pose: 'crossed', cam: 'gary', say: `Got your note. Didn't realize you owned the street.` },
           { who: 'ruth', mood: 'surprised', pose: 'down', caption: `Ruth has stopped pretending to water anything.` }
         ] }] },
-      B: { line: `Hey, I'm next door. I usually park out front there. Is the truck a temporary thing?`, preview: `Friendly and direct. You might hear something you don't like.`, row: 0,
+      B: { line: `Hey, I'm next door. I usually park out front there. Is the truck a temporary thing?`, preview: `Friendly and direct. Awkward if he doesn't take it well.`, row: 0,
         outcomes: [{ col: 0, beats: [
           { who: 'gary', mood: 'surprised', act: 'jump', say: `Oh no! Sorry! My driveway's being resealed. It's done Tuesday.` },
           { who: 'gary', mood: 'awkward', say: `I had no idea there was a system.` },
@@ -447,18 +447,18 @@ PP.scenes = {
           { who: 'gary', mood: 'skeptical', pose: 'mug', say: `It's a public street, you know. But fine. Driveway's done Tuesday.` },
           { cam: 'wide', caption: `Not the warmest start. Still, you know the facts, and it cost you one minute.` }
         ] }] },
-      C: { caption: `You park in front of Gary's house. That'll show him.`, preview: `Retaliation. Only works if he knows what it's a reply to.`, row: 2,
+      C: { caption: `It's a public street. You park in front of Gary's house. Fair's fair.`, vague: { caption: `You park in front of Gary's house. That'll show him.` }, preview: `Makes the point without a word. Only works if he knows what the point is.`, row: 2,
         outcomes: [{ col: 1, beats: [
           { who: 'gary', mood: 'thinking', pose: 'thinking', say: `…Huh.` },
           { cam: 'wide', caption: `Gary doesn't get the point. He just thinks you're a bit strange.` },
           { who: 'ruth', mood: 'skeptical', caption: `Ruth saw everything. Ruth always sees everything.` }
         ] }] },
-      D: { caption: `You say nothing and park down the block.`, preview: `Avoids friction now. Risks quiet resentment if this isn't temporary.`, row: 1,
+      D: { caption: `You say nothing. It's only a week, so you park down the block.`, vague: { caption: `You say nothing and park down the block.` }, preview: `No friction now. If it isn't temporary, the resentment builds quietly.`, row: 1,
         outcomes: [{ col: 0, beats: [
           { who: 'gary', mood: 'smile', pose: 'wave', say: `Have a good one!` },
           { cam: 'truck', caption: `On Wednesday, the truck moves back to Gary's driveway. Problem solved itself. This time.` }
         ] }] },
-      E: { caption: `You post about it on the neighborhood app.`, preview: `Public pressure. Turns a one-sentence talk into a referendum.`, row: 2,
+      E: { caption: `You ask on the neighborhood app who owns the white truck.`, preview: `Finds out who he is without a confrontation. It happens in public, before you've met.`, row: 2,
         outcomes: [{ col: 1, beats: [
           { cam: 'truck', caption: `Twenty-two replies. Someone posts a photo of the truck.` },
           { who: 'gary', mood: 'sad', pose: 'phone', cam: 'gary', say: `Saw the post.` },
@@ -499,12 +499,12 @@ PP.scenes = {
       { cam: 'dog', caption: `Behind the fence, a very large dog studies it with professional interest.` }
     ],
     options: {
-      A: { line: `Sure, fifty-fifty sounds fair.`, preview: `Keeps the peace. You pay half of an upgrade you didn't need.`, row: 0,
+      A: { line: `Sure, fifty-fifty sounds fair. Let's get it done.`, preview: `Keeps the peace and gets it done. You pay half of an upgrade you may not need.`, row: 0,
         outcomes: [{ col: 0, beats: [
           { who: 'gary', mood: 'happy', act: 'jump', say: `Great! I'll call the guy.` },
           { cam: 'dog', caption: `It's a very nice fence. It mostly solves Gary's dog problem.` }
         ] }] },
-      B: { line: `I didn't ask for a new fence. You can pay for it.`, preview: `Might save $2,400 today. Gary might hold out too, and there's always a next time.`, row: 1,
+      B: { line: `County guidance says upgrades get negotiated separately. If you want six-foot cedar, it's on you.`, vague: { line: `The old fence works fine for me. If you want a new one, I'd expect you to cover it.` }, preview: `Might save you $2,400. Gary might wait you out.`, row: 1,
         outcomes: [
           { col: 0, beats: [
             { who: 'gary', mood: 'frustrated', pose: 'crossed', say: `Right. Okay.` },
@@ -516,7 +516,7 @@ PP.scenes = {
             { cam: 'garden', caption: `The dog finds your garden.` }
           ] }
         ] },
-      C: { line: `I'm in for a new fence. Can we price a four-foot pine option? I'll split that, and if you want six-foot cedar for the dog, you cover the difference.`, preview: `Chips in on the shared need, separates his extra. He may have expected half.`, row: 0,
+      C: { line: `Let's split a basic four-foot fence. If you want six-foot cedar for the dog, you cover the rest.`, vague: { line: `Let's split a basic four-foot fence. If you want six-foot cedar, you cover the rest.`, outcomes: [{ beats: [{ who: 'gary', mood: 'thinking', say: `Pine's twenty-two hundred… fine.` }, { cam: 'wide', caption: `He agrees, though he thinks you're being a bit tight.` }] }, { beats: [{ who: 'gary', mood: 'frustrated', say: `It's not a luxury. It's for the dog.` }, { cam: 'wide', caption: `He pays the difference, but it leaves a mark.` }] }] }, preview: `Pays for what you both need, and no more. He may have expected an even split.`, row: 0,
         outcomes: [
           { col: 0, beats: [
             { who: 'gary', mood: 'thinking', pose: 'thinking', say: `Pine's twenty-two hundred…` },
@@ -529,13 +529,13 @@ PP.scenes = {
             { who: 'gary', mood: 'smile', say: `Honestly? That's fair.` }
           ] }
         ] },
-      D: { caption: `"Let me think about it." Then you never bring it up again.`, preview: `No awkward conversation today. Silence is still an answer.`, row: 1,
+      D: { caption: `"Let me think about it and get back to you." Then you never do.`, preview: `No awkward conversation today. Silence is still an answer.`, row: 1,
         outcomes: [{ col: 1, beats: [
           { caption: `Three weeks of silence.` },
           { who: 'gary', mood: 'sad', say: `Guess that's a no, then.` },
           { cam: 'garden', caption: `In June the old fence falls. The dog finds your garden.` }
         ] }] },
-      E: { caption: `You ask Ruth to help mediate.`, preview: `Brings in someone neutral. Can feel like an ambush.`, row: 0,
+      E: { caption: `You ask Ruth to help you and Gary work it out.`, preview: `Brings in someone fair. Can feel like an ambush.`, row: 0,
         outcomes: [
           { col: 0, beats: [
             { who: 'ruth', mood: 'smile', say: `Last fence on this street cost twenty-one hundred. Each of you pays for what you want.` },
@@ -578,7 +578,7 @@ PP.scenes = {
       { cam: 'wide', caption: `Your bid was a fixed $14,000. Your bathroom has no floor.` }
     ],
     options: {
-      A: { line: `Okay, go ahead. Just keep the crew here.`, preview: `Keeps the schedule. You never see what you're paying for.`, row: 1,
+      A: { line: `I've seen the rot myself, and it's real. Go ahead, and keep the crew here.`, vague: { line: `Go ahead. I trust you, and I need the crew here.` }, preview: `Keeps the schedule. You never see what you're paying for.`, row: 1,
         outcomes: [
           { col: 0, beats: [
             { who: 'luis', mood: 'smile', act: 'nod', say: `You got it.` },
@@ -589,7 +589,7 @@ PP.scenes = {
             { cam: 'rot', caption: `Weeks later, a friend in construction looks at your photos: "Documented, that's about $1,900."` }
           ] }
         ] },
-      B: { line: `No. The bid was fixed. That's your risk.`, preview: `Holds the line on price. Check what the contract actually says first.`, row: 2,
+      B: { line: `The bid was fixed, so the rot is your cost, not mine.`, preview: `Holds the line on price. Only as strong as your contract.`, row: 2,
         outcomes: [
           { col: 0, beats: [
             { who: 'luis', mood: 'skeptical', pose: 'crossed', say: `Section seven of the contract says otherwise.` },
@@ -597,7 +597,7 @@ PP.scenes = {
             { cam: 'wide', caption: `Your bathroom stays open for three weeks.` }
           ] }
         ] },
-      C: { line: `Show me the damage, then send a written change order with the itemized cost. I can approve it tonight.`, preview: `Meets his deadline and keeps your right to check.`, row: 0,
+      C: { line: `Show me the damage and send a written change order, itemized. I can sign tonight.`, vague: { line: `Show me the damage, and send me the cost in writing. I'll decide tonight.` }, preview: `Meets his deadline and keeps your right to check. Costs you an evening.`, row: 0,
         outcomes: [
           { col: 0, beats: [
             { who: 'luis', mood: 'surprised', say: `Fair. Come take a look.` },
@@ -609,7 +609,7 @@ PP.scenes = {
             { cam: 'wide', caption: `The itemized order comes in at $2,550. Expensive, but real. You approve it knowing exactly what you're paying for.` }
           ] }
         ] },
-      D: { line: `I want a second opinion before I approve anything.`, preview: `Real information, at the price of three weeks.`, row: 0,
+      D: { line: `I'd like a second opinion from another contractor before I approve anything extra.`, preview: `Real information. It may cost you the crew and weeks.`, row: 0,
         outcomes: [
           { col: 0, beats: [
             { who: 'luis', mood: 'neutral', pose: 'shrug', say: `Your call. My crew's gone tomorrow.` },
@@ -620,7 +620,7 @@ PP.scenes = {
             { cam: 'wide', caption: `The second opinion said $1,500 was reasonable. Luis comes down to $2,000, and the job slips nine days.` }
           ] }
         ] },
-      E: { line: `Do it at the original price, or I'm leaving a one-star review.`, preview: `A threat. Ask yourself whether you'd really carry it out.`, row: 2,
+      E: { line: `Do it at the original price, or I'll have to leave an honest review about how this went.`, preview: `Pressure on price. Only works if he believes you'd follow through.`, row: 2,
         outcomes: [
           { col: 0, beats: [
             { who: 'luis', mood: 'frustrated', pose: 'crossed', act: 'shake', say: `Then we'll finish the contracted work only.` },
@@ -655,11 +655,10 @@ PP.scenes = {
       { who: 'sam', mood: 'happy', say: `We're excited about you. The offer is ninety-two thousand.` },
       { who: 'sam', mood: 'smile', say: `We'd love an answer by Friday.` },
       { who: 'alicia', mood: 'smile', act: 'nod', say: `Honestly, we need someone in place before the November launch.` },
-      { cam: 'wide', caption: `You make $85,000 now. You have a second interview elsewhere next week, but no offer.` },
-      { cam: 'logo', caption: `Their job posting listed a range of $88,000 to $110,000.` }
+      { cam: 'wide', caption: `You make $85,000 now. You have a second interview elsewhere next week, but no offer.` }
     ],
     options: {
-      A: { line: `That's great. I accept!`, preview: `Certain and friendly. Leaves whatever room there was on the table.`, row: 1,
+      A: { line: `That sounds great. I'm happy to accept.`, preview: `Certain and friendly. Leaves whatever room there was on the table.`, row: 1,
         outcomes: [
           { col: 1, beats: [
             { who: 'sam', mood: 'happy', act: 'jump', say: `Wonderful. Welcome aboard!` },
@@ -667,7 +666,7 @@ PP.scenes = {
             { cam: 'wide', caption: `You start at $92,000. Six months later you learn a peer hired the same month started at $101,000.` }
           ] }
         ] },
-      B: { line: `I have another offer at $105,000. Can you match it?`, preview: `A claim you can't back up. It works only until someone asks to see it.`, row: 2,
+      B: { line: `I have another offer at $105,000. Can you match it so I can say yes to you?`, preview: `Strong pressure on the number. Only as good as your ability to back it up.`, row: 2,
         outcomes: [
           { col: 1, beats: [
             { who: 'sam', mood: 'skeptical', say: `Could you share that offer in writing? So we can move quickly.` },
@@ -679,7 +678,7 @@ PP.scenes = {
             { cam: 'wide', caption: `You won. You also started a job with a story you'll have to keep straight.` }
           ] }
         ] },
-      C: { line: `I'm excited about this. Your posted range goes to 110, and I can start before November. Could we get to 102? I'm interviewing elsewhere next week, so could we make the deadline Tuesday?`, preview: `Anchors with their own numbers and offers what they need. They might hold firm.`, row: 0,
+      C: { line: `I'm excited about this. Your posted range goes to 110, and I can start before your launch. Could we do 102, and decide by Tuesday?`, vague: { line: `I'm excited about this. Is there any room on the number, something closer to a hundred?`, outcomes: [{ beats: [{ who: 'sam', mood: 'thinking', say: `Let me see what I can do.` }, { who: 'sam', mood: 'smile', say: `Ninety-six.` }, { cam: 'wide', caption: `Better than ninety-two. You never mentioned their posted range.` }] }, { beats: [{ who: 'sam', mood: 'neutral', say: `I can get you to ninety-four.` }, { cam: 'wide', caption: `Without a reason Sam could take to Alicia, that was all there was.` }] }] }, preview: `Asks for more without a fight. They might hold firm.`, row: 0,
         outcomes: [
           { col: 0, beats: [
             { who: 'sam', mood: 'thinking', say: `Let me talk to Alicia.` },
@@ -691,7 +690,7 @@ PP.scenes = {
             { cam: 'wide', caption: `Less than you asked for, more than you had. You decide with full information.` }
           ] }
         ] },
-      D: { line: `I need $115,000 or I'm walking.`, preview: `An ultimatum above their published ceiling. You'd have to mean it.`, row: 2,
+      D: { line: `You need someone before launch, and I can start right away. To make the move I'd need $115,000.`, vague: { line: `To make the move worthwhile I'd need $115,000. Otherwise I'm happy staying where I am.` }, preview: `A clear number. You have to be ready to walk away.`, row: 2,
         outcomes: [
           { col: 1, beats: [
             { who: 'sam', mood: 'awkward', say: `That's above our posted range. We'll keep you in mind for future roles.` },
@@ -702,7 +701,7 @@ PP.scenes = {
             { cam: 'wide', caption: `You got more money and a slightly awkward start.` }
           ] }
         ] },
-      E: { line: `Thank you. Could I have until next Wednesday to decide?`, preview: `More time. Only useful if it changes what you know or what you can choose.`, row: null,
+      E: { line: `Thank you, this is exciting. Could I have until next Wednesday to think it through properly?`, preview: `More time. Only useful if it changes what you know or what you can choose.`, row: null,
         outcomes: [
           { beats: [
             { who: 'sam', mood: 'neutral', say: `We can do Monday.` },

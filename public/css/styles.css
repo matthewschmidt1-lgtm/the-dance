@@ -954,3 +954,11 @@ button.ps-btn:hover { background: var(--accent-soft); }
 .facts li { position: relative; padding-left: 18px; font-family: var(--f-read); font-size: 1.0625rem; line-height: 1.45; }
 .facts li::before { content: ''; position: absolute; left: 2px; top: .62em; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .facts strong { font-family: var(--f-display); font-weight: 680; }
+
+/* The other side of a decision */
+.their { display: grid; gap: 14px; margin: 14px 0 6px; padding: 18px 20px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
+.their p { font-family: var(--f-read); line-height: 1.55; }
+.their .their-k { font-family: var(--f-mono); font-size: var(--t-xs); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+.their em { font-style: normal; font-weight: 600; }
+.who-trust { font-size: var(--t-sm); font-weight: 600; margin-top: 2px; }
+.who-trust.up { color: var(--good); } .who-trust.down { color: var(--bad); }

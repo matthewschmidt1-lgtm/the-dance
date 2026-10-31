@@ -25,13 +25,12 @@ PP.Stage = class {
 
   build() {
     const sc = this.scene;
-    const { svg, env } = PP.art.sceneSvg(sc, PP.people, {}, this.label);
+    const { svg, env } = PP.art.sceneSvg(sc, PP.people, {}, this.label, this.ctx);
     this.env = env;
     this.root.innerHTML = `
       <div class="stage ${this.ambient ? 'is-ambient' : ''}">
         ${svg}
         <div class="lb lb-top" aria-hidden="true"></div><div class="lb lb-bot" aria-hidden="true"></div>
-        <p class="stage-caption" aria-live="polite"></p>
         <div class="stage-title" aria-hidden="true"></div>
         <div class="pins" aria-hidden="true"></div>
         <div class="freeze-badge" aria-hidden="true"><span class="freeze-dot"></span>Slow Motion Strategy</div>
@@ -52,7 +51,6 @@ PP.Stage = class {
       </div>`}`;
     this.stage = this.root.querySelector('.stage');
     this.world = this.root.querySelector('.world');
-    this.caption = this.root.querySelector('.stage-caption');
     this.dialogue = this.root.querySelector('.dialogue');
     sc.cast.forEach(c => {
       const el = this.root.querySelector(`.actor[data-id="${c.id}"]`);
@@ -205,46 +203,35 @@ PP.Stage = class {
     if (st.act) this.act(id, st.act);
   }
 
-  // A set with a register shows the price on it; any other set gets a terminal-style alert.
+  // A register shows the price on it. A desk monitor shows the latest notification across its top.
   setScreen(text) {
     const el = this.root.querySelector('.reg-price');
     if (el) { el.textContent = text; return; }
-    let a = this.root.querySelector('.stage-alert');
-    if (!a) {
-      a = document.createElement('p');
-      a.className = 'stage-alert';
-      a.setAttribute('aria-live', 'polite');
-      this.stage.appendChild(a);
-    }
-    a.textContent = text;
-    a.classList.remove('is-on');
-    void a.offsetWidth;
-    a.classList.add('is-on');
+    const bar = this.root.querySelector('.scr-alert');
+    if (bar) bar.innerHTML = PP.art.screenAlert(text);
   }
+  get hasRegister() { return !!this.root.querySelector('.reg-price'); }
 
   // ───────── text
+  // Every line, spoken or not, appears in the one script box under the stage.
+  // kind: say (a character), you, narrate (what happens), screen (what a screen says).
 
-  showCaption(text) {
-    this.caption.textContent = text;
-    this.caption.classList.add('is-on');
-  }
-  hideCaption() { this.caption.classList.remove('is-on'); }
-
-  async speak(name, text, speakerId, isYou) {
+  async speak(name, text, speakerId, kind = 'say') {
     if (this.fast) return;
     const d = this.dialogue;
+    if (!d) { await this.wait(this.paced(Math.max(1500, text.length * 42))); return; }
     d.hidden = false;
-    d.classList.toggle('is-you', !!isYou);
+    ['you', 'narrate', 'screen'].forEach(k => d.classList.toggle(`is-${k}`, kind === k));
     d.querySelector('.dlg-name').textContent = name;
     const out = d.querySelector('.dlg-text');
-    d.querySelector('.dlg-live').textContent = `${name}: ${text}`;
+    d.querySelector('.dlg-live').textContent = name ? `${name}: ${text}` : text;
     const a = speakerId && this.actors[speakerId];
     if (a) a.el.classList.add('speaking');
     const typeMs = this.reduced ? 0 : this.paced(Math.min(text.length * 24, 2600));
     const total = typeMs + this.paced(Math.max(1500, text.length * 42));
     out.textContent = this.reduced ? text : '';
     d.classList.remove('is-done');
-    const talking = this.voiceLine(isYou ? 'you' : speakerId, text);
+    const talking = kind === 'screen' ? null : this.voiceLine(kind === 'you' ? 'you' : kind === 'narrate' ? 'narrator' : speakerId, text);
     await this.wait(total, el => {
       const n = typeMs ? Math.min(text.length, Math.ceil((el / typeMs) * text.length)) : text.length;
       if (out.textContent.length !== n) out.textContent = text.slice(0, n);
@@ -262,20 +249,17 @@ PP.Stage = class {
     if (b.set) Object.entries(b.set).forEach(([id, st]) => this.applyState(id, st));
     if (b.who) this.applyState(b.who, b);
     if (b.screen) this.setScreen(b.screen);
-    const cam = b.cam || (b.who && (b.say || b.caption) ? b.who : null) || (b.you ? null : null);
+    const cam = b.cam || (b.who && (b.say || b.caption) ? b.who : null);
     if (cam) this.camera(cam);
+    const screenLine = b.screen && !this.hasRegister;
+    if (screenLine) await this.speak('On screen', b.screen, null, 'screen');
     if (b.say) {
-      this.hideCaption();
       await this.speak(PP.people[b.who].name, b.say, b.who);
     } else if (b.you) {
-      this.hideCaption();
-      await this.speak('You', b.you, null, true);
+      await this.speak('You', b.you, null, 'you');
     } else if (b.caption) {
-      if (this.dialogue) this.dialogue.hidden = true;
-      this.showCaption(b.caption);
-      const narrating = this.fast ? null : this.voiceLine('narrator', b.caption);
-      await this.wait(this.paced(Math.max(1900, b.caption.length * 48)), null, 0, narrating);
-    } else {
+      await this.speak('', b.caption, null, 'narrate');
+    } else if (!screenLine) {
       await this.wait(this.paced(b.wait || (b.move ? 1700 : 1100)));
     }
   }
@@ -296,7 +280,6 @@ PP.Stage = class {
       await this.beat(b);
     }
     this.fast = false;
-    this.hideCaption();
     if (this.dialogue) this.dialogue.hidden = true;
     this.stage.classList.remove('is-playing');
     this.root.classList.remove('is-running');
@@ -314,7 +297,6 @@ PP.Stage = class {
     });
     this.fast = wasFast;
     this.camera('wide');
-    this.hideCaption();
     if (this.dialogue) this.dialogue.hidden = true;
   }
 

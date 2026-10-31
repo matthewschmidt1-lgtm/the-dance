@@ -412,7 +412,7 @@
     if (stage) stage.destroy();
     const d = derive(history.slice(0, idx));
     stage = new PP.Stage(document.getElementById('stage-mount'), sc.stage, {
-      ctx: { rel: d.rel, flags: d.flags },
+      ctx: { rel: d.rel, flags: d.flags, account: isMarket() ? capitals(history.slice(0, idx)).cap.fin : null, rules },
       label: `${sc.title}. ${sc.setting}`,
       onFreeze: () => { ui.frozen = true; renderPanel(); },
       onResume: () => { ui.frozen = false; renderPanel(); }

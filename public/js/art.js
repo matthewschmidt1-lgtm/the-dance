@@ -7,7 +7,7 @@ window.PP = window.PP || {};
 PP.art = (function () {
   let uid = 0;
   // Bump when rendered images change, so browsers fetch the new files.
-  PP.assetV = '7';
+  PP.assetV = '8';
 
   const DOG = `<g class="dog-head">
     <path d="M-30,-6 C-46,0 -48,34 -36,44 C-30,30 -28,14 -24,4 Z" fill="#5a3f28"/>
@@ -518,6 +518,7 @@ PP.art = (function () {
     <linearGradient id="ppShadeX" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset=".38" stop-color="#fff" stop-opacity="0"/><stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".26"/></linearGradient>
     <linearGradient id="ppShadeY" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".06"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
     <radialGradient id="ppFace" cx=".36" cy=".32" r=".85"><stop offset="0" stop-color="#fff" stop-opacity=".14"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></radialGradient>
+    <linearGradient id="scrGlass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".07"/><stop offset=".4" stop-color="#fff" stop-opacity="0"/></linearGradient>
     <radialGradient id="ppContact"><stop offset="0" stop-color="#000" stop-opacity=".42"/><stop offset=".6" stop-color="#000" stop-opacity=".16"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
   </defs>`;
 
@@ -555,8 +556,37 @@ PP.art = (function () {
     return fb ? { ...fb } : { x: p.x, y: p.y, s: p.s };
   }
 
+  // Live monitors. A scene can draw its own content onto a set's screens, in a 1000 × 562
+  // space mapped onto each screen's projected corners (exported by the Blender render).
+  const SCR_W = 1000, SCR_H = 562;
+  const MONO = 'JetBrains Mono, ui-monospace, Menlo, monospace';
+  const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  function screenLayer(scene, ctx) {
+    const d = window.PP.envData && PP.envData[scene.env];
+    if (!d || !d.quads || !scene.screens) return '';
+    return Object.entries(scene.screens).map(([k, draw]) => {
+      const q = d.quads[k];
+      if (!q) return '';
+      // SVG can't do perspective, so fit the best flat mapping to all four corners
+      // and clip to the true outline.
+      const [tl, tr, br, bl] = q;
+      const ax = (tr.x - tl.x + br.x - bl.x) / 2 / SCR_W, ay = (tr.y - tl.y + br.y - bl.y) / 2 / SCR_W;
+      const cx = (bl.x - tl.x + br.x - tr.x) / 2 / SCR_H, cy = (bl.y - tl.y + br.y - tr.y) / 2 / SCR_H;
+      const mx = (tl.x + tr.x + br.x + bl.x) / 4 - ax * SCR_W / 2 - cx * SCR_H / 2, my = (tl.y + tr.y + br.y + bl.y) / 4 - ay * SCR_W / 2 - cy * SCR_H / 2;
+      const m = [ax, ay, cx, cy, mx, my].map(v => +v.toFixed(4)).join(' ');
+      const id = `scr${++uid}`;
+      return `<clipPath id="${id}"><polygon points="${q.map(p => `${p.x},${p.y}`).join(' ')}"/></clipPath>
+        <g clip-path="url(#${id})"><g class="scr scr-${k}" transform="matrix(${m})"><rect x="-20" y="-20" width="${SCR_W + 40}" height="${SCR_H + 40}" fill="#0a1012"/>${typeof draw === 'function' ? draw(ctx || {}) : draw}${k === 'center' ? '<g class="scr-alert"></g>' : ''}<rect width="${SCR_W}" height="${SCR_H}" fill="url(#scrGlass)"/></g></g>`;
+    }).join('');
+  }
+  // The latest notification, as a bar across the top of the center screen.
+  function screenAlert(text) {
+    const t = text.length > 64 ? text.slice(0, 62) + '…' : text;
+    return `<rect width="${SCR_W}" height="54" fill="#2a2110"/><circle cx="26" cy="27" r="7" fill="#d6a856"/><text x="46" y="36" font-family="${MONO}" font-size="24" fill="#f1e2c4">${esc(t)}</text>`;
+  }
+
   // Full scene SVG: environment layers with actors placed in "far", "back" or "front".
-  function sceneSvg(scene, people, moods = {}, label = '') {
+  function sceneSvg(scene, people, moods = {}, label = '', ctx) {
     const env = envFor(scene.env, scene.envOpts);
     const layer = name => scene.cast.filter(c => (c.layer || 'back') === name).map(c => {
       const st = moods[c.id] || {};
@@ -566,10 +596,10 @@ PP.art = (function () {
     return {
       env,
       svg: `<svg class="stage-svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${label}">${DEFS}
-        <g class="world">${env.bg}<g class="layer-far">${layer('far')}</g>${env.mid}<g class="layer-back">${layer('back')}</g>${env.fg}<g class="layer-front">${layer('front')}${extras}</g>${ots}</g>
+        <g class="world">${env.bg}<g class="layer-far">${layer('far')}</g>${env.mid}<g class="layer-back">${layer('back')}</g>${env.fg}${screenLayer(scene, ctx)}<g class="layer-front">${layer('front')}${extras}</g>${ots}</g>
       </svg>`
     };
   }
 
-  return { actor, arms, sceneSvg, actorTransform, place, MOODS, shade, DEFS };
+  return { actor, arms, sceneSvg, actorTransform, place, MOODS, shade, DEFS, screenAlert, esc, MONO };
 })();

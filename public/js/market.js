@@ -452,11 +452,11 @@ window.PP = window.PP || {};
     {
       id: 'final-bet',
       facts: [
-        `Last trade of the year: the best setup you've seen in two years. It fits your edge, <strong>{edge}</strong>.`,
+        `Last trade of the year: Orda Systems (ORDA), the best setup you've seen in two years. It fits your edge, <strong>{edge}</strong>.`,
         `You'd be <strong>buying</strong>, so you make money if the price rises. If it works, it should rise about 30%. If it fails, it could fall 30%.`,
         `Your account: <strong>{account}</strong>, everything you've built this year. Your rule: {rule} risk on any one decision.`,
-        `Nadia will allow leverage: borrowed money that multiplies both gains and losses.`,
-        `With full leverage, a 30% fall wipes out the whole account.`
+        `Nadia will allow leverage up to 4×: borrowed money that multiplies both gains and losses.`,
+        `At 4×, a 30% fall wipes out the whole account.`
       ],
       tests: `Can you protect your ability to play again?`,
       level: `Survival`,
@@ -471,7 +471,7 @@ window.PP = window.PP || {};
       unknown: [`Whether it works. Even a real edge loses often.`, `What January brings.`],
       clues: [
         { label: `Your trade log`, text: `Your best setups have worked about 60% of the time. Four in ten still lost.` },
-        { label: `The fine print on leverage`, text: `With full leverage, a 30% drop wipes out the whole account. This kind of trade has done that twice in ten years.` },
+        { label: `The fine print on leverage`, text: `At 4× leverage, a 30% drop wipes out the whole account. This kind of trade has done that twice in ten years.` },
         { label: `Theo's desk drawer`, text: `Theo keeps a list of traders he knew who were brilliant, until one trade. It's longer than you'd think.` }
       ],
       edgeNote: {
@@ -485,7 +485,7 @@ window.PP = window.PP || {};
           key: 'A', text: `Everything, plus borrowed money (leverage). This is the one.`, exposure: 'all',
           q: 0, s: { reg: -3, jdg: -3, lng: -3, bnd: -2 }, cap: { psy: -2, soc: -2 },
           outcomes: [
-            { p: 0.6, tone: 'good', fin: 90, text: `It works. Your account nearly doubles in six weeks. You're the best performer on the floor, and you'll spend years trying to feel this again.` },
+            { p: 0.6, tone: 'good', fin: 120, text: `It works. Your account more than doubles in six weeks. You're the best performer on the floor, and you'll spend years trying to feel this again.` },
             { p: 0.4, tone: 'bad', ruin: true, fin: -999, text: `A surprise announcement gaps the trade against you. With leverage, it's over by lunch. Your account is gone, and so is your seat.` }
           ],
           later: `Even a 60% edge loses four times in ten. Betting everything on one throw turned a good edge into a coin flip for your career.`,
@@ -549,19 +549,120 @@ window.PP = window.PP || {};
     }
   ];
 
+  // ───────────────────────────────────────── Screens
+  // Each challenge draws its own center and right monitors, in a 1000 × 562 space.
+  // The center screen keeps its top 60 units clear for the notification bar.
+  const C = { grid: '#1c282b', ink: '#c4d0cc', dim: '#6e7e7c', teal: '#40b2a6', red: '#d65c4e', amber: '#d6a856', panel: '#111a1c' };
+  const SANS = `'Archivo', 'Helvetica Neue', Arial, sans-serif`;
+  const T = (x, y, txt, o = {}) => `<text x="${x}" y="${y}" font-size="${o.size || 20}" fill="${o.fill || C.ink}" text-anchor="${o.anchor || 'start'}" font-weight="${o.weight || 400}" font-family="${o.sans ? SANS : PP.art.MONO}">${PP.art.esc(txt)}</text>`;
+  function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  // A price path through the given waypoints [t, value], with seeded noise.
+  function path(n, pts, seed, noise = 0.35) {
+    const r = rng(seed);
+    return Array.from({ length: n }, (_, i) => {
+      const t = i / (n - 1);
+      const k = pts.findIndex(p => p[0] >= t);
+      const [t0, v0] = pts[Math.max(0, k - 1)], [t1, v1] = pts[Math.max(0, k)];
+      const v = t1 === t0 ? v1 : v0 + (v1 - v0) * (t - t0) / (t1 - t0);
+      return i === n - 1 ? pts[pts.length - 1][1] : v + (r() - 0.5) * 2 * noise;
+    });
+  }
+  function frame(b, cols = 6, rows = 4) {
+    let g = '';
+    for (let i = 0; i <= cols; i++) { const x = b[0] + (b[2] - b[0]) * i / cols; g += `<line x1="${x}" y1="${b[1]}" x2="${x}" y2="${b[3]}" stroke="${C.grid}"/>`; }
+    for (let j = 0; j <= rows; j++) { const y = b[1] + (b[3] - b[1]) * j / rows; g += `<line x1="${b[0]}" y1="${y}" x2="${b[2]}" y2="${y}" stroke="${C.grid}"/>`; }
+    return g;
+  }
+  const scaler = (b, lo, hi) => v => b[3] - (v - lo) / (hi - lo) * (b[3] - b[1]);
+  function candles(b, closes, Y, seed) {
+    const r = rng(seed), w = (b[2] - b[0]) / closes.length;
+    let prev = closes[0], g = '';
+    closes.forEach((c, i) => {
+      const o = prev, hi = Math.max(o, c) + r() * 0.5, lo = Math.min(o, c) - r() * 0.5, x = b[0] + w * (i + 0.5), col = c >= o ? C.teal : C.red;
+      g += `<line x1="${x}" y1="${Y(hi)}" x2="${x}" y2="${Y(lo)}" stroke="${col}" stroke-width="1.5"/><rect x="${x - w * 0.32}" y="${Math.min(Y(o), Y(c))}" width="${w * 0.64}" height="${Math.max(1.5, Math.abs(Y(o) - Y(c)))}" fill="${col}"/>`;
+      prev = c;
+    });
+    return g;
+  }
+  const poly = (b, vals, Y, col, wd = 3) => `<polyline fill="none" stroke="${col}" stroke-width="${wd}" stroke-linejoin="round" points="${vals.map((v, i) => `${(b[0] + (b[2] - b[0]) * i / (vals.length - 1)).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')}"/>`;
+  const dash = (b, y, col, label, side = 'start') => `<line x1="${b[0]}" y1="${y}" x2="${b[2]}" y2="${y}" stroke="${col}" stroke-width="2" stroke-dasharray="10 8"/>${T(side === 'start' ? b[0] + 8 : b[2] - 8, y - 8, label, { size: 16, fill: col, anchor: side })}`;
+  const panel = (x, y, w, h, rows, edge = C.grid) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${C.panel}" stroke="${edge}" stroke-width="2"/>` +
+    rows.map(([t, o], i) => T(x + 20, y + 40 + rows.slice(0, i).reduce((a, r) => a + (r[1] && r[1].gap || 34), 0), t, o || {})).join('');
+  const feed = (title, items) => T(36, 52, title, { size: 22, fill: C.dim }) + items.map(([t, h, col], i) =>
+    `${T(36, 110 + i * 74, t, { size: 20, fill: C.dim })}${T(130, 110 + i * 74, h, { size: 25, fill: col || C.ink, sans: true })}<line x1="36" y1="${136 + i * 74}" x2="964" y2="${136 + i * 74}" stroke="${C.grid}"/>`).join('');
+  const header = (sym, name, price, chg, col) => `${T(36, 112, sym, { size: 44, sans: true, weight: 600 })}${T(36 + sym.length * 30 + 22, 108, name, { size: 24, fill: C.dim, sans: true })}${T(36, 156, price, { size: 32, fill: col, sans: true })}${T(36 + price.length * 20 + 20, 154, chg, { size: 20, fill: col })}`;
+  const riskLabel = ctx => ctx.rules ? M.rules.risk.options.find(o => o.v === ctx.rules.risk).label : `Normal`;
+
+  const SCREENS = {
+    'losing-position': {
+      center: () => {
+        const b = [36, 182, 640, 536], closes = path(54, [[0, 52], [0.4, 58.5], [0.52, 58], [1, 41.62]], 4), Y = scaler(b, 39, 60);
+        return header('HLX', 'Halcyon Logistics', '41.62', '−3.8% today', C.red) + frame(b) + candles(b, closes, Y, 9) +
+          dash(b, Y(52), C.dim, 'YOU BOUGHT AT 52.00') + dash(b, Y(47.8), C.amber, 'YOUR LINE 47.80') +
+          panel(668, 182, 300, 354, [['YOU OWN', { size: 17, fill: C.dim }], ['880 shares', { size: 28, sans: true, weight: 600 }], ['Bought at $52.00', { size: 18, fill: C.dim, gap: 30 }], ['Now $41.62', { size: 18, gap: 54 }], ['−$9,140', { size: 46, fill: C.red, sans: true, weight: 600, gap: 40 }], ['Open loss −20%', { size: 18, fill: C.red }]], '#3c2220');
+      },
+      right: () => feed('NEWS · HALCYON', [['20:41', `Halcyon's biggest customer may cancel contract`, C.amber], ['20:12', 'Freight volumes fall for a fourth month'], ['19:30', 'Analyst lowers Halcyon price target'], ['16:01', 'Close: transport stocks lead the decline'], ['14:22', 'Halcyon CFO to speak at conference Tuesday', C.dim]])
+    },
+    'winning-streak': {
+      center: () => {
+        const b = [36, 182, 600, 536], closes = path(46, [[0, 16.6], [0.5, 19.2], [1, 18.4]], 12, 0.35), Y = scaler(b, 14, 22);
+        return header('VLM', 'Vellum Bio', '18.40', '+0.6% today', C.teal) + frame(b) + candles(b, closes, Y, 5) +
+          `<line x1="620" y1="182" x2="620" y2="536" stroke="${C.amber}" stroke-width="2" stroke-dasharray="8 6"/>` + T(620, 176, 'FDA 7:00 AM', { size: 16, fill: C.amber, anchor: 'middle' }) +
+          `<path d="M604 ${Y(18.4)} L640 ${b[1] + 14}" stroke="${C.teal}" stroke-width="2" stroke-dasharray="6 6" fill="none"/><path d="M604 ${Y(18.4)} L640 ${b[3] - 14}" stroke="${C.red}" stroke-width="2" stroke-dasharray="6 6" fill="none"/>` +
+          T(646, b[1] + 20, '+50%?', { size: 16, fill: C.teal }) + T(646, b[3] - 8, '−50%?', { size: 16, fill: C.red }) +
+          panel(716, 182, 252, 354, [['YOU OWN', { size: 17, fill: C.dim }], ['No Vellum', { size: 26, sans: true, weight: 600, gap: 54 }], ['TIP FROM MARCO', { size: 17, fill: C.amber }], ['Buy before 7 am', { size: 22, sans: true, gap: 54 }], ['NORMAL TRADE', { size: 17, fill: C.dim }], ['≈ $10,000', { size: 22, sans: true }]]);
+      },
+      right: () => feed('RECENT TRADES · SEVEN WINS IN A ROW', [['APR 02', 'ARDN  +$1,840', C.teal], ['APR 05', 'GRNT  +$1,210', C.teal], ['APR 09', 'LUMA  +$2,460', C.teal], ['APR 11', 'CELT  +$980', C.teal], ['APR 16', 'FOXR  +$3,120', C.teal], ['APR 19', 'JUNO  +$2,740', C.teal]]) + T(36, 560 - 24, 'Trade size vs January: 2×   ·   3 trades open, all up', { size: 20, fill: C.amber })
+    },
+    'empty-hand': {
+      center: () => {
+        const tile = (x, y, sym, line1, vals, col, extra = '', note = '') => {
+          const b = [x + 16, y + 74, x + 448, y + 196], lo = Math.min(...vals), hi = Math.max(...vals), Y = scaler(b, lo - (hi - lo) * 0.15, hi + (hi - lo) * 0.15);
+          return `<rect x="${x}" y="${y}" width="464" height="232" rx="10" fill="${C.panel}" stroke="${C.grid}" stroke-width="2"/>${T(x + 18, y + 40, sym, { size: 28, sans: true, weight: 600 })}${T(x + 110, y + 38, line1, { size: 18, fill: col })}${poly(b, vals, Y, col)}${extra ? extra(b, Y) : ''}${T(x + 18, y + 220, note, { size: 16, fill: C.dim })}`;
+        };
+        return T(36, 92, `FOUR IDEAS · YOU OWN NOTHING`, { size: 20, fill: C.dim }) +
+          tile(24, 104, 'NOVA', 'Earnings report tomorrow', path(30, [[0, 40], [1, 62]], 3, 1.2), C.teal, null, 'Trading chat: everyone is buying') +
+          tile(512, 104, 'KEEL', '$28.60 · being bought at $30', path(30, [[0, 21], [0.35, 21.5], [0.4, 28.4], [1, 28.6]], 8, 0.15), C.ink, (b, Y) => dash(b, Y(30), C.amber, '$30 when the deal closes'), 'Deal expected to close in two months') +
+          tile(24, 330, 'ARDN', 'Highest price in two years', path(30, [[0, 30], [0.5, 33], [0.85, 33.5], [1, 37]], 5, 0.5), C.teal, (b, Y) => dash(b, Y(34), C.dim, 'old high', 'end'), 'Unusually heavy trading today') +
+          tile(512, 330, 'TSL', '−40% today', path(30, [[0, 50], [0.8, 51], [0.86, 30], [1, 30.5]], 6, 0.6), C.red, null, 'Its auditor quit. Nobody knows why.');
+      },
+      right: () => feed('TRADING CHAT', [['09:41', '“NOVA is going to crush earnings”'], ['09:44', '“Loaded up on NOVA this morning”'], ['09:52', '“If you are not in NOVA, what are you doing”'], ['10:05', '“TSL at -40% has to bounce, right?”'], ['10:11', '“Bought more NOVA”', C.dim]])
+    },
+    'changing-market': {
+      center: () => {
+        const b = [36, 150, 964, 500], vals = path(60, [[0, 100], [0.86, 128], [1, 114]], 21, 1.1), Y = scaler(b, 98, 132);
+        return T(36, 112, 'YOUR METHOD · BUY STRONG STOCKS ON A DIP', { size: 22, fill: C.dim }) + frame(b, 8, 4) + poly(b, vals, Y, C.teal) +
+          dash(b, Y(128), C.dim, 'PEAK', 'end') + dash(b, Y(114), C.amber, '−11% FROM PEAK · NOW', 'end') + dash(b, Y(108.8), C.red, '−15% · NADIA HALVES YOUR LIMITS', 'end') +
+          T(36, 530, '2 years ago', { size: 16, fill: C.dim }) + T(36 + (b[2] - b[0]) * 0.86, 530, '6 weeks ago', { size: 16, fill: C.dim, anchor: 'middle' }) + T(964, 530, 'today', { size: 16, fill: C.dim, anchor: 'end' });
+      },
+      right: () => feed('NEWS · 06:15', [['06:02', 'Regional bank fails overnight', C.amber], ['06:10', 'Market set to open about 3% lower', C.red], ['05:40', 'Rates: highest in fourteen years'], ['6 wks', 'Buying dips has lost money every week', C.dim]])
+    },
+    'final-bet': {
+      center: ctx => {
+        const b = [36, 182, 620, 536], closes = path(50, [[0, 60], [0.6, 74], [0.75, 71], [1, 80]], 33, 0.6), Y = scaler(b, 52, 108);
+        return header('ORDA', 'Orda Systems', '80.00', 'the best setup in two years', C.amber) + frame(b) + candles(b, closes, Y, 2) +
+          `<path d="M608 ${Y(80)} L640 ${Y(104)}" stroke="${C.teal}" stroke-width="2" stroke-dasharray="6 6" fill="none"/><path d="M608 ${Y(80)} L640 ${Y(56)}" stroke="${C.red}" stroke-width="2" stroke-dasharray="6 6" fill="none"/>` +
+          T(646, Y(104) + 6, '+30%', { size: 16, fill: C.teal }) + T(646, Y(56) + 6, '−30%', { size: 16, fill: C.red }) +
+          panel(716, 182, 252, 354, [['YOUR ACCOUNT', { size: 17, fill: C.dim }], [ctx.account != null ? `$${ctx.account}k` : '—', { size: 40, sans: true, weight: 600, gap: 60 }], ['NORMAL TRADE', { size: 17, fill: C.dim }], ['≈ $10,000', { size: 22, sans: true, gap: 54 }], ['LEVERAGE', { size: 17, fill: C.amber }], ['up to 4×', { size: 22, sans: true }]]);
+      },
+      right: ctx => feed('RISK DESK · NADIA', [['Limit', 'Leverage approved up to 4×'], ['Means', 'Borrowed money: gains and losses × 4'], ['Danger', 'At 4×, a 30% fall wipes out the account', C.red], ['Rule', `Yours: ${riskLabel(ctx)} risk on any one decision`, C.amber]])
+    }
+  };
+
   // ───────────────────────────────────────── Staging
   // One desk for all five. The player is the trader, seen over the shoulder.
   const alert = t => ({ screen: t });
   M.scenes = {
     'losing-position': {
       env: 'trading',
+      screens: SCREENS['losing-position'],
       cast: [{ id: 'theo', spot: 'theo', mood: 'neutral', pose: 'pocket', wants: `Nothing from you. He's watched this night happen to a lot of people.` }],
       intro: [
         { cam: 'wide', caption: `8:47 pm. The trading floor is nearly empty.` },
         { cam: 'screens', caption: `On the center screen: the Halcyon shares you bought at $52. They're at $41.62.` },
         { cam: 'note', caption: `Beside the keyboard, in your handwriting: "Original thesis: strong fundamentals. Temporary market weakness."` },
         { cam: 'screens', ...alert(`20:41 · Halcyon's largest customer said to review contract`), caption: `The news isn't about the market anymore. It's about Halcyon.` },
-        { cam: 'sticky', caption: `On the edge of the screen, a sticky note you wrote before you bought: max loss 8%, out below $47.80.` },
+        { cam: 'sticky', caption: `On the edge of the screen, your own rule: max loss 8% per trade. For HLX, that meant selling below $47.80.` },
         { cam: 'wide', caption: `Theo, thirty-one years on this desk, is packing up to go home.` },
         { who: 'theo', mood: 'neutral', say: `Long night?` },
         { you: `(It'll come back. It always comes back.)` },
@@ -600,6 +701,7 @@ window.PP = window.PP || {};
 
     'winning-streak': {
       env: 'trading',
+      screens: SCREENS['winning-streak'],
       cast: [{ id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `For you to still be trading next year.` }],
       intro: [
         { cam: 'wide', caption: `April. Seven winning trades in a row. The desk feels different when you're right.` },
@@ -642,6 +744,7 @@ window.PP = window.PP || {};
 
     'empty-hand': {
       env: 'trading',
+      screens: SCREENS['empty-hand'],
       cast: [{ id: 'theo', spot: 'theo', mood: 'neutral', pose: 'mug', wants: `To trade only when the trade is obvious.` }],
       intro: [
         { cam: 'wide', caption: `A slow Thursday. Four ideas cross your desk before lunch.` },
@@ -685,6 +788,7 @@ window.PP = window.PP || {};
 
     'changing-market': {
       env: 'trading',
+      screens: SCREENS['changing-market'],
       cast: [
         { id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `To keep you inside the wall.` },
         { id: 'theo', spot: 'theo', mood: 'thinking', pose: 'thinking', wants: `To understand what changed before he risks anything.` }
@@ -730,6 +834,7 @@ window.PP = window.PP || {};
 
     'final-bet': {
       env: 'trading',
+      screens: SCREENS['final-bet'],
       cast: [
         { id: 'theo', spot: 'theo', mood: 'neutral', pose: 'pocket', wants: `To see you here next December.` },
         { id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `To approve only what you can survive.` }
@@ -745,7 +850,7 @@ window.PP = window.PP || {};
       options: {
         A: { line: `Everything. With leverage.`, preview: `Ahead of everyone, or gone.`,
           outcomes: [
-            { beats: [{ who: 'nadia', mood: 'awkward', pose: 'tablet' }, { cam: 'screens', ...alert(`+90,000 · best on the floor`), caption: `It works. You'll spend years trying to feel this again.` }] },
+            { beats: [{ who: 'nadia', mood: 'awkward', pose: 'tablet' }, { cam: 'screens', ...alert(`+120,000 · best on the floor`), caption: `It works. You'll spend years trying to feel this again.` }] },
             { beats: [{ who: 'nadia', mood: 'surprised' }, { cam: 'screens', ...alert(`MARGIN CALL · ACCOUNT LIQUIDATED`) }, { who: 'theo', mood: 'neutral', act: 'sigh', caption: `It's over by lunch.` }] }
           ] },
         B: { line: `A quarter of the account.`, preview: `Big enough to matter. Big enough to hurt.`,

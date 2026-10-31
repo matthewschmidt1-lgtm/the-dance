@@ -1004,13 +1004,23 @@ def env_trading():
     boxes('desk-legs', [(-1.22, 0.62, 0, 0.05, 0.05, 0.74), (1.22, 0.62, 0, 0.05, 0.05, 0.74), (-1.22, 1.4, 0, 0.05, 0.05, 0.74), (1.22, 1.4, 0, 0.05, 0.05, 0.74)], mat('#1a1c1f', 0.4, 0.6), 'fg')
     box('modesty', (0, 1.44, 0.2), (2.4, 0.03, 0.5), mat('#2a2622', 0.6), 'fg')
     # Three screens, the side ones turned in.
-    screens = [('screen-left.png', (-0.78, 1.22, 1.13), 22), ('screen-center.png', (0.0, 1.3, 1.13), 0), ('screen-right.png', (0.78, 1.22, 1.13), -22)]
+    # The left screen is baked. The center and right ones are dark glass; the game draws each
+    # challenge's own charts onto them, using the corners exported below.
+    screens = [('screen-left.png', (-0.78, 1.22, 1.13), 22), (None, (0.0, 1.3, 1.13), 0), (None, (0.78, 1.22, 1.13), -22)]
+    quads = {}
     for i, (tex, c, yaw) in enumerate(screens):
         rot = (math.radians(90), 0, math.radians(yaw))
         box(f'bezel{i}', (c[0], c[1] + 0.025, c[2] - 0.22), (0.74, 0.03, 0.44), mat('#0c0d0f', 0.3), 'fg', rot=(0, 0, math.radians(yaw)))
         # Sit the glass just proud of the bezel, along the screen's facing direction.
         n = (math.sin(math.radians(yaw)), -math.cos(math.radians(yaw)))
-        img_plane(f'screen{i}', tex, (c[0] + n[0] * 0.03, c[1] + n[1] * 0.03, c[2]), 0.7, 0.394, rot, 'fg', emit=2.2)
+        sc = (c[0] + n[0] * 0.03, c[1] + n[1] * 0.03, c[2])
+        if tex:
+            img_plane(f'screen{i}', tex, sc, 0.7, 0.394, rot, 'fg', emit=2.2)
+        else:
+            box(f'screen{i}', (sc[0], sc[1], sc[2] - 0.197), (0.7, 0.004, 0.394), mat('#000', 0.08, emit='#0a1416', emit_strength=1.2), 'fg', rot=(0, 0, math.radians(yaw)))
+            cy, sy = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+            corner = lambda u, v: (sc[0] + u * cy + n[0] * 0.004, sc[1] + u * sy + n[1] * 0.004, sc[2] + v)
+            quads['center' if i == 1 else 'right'] = [corner(-0.35, 0.197), corner(0.35, 0.197), corner(0.35, -0.197), corner(-0.35, -0.197)]
         box(f'stand{i}', (c[0], c[1] + 0.07, 0.78), (0.06, 0.04, 0.2), mat('#1a1c1f', 0.4, 0.6), 'fg')
         box(f'foot{i}', (c[0], c[1] + 0.05, 0.78), (0.24, 0.16, 0.012), mat('#1a1c1f', 0.4, 0.6), 'fg')
     # The risk limit, stuck to the left screen's bezel.
@@ -1041,6 +1051,7 @@ def env_trading():
             'sticky': point((-0.47, 1.19, 0.99), 3.6),
             'window': point((0.0, 8.6, 1.6), 1.6),
         },
+        'quads': {k: [point(c) for c in q] for k, q in quads.items()},
     }
 
 

@@ -119,7 +119,7 @@ def left_screen():
         y = 100 + i * 60
         ch = r.uniform(-4, 3) if n != 'HLX' else -3.8
         col = TEAL if ch >= 0 else RED
-        d.text((48, y), n, font=font(MONO, 34), fill=INK if n != 'HLX' else AMBER)
+        d.text((48, y), n, font=font(MONO, 34), fill=INK)
         d.text((260, y), f'{r.uniform(12, 240):7.2f}', font=font(MONO, 34), fill=INK)
         d.text((520, y), f'{ch:+.1f}%', font=font(MONO, 34), fill=col)
         spark = series(24, i + 20, lambda t, c=ch: c / 12)
@@ -201,9 +201,9 @@ def main():
     ], HAND, ruled=True, seed=2).save(os.path.join(OUT, 'note-thesis.png'))
     paper((600, 600), (240, 214, 120), [
         ('MAX LOSS', 70, None),
-        ('-8%', 110, (150, 40, 34)),
-        ('OUT BELOW', 58, None),
-        ('47.80', 80, None),
+        ('PER TRADE', 58, None),
+        ('-8%', 120, (150, 40, 34)),
+        ('Know your exit', 50, None),
     ], NOTE, ink=(40, 36, 30), seed=3).save(os.path.join(OUT, 'sticky-risk.png'))
     print('textures ->', OUT)
 

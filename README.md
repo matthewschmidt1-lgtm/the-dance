@@ -42,12 +42,12 @@ A separate section, inspired by Jack Schwager's *Market Wizards*: lessons from t
 - **After each decision**: the risk chart (what every move could cost or earn), what Theo or Nadia saw, and the same decision in everyday life.
 - **The review** reveals the five principles underneath (protect your downside, find your edge, follow the evidence, master yourself, stay in the game), scored from what you actually did.
 
-The after-hours trading floor is rendered in Blender. `tools/make_trading_textures.py` draws its screens and handwritten notes first.
+The after-hours trading floor is rendered in Blender (`tools/make_trading_textures.py` draws the baked screen and handwritten notes first). The center and right monitors are drawn live in SVG on top of the render, so each challenge shows its own chart and news, and notifications appear across the top of the center screen.
 
 ## How each scene plays
 
 1. **Establishing shot** of a lit 3D set, with a title card.
-2. **The situation plays out**: typed dialogue, camera push-ins on whoever is speaking, characters changing expression (11 moods), posture (15 poses) and gesturing (nod, head shake, flinch, sigh, lean, glance, walk).
+2. **The situation plays out**: every line (narration, dialogue, your thoughts, and what a screen says) appears in one script box under the stage, typed out, camera push-ins on whoever is speaking, characters changing expression (11 moods), posture (15 poses) and gesturing (nod, head shake, flinch, sigh, lean, glance, walk).
 3. **Voices and speed**: characters, your lines and a narrator are spoken with the device's built-in voices, each character cast to a distinct natural voice. The speaker button turns voices off; the speed button cycles 0.75× to 1.5× and paces speech, typing and timing together. Both are remembered.
 4. **Slow Motion Strategy** (Slow-mo button, or press `P`): the scene freezes and desaturates over a strategy grid, numbered pins mark each person, and a panel shows what each wants, what you know, what's uncertain, details you can investigate, and where each option might lead. Resume, or replay from the start.
 5. **You choose a move.**

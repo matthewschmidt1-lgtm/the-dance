@@ -161,6 +161,15 @@ body.on-home .site-nav a:focus-visible { outline-color: var(--cine-accent); }
 .sbtn svg { width: 11px; height: 11px; fill: currentColor; }
 .sbtn:hover { background: rgba(12,14,18,.85); }
 .sbtn[aria-pressed="true"] { background: var(--cine-accent); color: #06201f; border-color: transparent; }
+.stage-ctl-left { right: auto; left: max(10px, 1.2%); }
+.stage.is-frozen .stage-ctl-left { display: none; }
+.sbtn-icon { width: 36px; padding: 0; justify-content: center; }
+.sbtn-icon svg { width: 16px; height: 16px; }
+.sbtn-icon .sv-off { display: none; }
+.sbtn-icon[aria-pressed="false"] .sv-on { display: none; }
+.sbtn-icon[aria-pressed="false"] .sv-off { display: inline; }
+.sbtn-icon[aria-pressed="true"] { background: rgba(12,14,18,.62); color: #fff; border-color: rgba(255,255,255,.22); }
+.sbtn-pace { min-width: 52px; justify-content: center; font-variant-numeric: tabular-nums; }
 
 .freeze-badge { position: absolute; top: max(12px, 1.6%); left: max(12px, 1.4%); z-index: 5; display: inline-flex; align-items: center; gap: 8px; padding: 6px 11px; border-radius: 999px; background: rgba(12,14,18,.7); color: var(--cine-accent); font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .1em; text-transform: uppercase; opacity: 0; transition: opacity .3s; pointer-events: none; }
 .freeze-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cine-accent); box-shadow: 0 0 0 0 rgba(102,212,204,.6); animation: pulse 1.6s infinite; }

@@ -27,11 +27,12 @@ Episode 2 (*The Deal*: contractors and job offers) has its scenario content writ
 
 1. **Establishing shot** of a lit 3D set, with a title card.
 2. **The situation plays out**: typed dialogue, camera push-ins on whoever is speaking, characters changing expression (11 moods), posture (15 poses) and gesturing (nod, head shake, flinch, sigh, lean, glance, walk).
-3. **Slow Motion Strategy** (Slow-mo button, or press `P`): the scene freezes and desaturates over a strategy grid, numbered pins mark each person, and a panel shows what each wants, what you know, what's uncertain, details you can investigate, and where each option might lead. Resume, or replay from the start.
-4. **You choose a move.**
-5. **The room reacts** in a short animated sequence. Results are partly random.
-6. **Analysis in four tabs**: *Outcome* (decision grade vs. result, now vs. later, trust changes), *The game* (payoff matrix with your cell highlighted, decision tree of every move's possible results, what reading the room would have shown), *The people* (relationship map, leverage scale, incentives), *The lens* (the thinkers' concepts, every move graded, the lesson).
-7. **Replay with another strategy**, or move on.
+3. **Voices and speed**: characters, your lines and a narrator are spoken with the device's built-in voices, each character cast to a distinct natural voice. The speaker button turns voices off; the speed button cycles 0.75× to 1.5× and paces speech, typing and timing together. Both are remembered.
+4. **Slow Motion Strategy** (Slow-mo button, or press `P`): the scene freezes and desaturates over a strategy grid, numbered pins mark each person, and a panel shows what each wants, what you know, what's uncertain, details you can investigate, and where each option might lead. Resume, or replay from the start.
+5. **You choose a move.**
+6. **The room reacts** in a short animated sequence. Results are partly random.
+7. **Analysis in four tabs**: *Outcome* (decision grade vs. result, now vs. later, trust changes), *The game* (payoff matrix with your cell highlighted, decision tree of every move's possible results, what reading the room would have shown), *The people* (relationship map, leverage scale, incentives), *The lens* (the thinkers' concepts, every move graded, the lesson).
+8. **Replay with another strategy**, or move on.
 
 Moves are graded with chess annotations (`!!` `!` `!?` `?!` `?`) on decision quality, never on outcome. The profile tracks ten measures, a strategic rating, your relationship network, and Annie Duke's decision-vs-result grid.
 

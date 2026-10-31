@@ -38,6 +38,10 @@ PP.Stage = class {
         ${this.ambient ? '' : `<div class="stage-ctl">
           <button type="button" class="sbtn" data-st="freeze" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg><span>Slow-mo</span></button>
           <button type="button" class="sbtn" data-st="skip"><span>Skip</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2l7 6-7 6zM8 2l7 6-7 6z"/></svg></button>
+        </div>
+        <div class="stage-ctl stage-ctl-left">
+          ${PP.voice.supported ? `<button type="button" class="sbtn sbtn-icon" data-st="voice" aria-pressed="${PP.voice.on}" aria-label="Voices"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10l-4-3H2z"/><path class="sv-on" d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.5a6 6 0 0 1 0 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path class="sv-off" d="M11 5.5l4 5M15 5.5l-4 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>` : ''}
+          <button type="button" class="sbtn sbtn-pace" data-st="pace" aria-label="Speed ${PP.voice.pace} times. Change speed">${PP.voice.pace}×</button>
         </div>`}
       </div>
       ${this.ambient ? '' : `<div class="dialogue" hidden>
@@ -65,10 +69,19 @@ PP.Stage = class {
       this.dialogue.addEventListener('click', () => { if (!this.paused) this.skip(); });
       this.root.querySelector('[data-st="freeze"]').addEventListener('click', () => this.paused ? this.resume() : this.freeze());
       this.root.querySelector('[data-st="skip"]').addEventListener('click', () => this.skipAll());
+      this.root.querySelector('[data-st="voice"]')?.addEventListener('click', e => {
+        PP.voice.setOn(!PP.voice.on);
+        e.currentTarget.setAttribute('aria-pressed', String(PP.voice.on));
+      });
+      this.root.querySelector('[data-st="pace"]').addEventListener('click', e => {
+        const p = PP.voice.cyclePace();
+        e.currentTarget.textContent = `${p}×`;
+        e.currentTarget.setAttribute('aria-label', `Speed ${p} times. Change speed`);
+      });
     }
   }
 
-  destroy() { this.alive = false; cancelAnimationFrame(this.raf); this.root.classList.remove('is-running'); if (this.waiter) this.waiter.res(); }
+  destroy() { this.alive = false; cancelAnimationFrame(this.raf); PP.voice.stop(); this.root.classList.remove('is-running'); if (this.waiter) this.waiter.res(); }
 
   // ───────── clock
 
@@ -80,24 +93,35 @@ PP.Stage = class {
     if (w && !this.paused) {
       w.elapsed += dt;
       if (w.onTick) w.onTick(w.elapsed);
-      if (this.fast || w.elapsed >= w.ms) { this.waiter = null; w.res(); }
+      const holding = w.hold && w.hold() && w.elapsed < w.ms + 20000;
+      if (this.fast || (w.elapsed >= w.ms && !holding)) { this.waiter = null; w.res(); }
     }
     this.raf = requestAnimationFrame(tt => this.tick(tt));
   }
 
-  wait(ms, onTick, typeMs = 0) {
+  wait(ms, onTick, typeMs = 0, hold = null) {
     if (this.fast) return Promise.resolve();
-    return new Promise(res => { this.waiter = { ms, elapsed: 0, res, onTick, typeMs }; });
+    return new Promise(res => { this.waiter = { ms, elapsed: 0, res, onTick, typeMs, hold }; });
+  }
+
+  // Scene timing follows the chosen speed.
+  paced(ms) { return ms / PP.voice.pace; }
+
+  // Speak a line if voices are on; returns a hold() that stays true until the voice finishes.
+  voiceLine(id, text) {
+    let endAt = 0;
+    let speaking = PP.voice.speak(id, text, () => { speaking = false; endAt = performance.now(); });
+    return () => speaking || (endAt && performance.now() - endAt < 250);
   }
 
   skip() {
     const w = this.waiter;
     if (!w) return;
     if (w.typeMs && w.elapsed < w.typeMs) { w.elapsed = w.typeMs; if (w.onTick) w.onTick(w.elapsed); }
-    else { this.waiter = null; w.res(); }
+    else { PP.voice.stop(); this.waiter = null; w.res(); }
   }
 
-  skipAll() { this.fast = true; this.skip(); }
+  skipAll() { this.fast = true; PP.voice.stop(); this.skip(); }
 
   // ───────── camera
 
@@ -204,15 +228,17 @@ PP.Stage = class {
     d.querySelector('.dlg-live').textContent = `${name}: ${text}`;
     const a = speakerId && this.actors[speakerId];
     if (a) a.el.classList.add('speaking');
-    const typeMs = this.reduced ? 0 : Math.min(text.length * 24, 2600);
-    const total = typeMs + Math.max(1500, text.length * 42);
+    const typeMs = this.reduced ? 0 : this.paced(Math.min(text.length * 24, 2600));
+    const total = typeMs + this.paced(Math.max(1500, text.length * 42));
     out.textContent = this.reduced ? text : '';
     d.classList.remove('is-done');
+    const talking = this.voiceLine(isYou ? 'you' : speakerId, text);
     await this.wait(total, el => {
       const n = typeMs ? Math.min(text.length, Math.ceil((el / typeMs) * text.length)) : text.length;
       if (out.textContent.length !== n) out.textContent = text.slice(0, n);
-      if (n >= text.length) { d.classList.add('is-done'); if (a) a.el.classList.remove('speaking'); }
-    }, typeMs);
+      // The mouth keeps moving while the voice is still speaking.
+      if (n >= text.length) { d.classList.add('is-done'); if (a && !talking()) a.el.classList.remove('speaking'); }
+    }, typeMs, talking);
     out.textContent = text;
     if (a) a.el.classList.remove('speaking');
   }
@@ -235,9 +261,10 @@ PP.Stage = class {
     } else if (b.caption) {
       if (this.dialogue) this.dialogue.hidden = true;
       this.showCaption(b.caption);
-      await this.wait(Math.max(1900, b.caption.length * 48));
+      const narrating = this.fast ? null : this.voiceLine('narrator', b.caption);
+      await this.wait(this.paced(Math.max(1900, b.caption.length * 48)), null, 0, narrating);
     } else {
-      await this.wait(b.wait || (b.move ? 1700 : 1100));
+      await this.wait(this.paced(b.wait || (b.move ? 1700 : 1100)));
     }
   }
 
@@ -249,7 +276,7 @@ PP.Stage = class {
       const t = this.root.querySelector('.stage-title');
       t.innerHTML = title;
       t.classList.add('is-on');
-      await this.wait(1800);
+      await this.wait(this.paced(1800));
       t.classList.remove('is-on');
     }
     for (const b of beats) {
@@ -287,6 +314,7 @@ PP.Stage = class {
     this.savedCam = this.cam;
     this.camera('wide');
     this.stage.classList.add('is-frozen');
+    PP.voice.pause();
     this.root.querySelector('[data-st="freeze"]')?.setAttribute('aria-pressed', 'true');
     setTimeout(() => this.placePins(), this.reduced ? 0 : 1250);
     this.onFreeze();
@@ -296,6 +324,7 @@ PP.Stage = class {
     if (!this.paused) return;
     this.paused = false;
     this.stage.classList.remove('is-frozen');
+    PP.voice.resume();
     this.root.querySelector('[data-st="freeze"]')?.setAttribute('aria-pressed', 'false');
     this.root.querySelector('.pins').innerHTML = '';
     if (this.savedCam) { this.cam = this.savedCam; this.applyCam(this.cam); }

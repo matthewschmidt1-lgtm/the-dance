@@ -313,7 +313,7 @@
       <section class="mk-band" aria-labelledby="mk-band-h">
         <div class="mk-band-art" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
         <div class="wrap mk-band-in">
-          <p class="eyebrow eyebrow-on-dark">A new section · Inspired by Market Wizards</p>
+          <p class="eyebrow eyebrow-on-dark">Playing the Odds · Inspired by Market Wizards</p>
           <h2 id="mk-band-h">The Trader's Mind</h2>
           <p class="mk-band-sub">You don't have to predict the future. You have to survive it.</p>
           <ul class="mk-band-tests">${TRACKS.market.list.map(sc => `<li><strong>${sc.title}</strong><span>${sc.tests}</span></li>`).join('')}</ul>

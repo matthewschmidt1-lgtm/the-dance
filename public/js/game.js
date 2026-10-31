@@ -209,12 +209,14 @@
     const cards = thinkerOrder.map(k => {
       const t = thinkers[k];
       const used = LIST.filter(s => s.lens[0] === k).map(s => s.title);
+      const also = LIST.filter(s => s.lens.slice(1).includes(k)).map(s => s.title);
       return `<article class="thinker ${t.grandfather ? 'is-grand' : ''}">
         <header class="thinker-head"><p class="thinker-field">${t.field}</p><h3>${t.name}</h3>${t.grandfather ? `<p class="thinker-badge">Intellectual grandfather of POWER PLAY</p>` : ''}</header>
         <p class="thinker-teaches">${t.short} teaches you ${t.teaches}.</p>
         <p>${t.idea}</p>
         <p class="thinker-ask"><span>The question to ask</span>${t.ask}</p>
         ${used.length ? `<p class="thinker-used">Main lens in: ${used.join(', ')}</p>` : ''}
+        ${also.length ? `<p class="thinker-used">Also in: ${also.join(', ')}</p>` : ''}
       </article>`;
     }).join('');
     return `<section class="wrap page">
@@ -496,7 +498,7 @@
           <h2 class="block-h block-h-gap">Lenses you've played through</h2><ul class="lenses">${lensesMet.map(k => `<li>${thinkers[k].name}</li>`).join('')}</ul></section>
       </div>
       <div class="page-actions">${done ? '' : `<button class="btn btn-primary" data-act="play">Continue · Scene ${n + 1}</button>`}
-        <button class="btn btn-ghost ${confirmReset ? 'is-danger' : ''}" data-act="reset">${confirmReset ? 'Tap again to erase all progress' : 'Start over'}</button></div>
+        <button class="${done && !confirmReset ? 'btn btn-primary' : 'btn btn-ghost'} ${confirmReset ? 'is-danger' : ''}" data-act="reset">${confirmReset ? 'Tap again to erase this run' : done ? 'Play Episode 1 again' : 'Start over'}</button></div>
     </section>`;
   }
 
@@ -546,7 +548,13 @@
     if (clue) { const i = Number(clue.dataset.clue); if (!draft.clues.includes(i)) draft.clues.push(i); renderPanel(); return; }
 
     const tab = e.target.closest('[data-tab]');
-    if (tab) { ui.tab = tab.dataset.tab; renderPanel(); document.getElementById(`tab-${ui.tab}`)?.focus(); return; }
+    if (tab) {
+      const before = tab.getBoundingClientRect().top;
+      ui.tab = tab.dataset.tab; renderPanel();
+      const now = document.getElementById(`tab-${ui.tab}`);
+      if (now) { window.scrollBy(0, now.getBoundingClientRect().top - before); now.focus({ preventScroll: true }); }
+      return;
+    }
 
     const act = e.target.closest('[data-act]');
     if (!act) return;
@@ -563,7 +571,7 @@
       case 'next': draft = { selected: null, clues: [] }; ui.phase = 'intro'; render(); window.scrollTo({ top: 0 }); break;
       case 'takeback': {
         const last = history.pop(); save();
-        draft = { selected: last.key, clues: last.clues.slice() };
+        draft = { selected: null, clues: last.clues.slice() };
         ui.phase = 'decide';
         app.innerHTML = viewPlay();
         toDecision();
@@ -572,7 +580,7 @@
       }
       case 'reset':
         if (!confirmReset) { confirmReset = true; render(); app.querySelector('[data-act="reset"]').focus(); return; }
-        confirmReset = false; history = []; draft = { selected: null, clues: [] }; save(); go('home');
+        confirmReset = false; history = []; draft = { selected: null, clues: [] }; save(); ui.phase = 'intro'; go('play');
         break;
     }
   });

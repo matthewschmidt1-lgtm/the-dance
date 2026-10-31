@@ -101,8 +101,21 @@ PP.Stage = class {
 
   // ───────── camera
 
+  // The part of the 1600x900 world the stage shows at rest (phones crop the sides).
+  visible() {
+    const r = this.stage.getBoundingClientRect();
+    const aspect = r.width && r.height ? r.width / r.height : 16 / 9;
+    return { w: Math.min(1600, 900 * aspect), h: Math.min(900, 1600 / aspect) };
+  }
+
   focusOf(target) {
-    if (!target || target === 'wide') return { x: 800, y: 450, s: 1 };
+    if (!target || target === 'wide') {
+      const v = this.visible();
+      if (v.w >= 1590) return { x: 800, y: 450, s: 1 };
+      const xs = Object.values(this.actors).map(a => a.pos.x).filter(x => x > 0 && x < 1600);
+      const cx = xs.length ? (Math.min(...xs) + Math.max(...xs)) / 2 : 800;
+      return { x: cx, y: 450, s: 1 };
+    }
     if (this.env.cams[target]) return this.env.cams[target];
     const a = this.actors[target];
     if (a) {
@@ -116,9 +129,11 @@ PP.Stage = class {
 
   applyCam(c, instant) {
     const s = c.s;
+    const v = this.visible();
     let tx = 800 - c.x * s, ty = 450 - c.y * s;
-    tx = Math.min(0, Math.max(1600 - 1600 * s, tx));
-    ty = Math.min(0, Math.max(900 - 900 * s, ty));
+    // Keep the scaled world covering the visible window, not the full frame.
+    tx = Math.min((1600 - v.w) / 2, Math.max((1600 + v.w) / 2 - 1600 * s, tx));
+    ty = Math.min((900 - v.h) / 2, Math.max((900 + v.h) / 2 - 900 * s, ty));
     if (instant || this.reduced || this.fast) this.world.style.transition = 'none';
     else this.world.style.transition = '';
     this.world.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
@@ -229,6 +244,7 @@ PP.Stage = class {
   async run(beats, { title } = {}) {
     this.fast = false;
     this.stage.classList.add('is-playing');
+    this.root.classList.add('is-running');
     if (title && !this.reduced) {
       const t = this.root.querySelector('.stage-title');
       t.innerHTML = title;
@@ -244,6 +260,7 @@ PP.Stage = class {
     this.hideCaption();
     if (this.dialogue) this.dialogue.hidden = true;
     this.stage.classList.remove('is-playing');
+    this.root.classList.remove('is-running');
   }
 
   // Apply every state change in a list of beats instantly (no camera, no text).

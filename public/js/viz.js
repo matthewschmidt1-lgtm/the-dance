@@ -21,7 +21,7 @@ PP.viz = (function () {
       </li>`;
     }).join('');
     return `<div class="tree">
-      <div class="tree-root"><span>You</span></div>
+      <div class="tree-root"><span>Your moves</span></div>
       <ol class="tree-rows">${rows}</ol>
       <p class="viz-note">Each bar is one move. Its segments show how often that move goes well, mixed or badly. Your move and result are outlined. A strong move can still land in a bad segment.</p>
     </div>`;
@@ -45,12 +45,12 @@ PP.viz = (function () {
 
   // People around you, edges colored by trust. `deltas` pulse the edges that just changed.
   function relMap(nodes, links = [], deltas = {}) {
-    const W = 440, H = 350, cx = W / 2, cy = H / 2 - 4;
+    const W = 560, H = 360, cx = W / 2, cy = H / 2 - 4;
     const n = nodes.length;
     const pos = {};
     nodes.forEach((p, i) => {
       const a = -Math.PI / 2 + (i / n) * Math.PI * 2 + (n === 2 ? Math.PI / 2 : 0);
-      pos[p.id] = { x: cx + Math.cos(a) * 158, y: cy + Math.sin(a) * 118 };
+      pos[p.id] = { x: cx + Math.cos(a) * 185, y: cy + Math.sin(a) * 118 };
     });
     const trustColor = v => v > 0 ? 'var(--good)' : v < 0 ? 'var(--bad)' : 'var(--muted)';
     const word = v => v >= 3 ? 'Trusting' : v >= 1 ? 'Warm' : v === 0 ? 'Neutral' : v >= -2 ? 'Wary' : 'Strained';
@@ -61,20 +61,22 @@ PP.viz = (function () {
     }).join('');
     const side = links.filter(([a, b]) => pos[a] && pos[b]).map(([a, b, label]) => {
       const p = pos[a], q = pos[b];
-      const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
-      return `<line x1="${p.x.toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${q.x.toFixed(1)}" y2="${q.y.toFixed(1)}" class="rm-link"/><text x="${mx.toFixed(1)}" y="${(my - 6).toFixed(1)}" class="rm-link-t" text-anchor="middle">${label}</text>`;
+      // Label sits a third of the way along, nudged off the line, clear of both nodes' text.
+      const mx = p.x + (q.x - p.x) * 0.5, my = p.y + (q.y - p.y) * 0.5;
+      const len = Math.hypot(q.x - p.x, q.y - p.y) || 1, ox = -(q.y - p.y) / len * 12, oy = (q.x - p.x) / len * 12;
+      return `<line x1="${p.x.toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${q.x.toFixed(1)}" y2="${q.y.toFixed(1)}" class="rm-link"/><text x="${(mx + ox).toFixed(1)}" y="${(my + oy + 4).toFixed(1)}" class="rm-link-t rm-halo" text-anchor="middle">${label}</text>`;
     }).join('');
     const dots = nodes.map(p => {
       const q = pos[p.id];
       const d = deltas[p.id];
       return `<g class="rm-node" transform="translate(${q.x.toFixed(1)},${q.y.toFixed(1)})">
         <circle r="24" class="rm-dot"/><text class="rm-init" text-anchor="middle" dy="5">${(p.short || p.name)[0]}</text>
-        <text class="rm-name" text-anchor="middle" y="40">${p.short || p.name}</text>
-        <text class="rm-state" text-anchor="middle" y="54" fill="${trustColor(p.trust || 0)}">${p.recurring ? word(p.trust || 0) : (p.role || '')}${d ? (d > 0 ? ' ▲' : ' ▼') : ''}</text>
+        <text class="rm-name rm-halo" text-anchor="middle" y="41">${p.short || p.name}</text>
+        <text class="rm-state rm-halo" text-anchor="middle" y="56" fill="${trustColor(p.trust || 0)}">${p.recurring ? word(p.trust || 0) : (p.role || '')}${d ? (d > 0 ? ' ▲' : ' ▼') : ''}</text>
       </g>`;
     }).join('');
     return `<svg class="relmap" viewBox="0 0 ${W} ${H + 20}" role="img" aria-label="Relationship map">
-      ${side}${edges}
+      ${edges}${side}
       <g transform="translate(${cx},${cy})"><circle r="30" class="rm-you"/><text class="rm-you-t" text-anchor="middle" dy="5">You</text></g>
       ${dots}
     </svg>`;
@@ -98,7 +100,7 @@ PP.viz = (function () {
         <div><h4>Your leverage</h4><ul>${l.you.map(x => `<li>${x}</li>`).join('')}</ul></div>
         <div><h4>Their leverage</h4><ul>${l.them.map(x => `<li>${x}</li>`).join('')}</ul></div>
       </div>
-      <p class="viz-note">${l.tilt > 2 ? `The other side held more leverage here. Strategy mattered more than force.` : l.tilt < -2 ? `You held more leverage than it felt like in the moment.` : `Leverage was roughly even. The relationship decided most of it.`}</p>
+      <p class="viz-note">${l.tilt >= 4 ? `The other side held more leverage here. Strategy mattered more than force.` : l.tilt >= 1 ? `The other side held slightly more leverage. Goodwill could close the gap.` : l.tilt <= -4 ? `You held more leverage than it felt like in the moment.` : l.tilt <= -1 ? `You held slightly more leverage. Using it gently was the point.` : `Leverage was even. The relationship decided most of it.`}</p>
     </div>`;
   }
 

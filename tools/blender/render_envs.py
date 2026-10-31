@@ -428,11 +428,11 @@ def env_checkout():
     camera((0.85, -2.9, 1.6), (0.85, 4, 1.34), 28)
     return {
         'spots': {
-            'maya': spot((0.05, 1.85, 0)), 'dev': spot((-4.95, 9.2, 0)), 'dev_near': spot((-0.95, 1.95, 0)),
+            'maya': spot((0.05, 1.85, 0)), 'dev': spot((-1.6, 5.4, 0)), 'dev_near': spot((-0.95, 1.95, 0)),
             'sigh': spot((2.15, -0.3, 0)), 'shopper1': spot((4.4, -0.2, 0)), 'shopper2': spot((5.4, 0.35, 0)),
         },
-        'cams': {'register': point((2.05, 0.97, 1.30), 2.8), 'belt': point((-1.2, 1.1, 1.05), 2.2)},
-        'points': {'reg': point((2.05, 0.97, 1.30)), 'reg_w': round(project((2.27, 0.97, 1.3))[0] - project((1.83, 0.97, 1.3))[0], 1)},
+        'cams': {'register': point((2.05, 0.97, 1.42), 2.8), 'belt': point((-1.2, 1.1, 1.05), 2.2)},
+        'points': {'reg': point((2.05, 0.97, 1.42)), 'reg_w': round(project((2.27, 0.97, 1.42))[0] - project((1.83, 0.97, 1.42))[0], 1)},
     }
 
 

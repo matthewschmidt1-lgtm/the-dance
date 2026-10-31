@@ -527,8 +527,8 @@ PP.art = (function () {
     let far = '', midX = '', fgX = '';
     if (name === 'checkout' && d.points && d.points.reg) {
       const { x, y } = d.points.reg, w = d.points.reg_w || 80;
-      fgX = `<text x="${x - w * 0.42}" y="${y - w * 0.12}" font-size="${(w * 0.075).toFixed(1)}" font-family="JetBrains Mono, monospace" fill="#7cffb0" opacity=".75">OLIVE OIL 1L</text>
-        <text class="reg-price" x="${x + w * 0.42}" y="${y + w * 0.17}" font-size="${(w * 0.2).toFixed(1)}" font-family="JetBrains Mono, monospace" font-weight="600" text-anchor="end" fill="#7cffb0">$11.99</text>`;
+      fgX = `<text x="${x - w * 0.42}" y="${y - w * 0.15}" font-size="${(w * 0.075).toFixed(1)}" font-family="JetBrains Mono, monospace" fill="#7cffb0" opacity=".75">OLIVE OIL 1L</text>
+        <text class="reg-price" x="${x + w * 0.42}" y="${y + w * 0.12}" font-size="${(w * 0.2).toFixed(1)}" font-family="JetBrains Mono, monospace" font-weight="600" text-anchor="end" fill="#7cffb0">$11.99</text>`;
     }
     if (name === 'yard' && d.points && d.points.dog) {
       const ppm = d.points.dog.s * 560 / 1.72;

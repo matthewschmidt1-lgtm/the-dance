@@ -41,6 +41,7 @@
   let history = load();
   let draft = { selected: null, clues: [] };
   let confirmReset = false;
+  let confirmScene = -1; // index of a played scene awaiting a second tap to replay
   let stage = null;
   const ui = { view: 'home', phase: 'intro', frozen: false, tab: 'outcome', runId: 0 };
 
@@ -128,7 +129,18 @@
           <p>${p.theme}</p>
           <ul class="place-scenes">${p.scenes.map(id => {
             const i = LIST.findIndex(s => s.id === id), m = d.moves[i];
-            return `<li><span class="ps-n">${i + 1}</span>${LIST[i].title}${m ? `<span class="ps-g g${m.opt.q}">${grades[m.opt.q].glyph}</span>` : ''}</li>`;
+            // Scenes build on earlier choices, so: replay what you've played, start what's next, the rest unlock in order.
+            if (i < n) {
+              const asking = confirmScene === i;
+              return `<li><button type="button" class="ps-btn ${asking ? 'is-asking' : ''}" data-act="scene" data-i="${i}">
+                <span class="ps-n">${i + 1}</span><span class="ps-title">${asking ? `Replay ${LIST[i].title}?` : LIST[i].title}</span>
+                ${asking ? `<span class="ps-note">${i < n - 1 ? 'Tap again. Later scenes reset.' : 'Tap again to replay.'}</span>` : `<span class="ps-g g${m.opt.q}" title="${grades[m.opt.q].name}">${grades[m.opt.q].glyph}</span><span class="ps-tag">Replay</span>`}
+              </button></li>`;
+            }
+            if (i === n) {
+              return `<li><button type="button" class="ps-btn is-next" data-act="scene" data-i="${i}"><span class="ps-n">${i + 1}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-tag ps-tag-next">Up next</span></button></li>`;
+            }
+            return `<li><span class="ps-btn is-locked" aria-disabled="true"><span class="ps-n">${i + 1}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-lock"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Unlocks after Scene ${i}</span></span></li>`;
           }).join('')}</ul>
         </div>
       </article>`;
@@ -596,6 +608,7 @@
     if (!act) return;
     const a = act.dataset.act;
     if (a !== 'reset') confirmReset = false;
+    if (a !== 'scene') confirmScene = -1;
     switch (a) {
       case 'play': ui.phase = 'intro'; go('play'); break;
       case 'bench': go('bench'); break;
@@ -612,6 +625,18 @@
         app.innerHTML = viewPlay();
         toDecision();
         document.getElementById('stage-mount').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+      case 'scene': {
+        const i = Number(act.dataset.i);
+        if (i < history.length && confirmScene !== i) {
+          confirmScene = i; render();
+          app.querySelector(`[data-act="scene"][data-i="${i}"]`)?.focus({ preventScroll: true });
+          return;
+        }
+        confirmScene = -1;
+        if (i < history.length) { history = history.slice(0, i); save(); }
+        draft = { selected: null, clues: [] }; ui.phase = 'intro'; go('play');
         break;
       }
       case 'reset':

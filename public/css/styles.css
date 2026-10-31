@@ -293,10 +293,27 @@ body.on-home .site-nav a:focus-visible { outline-color: var(--cine-accent); }
 .place-copy { padding: 18px 20px 20px; display: grid; gap: 8px; align-content: start; }
 .place-copy h3 { font-size: var(--t-xl); font-weight: 780; font-stretch: 106%; }
 .place-copy > p { color: var(--muted); font-size: var(--t-sm); }
-.place-scenes { display: grid; gap: 6px; margin-top: 6px; font-size: var(--t-sm); }
-.place-scenes li { display: flex; align-items: center; gap: 10px; }
+.place-scenes { display: grid; gap: 4px; margin-top: 8px; font-size: var(--t-sm); }
+.place-scenes li { display: flex; }
+.ps-btn { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 44px; padding: 6px 10px 6px 6px; margin-inline: -6px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; transition: background .15s; }
+button.ps-btn:hover { background: var(--accent-soft); }
+.ps-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.ps-title { font-weight: 620; }
+.ps-tag { margin-left: auto; font-size: .75rem; font-weight: 650; color: var(--accent); }
+.ps-tag::after { content: " →"; }
+.ps-tag-next { padding: 3px 9px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); }
+.ps-tag-next::after { content: ""; }
+.ps-btn.is-next .ps-n { background: var(--accent); color: var(--accent-ink); }
+.ps-btn.is-asking { background: var(--mixed-soft); }
+.ps-btn.is-asking .ps-title { color: var(--mixed); }
+.ps-note { margin-left: auto; font-size: .75rem; color: var(--mixed); }
+.ps-btn.is-locked { cursor: default; color: var(--muted); }
+.ps-btn.is-locked .ps-title { font-weight: 500; }
+.ps-lock { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font-size: .75rem; }
+.ps-lock svg { width: 12px; height: 12px; fill: currentColor; }
 .ps-n { font-family: var(--f-mono); font-size: .6875rem; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 4px; background: var(--bg); color: var(--muted); }
 .ps-g { margin-left: auto; font-family: var(--f-mono); font-weight: 600; }
+.ps-g + .ps-tag { margin-left: 0; }
 
 .band { background: var(--surface); border-block: 1px solid var(--line); padding-block: clamp(40px, 7vw, 80px); }
 .slowmo { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(24px, 5vw, 64px); align-items: center; }

@@ -234,7 +234,7 @@ pip = mat('pip', '#14171a', 0.4)
 
 
 def dice(name, c, rz, top, front):
-    s = 0.34
+    s = 0.39
     ob = box(name, c, (s, s, s), die, bevel=0.05)
     ob.rotation_euler = (0, 0, rz)
     layouts = {1: [(0, 0)], 2: [(-1, -1), (1, 1)], 3: [(-1, -1), (0, 0), (1, 1)], 4: [(-1, -1), (1, 1), (-1, 1), (1, -1)],
@@ -249,9 +249,9 @@ def dice(name, c, rz, top, front):
     return ob
 
 
-dice('die-a', (-1.45, -1.25, 0.17), math.radians(22), 5, 3)
-dice('die-b', (-0.95, -0.95, 0.17), math.radians(-14), 2, 6)
-spot('dice-light', (-2.2, -2.4, 2.6), (-1.2, -1.1, 0.1), 260, '#ffe7c4', 30, 0.8)
+dice('die-a', (-1.25, -0.45, 0.195), math.radians(22), 5, 3)
+dice('die-b', (-0.68, -0.12, 0.195), math.radians(-14), 2, 6)
+spot('dice-light', (-2.0, -1.6, 2.6), (-1.0, -0.3, 0.1), 260, '#ffe7c4', 30, 0.8)
 
 # Haze, so the light has a shape.
 fog = mat('fog', '#ffffff')

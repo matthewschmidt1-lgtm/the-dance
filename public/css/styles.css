@@ -2,16 +2,16 @@
    Layout: a cinematic stage on top, a decision surface underneath. Chess is the
    grading language; the stage is a lit set; the UI around it stays quiet. */
 :root {
-  --bg: #eef0f3;
-  --surface: #ffffff;
-  --ink: #14171c;
-  --muted: #5a6170;
-  --line: #d6dae1;
+  --bg: #f6f1e7;
+  --surface: #fffcf6;
+  --ink: #1a1814;
+  --muted: #5f5a52;
+  --line: #e2d9ca;
   --accent: #0b7a87;
   --accent-ink: #ffffff;
   --accent-soft: #dbf0f1;
-  --sq-light: #e4e7ec;
-  --sq-dark: #9aa3b2;
+  --sq-light: #ebe4d6;
+  --sq-dark: #a39a8a;
   --good: #1d7a4e;
   --good-soft: #dff1e7;
   --mixed: #9a6200;

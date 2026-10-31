@@ -32,6 +32,18 @@ Two deals where the other side knows more than you, and the clock is theirs.
 
 Episode 3 (*The Circle*: friends, family and the group chat) is shown as "in development".
 
+## The Trader's Mind
+
+A separate section, inspired by Jack Schwager's *Market Wizards*: lessons from the people who learned to survive the market. It isn't about how to trade. It's about sizing a risk, admitting you're wrong, waiting, adapting and staying in the game.
+
+- **One desk, five challenges**, each asking one question about you: *The Losing Position* (can you accept being wrong?), *The Winning Streak* (overconfidence), *The Empty Hand* (waiting for an edge), *The Changing Market* (abandoning assumptions) and *The Last Player Standing* (protecting your ability to play again).
+- **Your rules first.** Before you sit down you choose how much you'll risk on one decision and what your edge is. Every option shows its risk, and the game tracks when you break your own rule.
+- **Five kinds of capital**: Account, Trust, Edge, Composure and Runway. Lose half the account and the desk pulls your capital, which ends the section early.
+- **After each decision**: the risk chart (what every move could cost or earn), what was driving you, what Theo or Nadia saw, and the same decision in everyday life.
+- **The review** reveals the five principles underneath (protect your downside, find your edge, follow the evidence, master yourself, stay in the game), scored from what you actually did.
+
+The after-hours trading floor is rendered in Blender. `tools/make_trading_textures.py` draws its screens and handwritten notes first.
+
 ## How each scene plays
 
 1. **Establishing shot** of a lit 3D set, with a title card.
@@ -78,6 +90,7 @@ public/
   js/scenarios.js       scenario substance: options, grading, analysis
   js/scenes.js          staging: people, places, beats, reactions, matrices, leverage
   js/insight.js         reads, what each move pursues, what people say about you, closing questions
+  js/market.js          The Trader's Mind: challenges, staging, capital, rules and principles
   js/env-data.js        generated: where people stand in each render, camera targets
   js/art.js             character renderer (moods, poses) and environment layering
   js/stage.js           playback engine: camera, dialogue, freeze, skip

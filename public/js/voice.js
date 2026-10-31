@@ -32,6 +32,8 @@ PP.voice = (function () {
     luis:     { names: ['Rocko (English (United Kingdom))', 'Reed (English (United Kingdom))', 'Juan', 'Guy', 'Google UK English Male'], pitch: 0.9, rate: 0.98 },
     sam:      { names: ['Shelley (English (United States))', 'Jenny', 'Aria', 'Nicky', 'Google US English'], pitch: 1.1, rate: 1.08 },
     alicia:   { names: ['Flo (English (United Kingdom))', 'Libby', 'Sonia', 'Tessa', 'Google UK English Female'], pitch: 0.98, rate: 0.98 },
+    theo:     { names: ['Grandpa (English (United Kingdom))', 'Daniel', 'Arthur', 'Reed (English (United Kingdom))', 'Google UK English Male'], pitch: 0.88, rate: 0.9 },
+    nadia:    { names: ['Kate', 'Serena', 'Martha', 'Sonia', 'Google UK English Female'], pitch: 1.0, rate: 1.0 },
     you:      { names: ['Ava', 'Allison', 'Jenny', 'Aria', 'Samantha', 'Google US English'], pitch: 1, rate: 1 },
     narrator: { names: ['Serena', 'Libby', 'Sandy (English (United Kingdom))', 'Google UK English Female', 'Shelley (English (United Kingdom))', 'Moira'], pitch: 1, rate: 0.95 }
   };

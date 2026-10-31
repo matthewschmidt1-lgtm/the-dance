@@ -2,16 +2,25 @@
 // Progress is derived entirely from `history`, so replaying a scene is just popping it.
 (function () {
   const { thinkers, thinkerOrder, skills, grades } = PP;
-  const STORE_KEY = 'powerplay:ep1:v2';
   const START_RATING = 1200;
   const EPS = PP.episodes.filter(e => !e.locked);
-  const LIST = EPS.flatMap(ep => ep.scenes.map(id => ({ ...PP.scenarios.find(s => s.id === id), stage: PP.scenes[id], ep })));
-  const placeOf = id => EPS.flatMap(e => e.places).find(p => p.scenes.includes(id));
+  const MK = PP.market;
+  // Two tracks share one engine: the episodes, and The Trader's Mind. Each keeps its own progress.
+  const TRACKS = {
+    main: { key: 'powerplay:ep1:v2', list: EPS.flatMap(ep => ep.scenes.map(id => ({ ...PP.scenarios.find(s => s.id === id), stage: PP.scenes[id], ep }))) },
+    market: { key: 'thedance:market:v1', list: MK.scenarios.map(s => ({ ...s, stage: MK.scenes[s.id], ep: MK.ep })) }
+  };
+  const RULES_KEY = 'thedance:market:rules';
+  let track = 'main';
+  let LIST = TRACKS.main.list;
+  const isMarket = () => track === 'market';
+  const trackFor = view => (view === 'market' || view === 'trade') ? 'market' : view === 'bench' ? track : 'main';
+  const placeOf = id => [...EPS, MK.ep].flatMap(e => e.places).find(p => p.scenes.includes(id));
   // Scene numbers restart in each episode.
   const pos = i => { const sc = LIST[i], eps = LIST.filter(s => s.ep === sc.ep); return { n: eps.indexOf(sc) + 1, of: eps.length, ep: sc.ep }; };
   const epEnd = i => !!LIST[i] && (!LIST[i + 1] || LIST[i + 1].ep !== LIST[i].ep);
   const DANCE_AT = EPS[0].scenes.length; // "Your Dance" opens once the first episode is played
-  const READ_LABEL = { right: `Spot on`, part: `Partly`, suspicious: `Too suspicious`, naive: `Too trusting` };
+  const READ_LABEL = { right: `Spot on`, part: `Partly`, suspicious: `Too suspicious`, naive: `Too trusting`, hope: `Hope talking`, ego: `Ego talking`, fear: `Fear talking`, impulse: `Impulse talking`, crowd: `Following the crowd`, revenge: `Revenge talking` };
   const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
   const fresh = (clues = [], read = null) => ({ selected: null, clues, read });
   const RECURRING = ['dana', 'gary', 'jordan', 'priya', 'marcus'];
@@ -46,6 +55,7 @@
   // ───────────────────────── State
 
   let history = load();
+  let rules = loadRules();
   let draft = fresh();
   let confirmReset = false;
   let confirmScene = -1; // index of a played scene awaiting a second tap to replay
@@ -54,11 +64,82 @@
 
   function load() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+      const parsed = JSON.parse(localStorage.getItem(TRACKS[track].key) || '[]');
       return Array.isArray(parsed) ? parsed.filter((h, i) => LIST[i] && LIST[i].id === h.id) : [];
     } catch (e) { return []; }
   }
-  function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(history)); } catch (e) { /* storage unavailable */ } }
+  function save() { try { localStorage.setItem(TRACKS[track].key, JSON.stringify(history)); } catch (e) { /* storage unavailable */ } }
+  function loadRules() {
+    try { const r = JSON.parse(localStorage.getItem(RULES_KEY) || 'null'); return r && r.risk && r.edge ? r : null; } catch (e) { return null; }
+  }
+  function saveRules() { try { rules ? localStorage.setItem(RULES_KEY, JSON.stringify(rules)) : localStorage.removeItem(RULES_KEY); } catch (e) { /* storage unavailable */ } }
+  function useTrack(t) {
+    if (t === track) return;
+    track = t; LIST = TRACKS[t].list; history = load(); draft = fresh(); ui.phase = 'intro'; confirmScene = -1;
+  }
+
+  // ───────────────────────── The Trader's Mind: capital, rules, risk
+
+  const ruleOf = (k, v) => MK.rules[k].options.find(o => o.v === v);
+  const breaks = opt => !!rules && MK.exposure[opt.exposure] > ruleOf('risk', rules.risk).max;
+  const money = k => k === 0 ? `$0` : `${k > 0 ? '+' : '−'}$${Math.abs(k)}k`;
+  function capitals(hist = history) {
+    const cap = Object.fromEntries(MK.capitals.map(c => [c.k, c.start]));
+    let ruinedAt = null;
+    const steps = hist.map((h, i) => {
+      const sc = TRACKS.market.list[i], opt = sc.options.find(o => o.key === h.key), oc = opt.outcomes[h.outcome];
+      const before = { ...cap };
+      cap.time -= 1;
+      Object.entries(opt.cap || {}).forEach(([k, v]) => { cap[k] += v; });
+      cap.fin = oc.ruin ? 0 : cap.fin + oc.fin;
+      MK.capitals.forEach(c => { if (c.k !== 'fin') cap[c.k] = Math.max(0, Math.min(c.max, cap[c.k])); });
+      if (ruinedAt === null && cap.fin <= MK.ruin) ruinedAt = i;
+      return { sc, opt, oc, h, before, after: { ...cap }, broke: breaks(opt) };
+    });
+    return { cap, steps, ruinedAt };
+  }
+  const marketOver = () => history.length >= LIST.length || capitals().ruinedAt !== null;
+
+  // Five meters. The account shows the line where the desk pulls your capital.
+  function hud(cap, prev) {
+    return MK.capitals.map(c => {
+      const v = cap[c.k], d = prev ? v - prev[c.k] : 0;
+      const pct = Math.max(0, Math.min(100, v / c.max * 100));
+      const val = c.k === 'fin' ? `$${v}k` : `${v}`;
+      const danger = c.k === 'fin' ? v <= MK.ruin + 15 : v <= 2;
+      return `<div class="hud-m ${danger ? 'is-low' : ''}" title="${c.kind}: ${c.note}">
+        <span class="hud-k">${c.name}</span>
+        <span class="hud-v">${val}${d ? `<small class="${d > 0 ? 'up' : 'down'}">${c.k === 'fin' ? money(d) : (d > 0 ? '+' : '−') + Math.abs(d)}</small>` : ''}</span>
+        <span class="hud-bar" aria-hidden="true"><span style="width:${pct.toFixed(1)}%"></span>${c.k === 'fin' ? `<i class="hud-ruin" style="left:${MK.ruin / c.max * 100}%"></i>` : ''}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // What each move could cost or earn, sized by likelihood. The far left is the end of the game.
+  function riskChart(sc, key, oi) {
+    const vals = sc.options.flatMap(o => o.outcomes.filter(x => !x.ruin).map(x => x.fin));
+    const hasRuin = sc.options.some(o => o.outcomes.some(x => x.ruin));
+    const lo = hasRuin ? Math.min(-40, ...vals) - 20 : Math.min(-10, ...vals) - 3, hi = Math.max(10, ...vals) + 3;
+    const X = v => (v - lo) / (hi - lo) * 100;
+    const rows = sc.options.map(o => {
+      const vs = o.outcomes.map(x => x.ruin ? lo : x.fin);
+      const a = Math.min(...vs), b = Math.max(...vs);
+      const dots = o.outcomes.map((x, i) => {
+        const v = x.ruin ? lo : x.fin, hit = o.key === key && i === oi;
+        return `<span class="rk-dot tone-${x.tone} ${hit ? 'is-hit' : ''} ${x.ruin ? 'is-ruin' : ''}" style="left:${X(v).toFixed(1)}%;--p:${x.p}" title="${Math.round(x.p * 100)}%: ${x.ruin ? 'out of the game' : money(x.fin)}"></span>`;
+      }).join('');
+      return `<li class="rk-row ${o.key === key ? 'is-mine' : ''}">
+        <span class="rk-key">${o.key}</span>
+        <span class="rk-track"><span class="rk-zero" style="left:${X(0).toFixed(1)}%"></span><span class="rk-span" style="left:${X(a).toFixed(1)}%;width:${(X(b) - X(a)).toFixed(1)}%"></span>${dots}</span>
+        <span class="rk-exp">${MK.exposureLabel[o.exposure]}</span>
+      </li>`;
+    }).join('');
+    return `<div class="rk">
+      <div class="rk-axis" aria-hidden="true"><span>${hasRuin ? 'Out of the game' : money(Math.round(lo))}</span><span style="left:${X(0).toFixed(1)}%">$0</span><span>${money(Math.round(hi))}</span></div>
+      <ol class="rk-rows">${rows}</ol>
+      <p class="viz-note">Each row is one move. Its dots are what it could cost or earn, larger when more likely. Your move and result are outlined. Look at the left end of each row before the right.</p>
+    </div>`;
+  }
 
   function derive(hist) {
     const totals = Object.fromEntries(Object.keys(skills).map(k => [k, 0]));
@@ -101,6 +182,7 @@
 
   function go(view) {
     teardown();
+    useTrack(trackFor(view));
     ui.view = view;
     const hash = view === 'home' ? '' : '#' + view;
     if (location.hash !== hash) window.history.replaceState(null, '', hash || location.pathname);
@@ -231,6 +313,17 @@
 
       ${EPS.slice(1).map(placesSec).join('')}
 
+      <section class="mk-band" aria-labelledby="mk-band-h">
+        <div class="mk-band-art" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
+        <div class="wrap mk-band-in">
+          <p class="eyebrow eyebrow-on-dark">A new section · Inspired by Market Wizards</p>
+          <h2 id="mk-band-h">The Trader's Mind</h2>
+          <p class="mk-band-sub">You don't have to predict the future. You have to survive it.</p>
+          <ul class="mk-band-tests">${TRACKS.market.list.map(sc => `<li><strong>${sc.title}</strong><span>${sc.tests}</span></li>`).join('')}</ul>
+          <button class="btn btn-primary" data-act="market">Enter The Trader's Mind</button>
+        </div>
+      </section>
+
       ${soon ? `<section class="wrap next-ep">
         <div class="next-card">
           <span class="lock" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span>
@@ -308,9 +401,10 @@
       <div class="wrap play-head">
         ${strip(idx, derive(history))}
         <div class="play-meta">
-          <p class="meta">Episode ${at.ep.number} · Scene ${at.n} of ${at.of} · ${place.name}</p>
+          <p class="meta">${isMarket() ? `The Trader's Mind · Challenge ${at.n} of ${at.of}` : `Episode ${at.ep.number} · Scene ${at.n} of ${at.of}`} · ${place.name}</p>
           <div class="chips"><span class="chip">${sc.level}</span>${sc.lens.map((k, i) => `<span class="chip ${i ? '' : 'chip-lens'}">${i ? 'Also' : 'Lens'} · ${thinkers[k].short}</span>`).join('')}</div>
         </div>
+        ${isMarket() ? `<div class="hud" id="hud" aria-label="Your capital">${hud(capitals(history.slice(0, idx)).cap)}</div>` : ''}
       </div>
       <div class="stage-wrap wrap-stage" id="stage-mount"></div>
       <div class="wrap panel-wrap"><div class="panel" id="panel"></div></div>
@@ -335,7 +429,7 @@
     ui.phase = 'intro'; ui.frozen = false;
     mountStage(sc, idx);
     renderPanel();
-    await stage.run(sc.stage.intro, { title: `<span>${pos(idx).n === 1 ? `Episode ${sc.ep.number} · ` : ''}Scene ${pos(idx).n} · ${placeOf(sc.id).name}</span><strong>${sc.title}</strong>` });
+    await stage.run(sc.stage.intro, { title: `<span>${isMarket() ? `Challenge ${pos(idx).n}` : `${pos(idx).n === 1 ? `Episode ${sc.ep.number} · ` : ''}Scene ${pos(idx).n}`} · ${placeOf(sc.id).name}</span><strong>${sc.title}</strong>` });
     if (run !== ui.runId) return;
     ui.phase = 'decide';
     renderPanel();
@@ -381,6 +475,8 @@
     else html = panelResult(sc);
     p.innerHTML = html;
     p.dataset.phase = ui.frozen ? 'frozen' : ui.phase;
+    const h = document.getElementById('hud');
+    if (h) h.innerHTML = ui.phase === 'result' ? hud(capitals().cap, capitals(history.slice(0, -1)).cap) : hud(capitals(history.slice(0, idx)).cap);
   }
 
   function panelWatching(sc, msg) {
@@ -391,7 +487,7 @@
   function panelDecide(sc) {
     const options = sc.options.map(o => `<li>
       <input type="radio" name="move" id="move-${sc.id}-${o.key}" value="${o.key}" ${draft.selected === o.key ? 'checked' : ''}>
-      <label for="move-${sc.id}-${o.key}" class="option"><span class="option-key">${o.key}</span><span class="option-text">${o.text}</span></label>
+      <label for="move-${sc.id}-${o.key}" class="option"><span class="option-key">${o.key}</span><span class="option-text">${o.text}${o.exposure ? `<span class="exp exp-${o.exposure} ${breaks(o) ? 'is-over' : ''}">${MK.exposureLabel[o.exposure]}${breaks(o) ? ' · over your limit' : ''}</span>` : ''}</span></label>
     </li>`).join('');
     const R = (PP.insight.scenes[sc.id] || {}).read;
     const read = R ? `<fieldset class="read"><legend class="read-q"><span class="read-k">First, your read</span>${R.q}</legend>
@@ -400,7 +496,9 @@
     return `<form id="decide-form" class="decide">
       <div class="decide-top">
         ${read}
-        <fieldset><legend class="decide-q">${R ? `<span class="read-k">Then, your move</span>` : ''}${sc.question}</legend><ul class="options">${options}</ul></fieldset>
+        <fieldset><legend class="decide-q">${R ? `<span class="read-k">Then, your move</span>` : ''}${sc.question}</legend>
+          ${isMarket() && rules ? `<p class="rules-mini">Your rules: <strong>${ruleOf('risk', rules.risk).label}</strong> risk per decision · edge: <strong>${ruleOf('edge', rules.edge).label}</strong></p>` : ''}
+          <ul class="options">${options}</ul></fieldset>
       </div>
       <div class="decide-bar">
         <button type="button" class="btn btn-ghost" data-act="freeze"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>Freeze and analyze</button>
@@ -445,7 +543,100 @@
     </div>`;
   }
 
+  function lensBody(sc, opt) {
+    const a = sc.analysis;
+    const concept = c => { const t = thinkers[c.thinker]; return `<article class="concept ${t.grandfather ? 'is-grand' : ''}"><p class="concept-who">${t.name} · ${t.field}</p><h3>${c.name}</h3><p>${c.body}</p></article>`; };
+    const others = sc.options.map(o => `<li class="other ${o.key === opt.key ? 'is-mine' : ''}"><span class="other-glyph g${o.q}" title="${grades[o.q].name}">${grades[o.q].glyph}</span><span class="other-text"><strong>${o.key}.</strong> ${o.text}${o.key === opt.key ? ' <em>(your move)</em>' : ''}</span></li>`).join('');
+    return `<div class="concepts">${concept(a.concept)}${concept(a.second)}</div>
+        <dl class="analysis">${[['Where the leverage was', a.leverage], ['What information was missing', a.missing], ['Assumptions you might have made', a.assumptions]].map(([k, v]) => `<div class="arow"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+        <h3 class="viz-h">Every move on the board</h3><ul class="others">${others}</ul>
+        <p class="better"><strong>Strongest line:</strong> ${a.better}</p>
+        <p class="lesson">${a.lesson}</p>`;
+  }
+
+  const whyOf = (opt, outcome) => opt.q >= 3 && outcome.tone !== 'good' ? `A sound decision that didn't fully pay off this time. Keep making it. Over many tries, sound decisions come out ahead.`
+    : opt.q <= 1 && outcome.tone === 'good' ? `It worked out, but the reasoning was weak. Be most careful here: a lucky win teaches you to do it again.`
+      : `The grade judges the decision. The result includes things you couldn't control.`;
+
+  function panelResultMarket(sc) {
+    const idx = history.length - 1;
+    const move = derive(history).moves[idx];
+    const { opt, outcome } = move;
+    const g = grades[opt.q];
+    const C = capitals(), prev = capitals(history.slice(0, idx)).cap;
+    const out = C.ruinedAt !== null;
+    const last = idx === LIST.length - 1 || out;
+    const tabs = [['outcome', 'Outcome'], ['game', 'The decision'], ['mind', 'The mind'], ['lens', 'The lens']];
+    if (!tabs.some(t => t[0] === ui.tab)) ui.tab = 'outcome';
+    const tabBar = `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" class="tab" data-tab="${k}" aria-selected="${ui.tab === k}" id="tab-${k}" aria-controls="tp-${k}">${l}</button>`).join('')}</div>`;
+    const rule = rules ? ruleOf('risk', rules.risk) : null;
+    const ruleLine = !rules ? '' : rules.risk === 'open'
+      ? `You set no fixed limit, so nothing here broke a rule. Bruce Kovner would ask where you planned to get out before you got in.`
+      : breaks(opt) ? `You said you'd risk no more than a ${rule.label.toLowerCase()} position on one decision. This move <strong>${MK.exposureVerb[opt.exposure]}</strong>. You broke your own rule.`
+        : `You said: ${rule.label.toLowerCase()} risk per decision. This move stayed inside it.`;
+
+    let body = '';
+    if (ui.tab === 'outcome') {
+      const caps = MK.capitals.map(c => {
+        const d = C.steps[idx].after[c.k] - prev[c.k];
+        return `<li class="capd ${d > 0 ? 'up' : d < 0 ? 'down' : ''}"><span class="capd-k">${c.name}</span><span class="capd-v">${c.k === 'fin' ? `$${C.steps[idx].after.fin}k` : C.steps[idx].after[c.k]}</span><span class="capd-d">${d ? (c.k === 'fin' ? money(d) : (d > 0 ? '+' : '−') + Math.abs(d)) : '·'}</span></li>`;
+      }).join('');
+      body = `
+        ${out ? `<div class="ruin"><p class="eyebrow">The desk has pulled your capital</p><h2>You're out of the game.</h2><p>Your account fell below half of what you started with. ${LIST.length - idx - 1 ? `You won't get to play the ${NUM[LIST.length - idx - 1]} challenge${LIST.length - idx - 1 === 1 ? '' : 's'} that remained.` : ''} Everything you learned is still yours. The account isn't.</p></div>` : ''}
+        <div class="verdict">
+          <div class="verdict-glyph g${opt.q}" aria-hidden="true">${g.glyph}</div>
+          <div class="verdict-copy">
+            <p class="eyebrow">You played ${opt.key}</p><h2>${g.name}</h2><p class="verdict-note">${g.note}</p>
+            <div class="verdict-pills"><span class="pill">Decision: ${g.name}</span><span class="pill pill-${outcome.tone}">Result: ${toneLabel[outcome.tone]}</span><span class="pill pill-num">${outcome.ruin ? 'Account: gone' : `Account ${money(outcome.fin)}`}</span></div>
+            <p class="verdict-why">${whyOf(opt, outcome)}</p>
+          </div>
+        </div>
+        ${move.read ? `<div class="read-reveal is-${move.read.kind === 'right' ? 'right' : move.read.kind === 'part' ? 'part' : 'naive'}">
+          <p class="rr-k">What was driving you <span class="rr-tag">${READ_LABEL[move.read.kind]}</span></p>
+          <p class="rr-guess">“${move.read.t}”</p>
+          <p class="rr-truth">${move.read.R.truth}</p>
+        </div>` : ''}
+        <ol class="timeline">
+          <li><span class="tl-k">Right now</span><p>${outcome.text}</p></li>
+          <li><span class="tl-k">What it means</span><p>${opt.later}</p></li>
+        </ol>
+        <h3 class="block-h">Your capital after this decision</h3><ul class="capds">${caps}</ul>
+        ${ruleLine ? `<p class="rule-line ${breaks(opt) ? 'is-broke' : ''}">${ruleLine}</p>` : ''}`;
+    } else if (ui.tab === 'game') {
+      body = `
+        <h3 class="viz-h">What each move could cost or earn</h3>${riskChart(sc, opt.key, move.outcomeIdx)}
+        <h3 class="viz-h">How often each move goes well</h3>${PP.viz.tree(sc, opt.key, move.outcomeIdx)}
+        <h3 class="viz-h">What reading the room would have shown</h3>
+        <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${c.text}</p></li>`).join('')}</ul>`;
+    } else if (ui.tab === 'mind') {
+      const v = opt.verdict;
+      body = `
+        <div class="mind-grid">
+          <section class="card"><h3 class="block-h">Your rules vs. this move</h3>
+            <p class="mind-p">${ruleLine || `You haven't set rules yet.`}</p>
+            ${rules && sc.edgeNote ? `<p class="mind-p"><strong>Your edge: ${ruleOf('edge', rules.edge).label}.</strong> ${sc.edgeNote[rules.edge]}</p>` : ''}
+          </section>
+          ${v ? `<section class="card said said-card"><span class="said-face">${portrait(v.who, opt.q >= 3 ? 'smile' : opt.q === 2 ? 'neutral' : 'skeptical')}</span>
+            <blockquote><p>“${v.line}”</p><footer><strong>${PP.people[v.who].name}</strong> · what the desk saw</footer></blockquote></section>` : ''}
+        </div>
+        <svg width="0" height="0" class="defs-only" aria-hidden="true">${PP.art.DEFS}</svg>
+        <section class="life"><p class="eyebrow">The same decision, away from the screens</p><h3>${sc.life.title}</h3><p>${sc.life.text}</p></section>
+        <dl class="analysis">${[['What game you were playing', sc.analysis.game], ['What was pulling at you', sc.analysis.incentives], ['What you controlled', sc.analysis.controlled], ['What you couldn\'t control', sc.analysis.couldnt]].map(([k, val]) => `<div class="arow"><dt>${k}</dt><dd>${val}</dd></div>`).join('')}</dl>`;
+    } else {
+      body = lensBody(sc, opt);
+    }
+    return `<div class="result">
+      ${tabBar}
+      <div class="tabpanel" role="tabpanel" id="tp-${ui.tab}" aria-labelledby="tab-${ui.tab}">${body}</div>
+      <div class="result-bar">
+        <button class="btn btn-ghost" data-act="takeback">Replay with another strategy</button>
+        <button class="btn btn-primary" data-act="${last ? 'market' : 'next'}">${last ? (out ? 'See what happened' : 'See your review') : 'Next challenge'}</button>
+      </div>
+    </div>`;
+  }
+
   function panelResult(sc) {
+    if (isMarket()) return panelResultMarket(sc);
     const idx = history.length - 1;
     const all = derive(history);
     const move = all.moves[idx];
@@ -457,9 +648,7 @@
     const last = epEnd(idx);
     const ctxAfter = { rel: all.rel, flags: all.flags };
     const ratingDelta = move.ratingAfter - move.ratingBefore;
-    const why = opt.q >= 3 && outcome.tone !== 'good' ? `A sound decision that didn't fully pay off this time. Keep making it. Over many tries, sound decisions come out ahead.`
-      : opt.q <= 1 && outcome.tone === 'good' ? `It worked out, but the reasoning was weak. Be most careful here: a lucky win teaches you to do it again.`
-        : `The grade judges the decision. The result includes things you couldn't control.`;
+    const why = whyOf(opt, outcome);
 
     const tabs = [['outcome', 'Outcome'], ['game', 'The game'], ['people', 'The people'], ['lens', 'The lens']];
     const tabBar = `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" class="tab" data-tab="${k}" aria-selected="${ui.tab === k}" id="tab-${k}" aria-controls="tp-${k}">${l}</button>`).join('')}</div>`;
@@ -509,13 +698,7 @@
         <ul class="wants">${sc.stage.cast.map(c => `<li><strong>${PP.people[c.id].name}</strong>${c.wants}</li>`).join('')}</ul>
         <dl class="analysis">${[['What game you were playing', a.game], ['What people wanted', a.incentives], ['What you controlled', a.controlled], ['What you couldn\'t control', a.couldnt]].map(([k, v]) => `<div class="arow"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
     } else {
-      const concept = c => { const t = thinkers[c.thinker]; return `<article class="concept ${t.grandfather ? 'is-grand' : ''}"><p class="concept-who">${t.name} · ${t.field}</p><h3>${c.name}</h3><p>${c.body}</p></article>`; };
-      const others = sc.options.map(o => `<li class="other ${o.key === opt.key ? 'is-mine' : ''}"><span class="other-glyph g${o.q}" title="${grades[o.q].name}">${grades[o.q].glyph}</span><span class="other-text"><strong>${o.key}.</strong> ${o.text}${o.key === opt.key ? ' <em>(your move)</em>' : ''}</span></li>`).join('');
-      body = `<div class="concepts">${concept(a.concept)}${concept(a.second)}</div>
-        <dl class="analysis">${[['Where the leverage was', a.leverage], ['What information was missing', a.missing], ['Assumptions you might have made', a.assumptions]].map(([k, v]) => `<div class="arow"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
-        <h3 class="viz-h">Every move on the board</h3><ul class="others">${others}</ul>
-        <p class="better"><strong>Strongest line:</strong> ${a.better}</p>
-        <p class="lesson">${a.lesson}</p>`;
+      body = lensBody(sc, opt);
     }
 
     return `<div class="result">
@@ -680,21 +863,147 @@
     </section>`;
   }
 
+  // ───────────────────────── The Trader's Mind
+
+  function mkHero(inner) {
+    return `<section class="mk-hero">
+      <div class="mk-art" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350"></div>
+      <div class="mk-over"><div class="wrap">${inner}</div></div>
+    </section>`;
+  }
+
+  function viewMarket() {
+    const C = capitals(), n = history.length;
+    if (n && (n >= LIST.length || C.ruinedAt !== null)) return viewMarketReview(C);
+    const list = LIST.map((sc, i) => {
+      const m = C.steps[i];
+      const asking = confirmScene === i;
+      const inner = `<span class="mkc-n">${i + 1}</span><span class="mkc-body"><span class="mkc-t">${asking ? `Replay ${sc.title}?` : sc.title}</span><span class="mkc-q">${asking ? (i < n - 1 ? 'Tap again. Later challenges reset.' : 'Tap again to replay.') : sc.tests}</span><span class="mkc-life">Also: ${sc.life.title.charAt(0).toLowerCase() + sc.life.title.slice(1)}</span></span>`;
+      if (i < n) return `<li><button type="button" class="mkc is-done ${asking ? 'is-asking' : ''}" data-act="scene" data-i="${i}">${inner}<span class="mkc-tag"><span class="g${m.opt.q}">${grades[m.opt.q].glyph}</span> Replay</span></button></li>`;
+      if (i === n && rules) return `<li><button type="button" class="mkc is-next" data-act="trade">${inner}<span class="mkc-tag mkc-tag-next">Up next</span></button></li>`;
+      return `<li><span class="mkc is-locked" aria-disabled="true">${inner}<span class="mkc-tag">${i === n ? 'Set your rules first' : 'Locked'}</span></span></li>`;
+    }).join('');
+    const ruleForm = `<form id="rules-form" class="rules">
+      <div class="section-head"><p class="eyebrow">Before you sit down</p><h2>Write your rules.</h2>
+        <p class="lede">Traders who last decide how they'll play before they have anything to defend. The game will hold you to what you write here.</p></div>
+      ${['risk', 'edge'].map(k => `<fieldset class="rule-set"><legend>${MK.rules[k].q}</legend><div class="rule-opts">${MK.rules[k].options.map((o, i) => `<label class="rule-opt"><input type="radio" name="${k}" value="${o.v}" ${rules ? (rules[k] === o.v ? 'checked' : '') : i === (k === 'risk' ? 1 : 0) ? 'checked' : ''}><span class="rule-card"><strong>${o.label}</strong><span>${o.d}</span></span></label>`).join('')}</div></fieldset>`).join('')}
+      <div class="page-actions"><button type="submit" class="btn btn-primary">Take your seat</button></div>
+    </form>`;
+    const rulesCard = rules ? `<section class="wrap mk-rules-card">
+      <div><p class="eyebrow">Your rules</p><p class="mk-rule"><strong>${ruleOf('risk', rules.risk).label}</strong> risk on any one decision. Your edge: <strong>${ruleOf('edge', rules.edge).label.toLowerCase()}</strong>.</p></div>
+      <div class="mk-rule-acts"><button class="btn btn-primary" data-act="trade">${n ? `Continue · Challenge ${n + 1}` : 'Take your seat'}</button>${n ? '' : `<button class="btn btn-ghost" data-act="rules-edit">Change my rules</button>`}</div>
+    </section>` : '';
+    return `${mkHero(`<p class="eyebrow eyebrow-on-dark">Inspired by Jack Schwager's Market Wizards</p>
+        <h1 class="mk-title">The Trader's Mind</h1>
+        <p class="mk-sub">Lessons from the people who learned to survive the market.</p>
+        ${rules ? `<div class="hero-actions"><button class="btn btn-primary" data-act="trade">${n ? `Continue · Challenge ${n + 1}` : 'Take your seat'}</button></div>` : ''}`)}
+      <section class="wrap mk-intro">
+        <p class="hook-line">You don't need to know anything about markets.</p>
+        <p class="hook-sub">This isn't a game about trading. It's about how exceptional performers think when nobody controls the outcome: how they size a risk, admit they're wrong, wait, adapt, and stay in the game. Five situations at one desk, with one account. The market won't care what you meant.</p>
+      </section>
+      ${rulesCard}
+      <section class="wrap mk-caps">
+        <div class="section-head"><p class="eyebrow">${n ? 'Your capital so far' : 'You start with five kinds of capital'}</p><h2>Money is only one of them.</h2>
+          <p class="lede">You can win financially and lose your reputation, or protect your money and run out of time. Lose half your account and the desk pulls your capital. That ends the section.</p></div>
+        <div class="hud hud-lg">${hud(C.cap)}</div>
+        <ul class="cap-notes">${MK.capitals.map(c => `<li><strong>${c.name}</strong> <span>${c.kind}.</span> ${c.note}</li>`).join('')}</ul>
+      </section>
+      <section class="wrap mk-list">
+        <div class="section-head"><p class="eyebrow">Five challenges</p><h2>Each one asks a single question about you.</h2></div>
+        <ol class="mkcs">${list}</ol>
+      </section>
+      ${rules ? '' : `<section class="wrap">${ruleForm}</section>`}`;
+  }
+
+  function viewMarketReview(C) {
+    const out = C.ruinedAt !== null;
+    const played = C.steps.length;
+    const fin = C.cap.fin;
+    const quad = m => { const gd = m.opt.q >= 3, gr = m.oc.tone === 'good'; return gd ? (gr ? 'Earned' : 'Unlucky') : (gr ? 'Got lucky' : 'Lesson'); };
+    const capRows = MK.capitals.map(c => {
+      const a = c.start, b = C.cap[c.k], d = b - a;
+      return `<li class="capr"><span class="capr-k">${c.name}<small>${c.kind}</small></span>
+        <span class="capr-bar" aria-hidden="true"><span class="capr-start" style="left:${Math.min(100, a / c.max * 100)}%"></span><span class="capr-fill ${d < 0 ? 'down' : ''}" style="width:${Math.max(0, Math.min(100, b / c.max * 100))}%"></span></span>
+        <span class="capr-v">${c.k === 'fin' ? `$${b}k` : b}<small class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d ? (c.k === 'fin' ? money(d) : (d > 0 ? '+' : '−') + Math.abs(d)) : 'no change'}</small></span></li>`;
+    }).join('');
+    const soft = MK.capitals.filter(c => c.k !== 'fin').map(c => ({ c, d: C.cap[c.k] - c.start })).sort((x, y) => y.d - x.d);
+    const capLine = `${fin > 100 ? `You made money` : fin === 100 ? `You protected your money` : out ? (fin === 0 ? `You lost the whole account` : `You lost more than half your account`) : `You lost some money`}${soft[0].d > 0 ? ` and built ${soft[0].c.name.toLowerCase()}` : ''}${soft[soft.length - 1].d < 0 ? `, and spent ${soft[soft.length - 1].c.name.toLowerCase()}` : ''}.`;
+
+    const brokeN = C.steps.filter(x => x.broke).length;
+    const rr = rules ? ruleOf('risk', rules.risk) : null;
+    const ruleSummary = !rules ? '' : rules.risk === 'open'
+      ? `You set no fixed limit on risk. Every decision was sized by how you felt about it, which is exactly what a limit protects you from.`
+      : brokeN ? `You said you'd risk no more than a ${rr.label.toLowerCase()} position on any one decision. You broke that rule in ${NUM[brokeN]} of ${NUM[played]} decisions.`
+        : `You said you'd risk no more than a ${rr.label.toLowerCase()} position on any one decision, and you kept that promise every time.`;
+    const eh = C.steps.find(x => x.sc.id === 'empty-hand');
+    const edgeSummary = !rules || !eh ? '' : eh.opt.key === 'B' ? `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}, and when four ideas arrived you played only the one that fit it.`
+      : eh.opt.key === 'C' ? `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}. On the slow Thursday you waited, which is never wrong, though one idea may have been yours.`
+        : `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}. On the slow Thursday you played someone else's game.`;
+
+    const review = C.steps.map((x, i) => {
+      const read = readOf(x.sc, x.h);
+      return `<li class="dr">
+        <span class="dr-n">${i + 1}</span>
+        <div class="dr-main"><h4>${x.sc.title}</h4>
+          <p class="dr-row"><span class="dr-k">You knew</span>${x.h.clues.length} of ${x.sc.clues.length} details${read ? ` · your read: ${READ_LABEL[read.kind].toLowerCase()}` : ''}</p>
+          <p class="dr-row"><span class="dr-k">You chose</span><span class="mo-key">${x.opt.key}</span> ${x.opt.text}${x.broke ? ' <em class="dr-broke">Broke your rule</em>' : ''}</p>
+          <p class="dr-row"><span class="dr-k">What happened</span>${toneLabel[x.oc.tone]} · ${x.oc.ruin ? 'the account was wiped out' : `account ${money(x.oc.fin)}`}</p></div>
+        <span class="dr-q q-${quad(x).toLowerCase().replace(' ', '-')}"><span class="g${x.opt.q}">${grades[x.opt.q].glyph}</span>${quad(x)}</span>
+      </li>`;
+    }).join('') + (out ? LIST.slice(played).map((sc, j) => `<li class="dr is-unplayed"><span class="dr-n">${played + j + 1}</span><div class="dr-main"><h4>${sc.title}</h4><p class="dr-row">Never played. You were out of the game.</p></div></li>`).join('') : '');
+
+    const code = MK.principles.map(pr => {
+      const ms = C.steps.filter(x => pr.scenes.includes(x.sc.id));
+      const avg = ms.length ? ms.reduce((a, x) => a + x.opt.q, 0) / ms.length : null;
+      const [cls, word] = avg === null ? ['none', 'Never reached'] : avg >= 3 ? ['good', 'Lived it'] : avg >= 2 ? ['mid', 'Partly'] : ['low', 'Still learning'];
+      return `<li class="pr pr-${cls}"><p class="pr-k">${word}</p><h4>${pr.name}</h4><p>${pr.line}</p><p class="pr-from">Tested in ${pr.scenes.map(id => LIST.find(s => s.id === id).title).join(' and ')}</p></li>`;
+    }).join('');
+
+    const said = C.steps.filter(x => x.opt.verdict).map(x => `<li class="said"><span class="said-face">${portrait(x.opt.verdict.who, x.opt.q >= 3 ? 'smile' : x.opt.q === 2 ? 'neutral' : 'skeptical')}</span>
+        <blockquote><p>“${x.opt.verdict.line}”</p><footer><strong>${PP.people[x.opt.verdict.who].name}</strong> · ${x.sc.title}</footer></blockquote></li>`).join('');
+
+    return `${mkHero(`<p class="eyebrow eyebrow-on-dark">${out ? `Challenge ${C.ruinedAt + 1} · The desk pulled your capital` : `The Trader's Mind · Complete`}</p>
+        <h1 class="mk-title">${out ? 'Out of the game.' : 'Still standing.'}</h1>
+        <p class="mk-sub">${out ? `Your account fell below half of what you started with. Nothing teaches survival like losing the ability to continue.` : `The objective was never to win every round. It was to become the kind of player who could keep playing.`}</p>`)}
+      <section class="wrap page mk-review">
+        <div class="mk-final">
+          <div class="rating-card"><span class="rating-label">Account</span><span class="rating-num">$${fin}k</span><span class="rating-sub">Started at $100k</span></div>
+          <p class="lede">${capLine}</p>
+        </div>
+        <section class="block card"><h2 class="block-h">Five kinds of capital <span class="block-hint">the tick marks where you started</span></h2><ul class="caprs">${capRows}</ul></section>
+        ${rules ? `<section class="block card mk-said"><h2 class="block-h">What you said vs. what you did</h2><p class="mind-p">${ruleSummary}</p>${edgeSummary ? `<p class="mind-p">${edgeSummary}</p>` : ''}</section>` : ''}
+        <section class="block"><h2 class="block-h">Decision review</h2><p class="small">What you knew, what you chose, what happened, and whether the reasoning was sound. Annie Duke's distinction: a good decision can lose, and a bad one can win.</p><ol class="drs">${review}</ol></section>
+        <section class="block"><div class="section-head"><p class="eyebrow">The code underneath</p><h2>Five principles ran through every challenge.</h2>
+          <p class="lede">They weren't shown up front, because you can't learn them from a list. Here they are, now that you've felt them.</p></div>
+          <ol class="prs">${code}</ol></section>
+        ${said ? `<section class="block"><h2 class="block-h">What the desk saw</h2><svg width="0" height="0" class="defs-only" aria-hidden="true">${PP.art.DEFS}</svg><ul class="said-list">${said}</ul></section>` : ''}
+        <div class="carry"><p class="eyebrow">What Ed Seykota would leave you with</p><p class="carry-q">You don't have to predict the future. You have to develop the judgment, discipline and resilience to survive it.</p></div>
+        <div class="page-actions">
+          <button class="${confirmReset ? 'btn btn-ghost is-danger' : 'btn btn-primary'}" data-act="market-reset">${confirmReset ? 'Tap again to start over' : 'Play The Trader\'s Mind again'}</button>
+          <button class="btn btn-ghost" data-nav="home">Back to The Dance</button>
+        </div>
+      </section>`;
+  }
+
   // ───────────────────────── Render + events
 
   function render() {
-    if (ui.view === 'play' && history.length >= LIST.length && ui.phase !== 'result' && ui.phase !== 'react') ui.view = 'profile';
-    const views = { home: viewHome, bench: viewBench, play: viewPlay, profile: viewProfile };
+    useTrack(trackFor(ui.view));
+    const settled = ui.phase !== 'result' && ui.phase !== 'react';
+    if (ui.view === 'play' && history.length >= LIST.length && settled) ui.view = 'profile';
+    if (ui.view === 'trade' && settled && (!rules || marketOver())) ui.view = 'market';
+    const views = { home: viewHome, bench: viewBench, play: viewPlay, trade: viewPlay, profile: viewProfile, market: viewMarket };
     app.innerHTML = views[ui.view]();
-    document.querySelectorAll('[data-nav]').forEach(a => a.setAttribute('aria-current', a.dataset.nav === ui.view ? 'page' : 'false'));
+    document.querySelectorAll('[data-nav]').forEach(a => a.setAttribute('aria-current', a.dataset.nav === ui.view || (ui.view === 'trade' && a.dataset.nav === 'market') ? 'page' : 'false'));
     // The home page opens on a dark image, so its nav bar and the phone's browser bar go dark to match.
     document.body.classList.toggle('on-home', ui.view === 'home');
     const light = document.querySelector('meta[name="theme-color"][media*="light"]');
     if (light) light.content = ui.view === 'home' ? '#0e1014' : '#f6f1e7';
-    const sc = ui.view === 'play' ? LIST[currentIndex()] : null;
-    document.title = (sc ? `${sc.title} · ` : ui.view === 'bench' ? 'The Bench · ' : ui.view === 'profile' ? 'Profile · ' : '') + 'The Dance';
+    const playing = ui.view === 'play' || ui.view === 'trade';
+    const sc = playing ? LIST[currentIndex()] : null;
+    document.title = (sc ? `${sc.title} · ` : ui.view === 'bench' ? 'The Bench · ' : ui.view === 'profile' ? 'Profile · ' : ui.view === 'market' ? 'The Trader\'s Mind · ' : '') + 'The Dance';
 
-    if (ui.view === 'play') {
+    if (playing) {
       if (ui.phase === 'result') { mountStage(LIST[history.length - 1], history.length - 1); settleResult(); renderPanel(); }
       else playIntro();
     }
@@ -739,10 +1048,17 @@
     const act = e.target.closest('[data-act]');
     if (!act) return;
     const a = act.dataset.act;
-    if (a !== 'reset') confirmReset = false;
+    if (a !== 'reset' && a !== 'market-reset') confirmReset = false;
     if (a !== 'scene') confirmScene = -1;
     switch (a) {
       case 'play': ui.phase = 'intro'; go('play'); break;
+      case 'trade': ui.phase = 'intro'; go('trade'); break;
+      case 'market': go('market'); break;
+      case 'rules-edit': rules = null; saveRules(); render(); break;
+      case 'market-reset':
+        if (!confirmReset) { confirmReset = true; render(); app.querySelector('[data-act="market-reset"]').focus(); return; }
+        confirmReset = false; history = []; save(); rules = null; saveRules(); draft = fresh(); go('market');
+        break;
       case 'bench': go('bench'); break;
       case 'profile': go('profile'); break;
       case 'freeze': stage && stage.freeze(); break;
@@ -768,7 +1084,7 @@
         }
         confirmScene = -1;
         if (i < history.length) { history = history.slice(0, i); save(); }
-        draft = fresh(); ui.phase = 'intro'; go('play');
+        draft = fresh(); ui.phase = 'intro'; go(isMarket() ? 'trade' : 'play');
         break;
       }
       case 'reset':
@@ -779,7 +1095,7 @@
   });
 
   document.addEventListener('keydown', e => {
-    if (ui.view !== 'play' || !stage) return;
+    if ((ui.view !== 'play' && ui.view !== 'trade') || !stage) return;
     if (e.target.closest('input, textarea, button')) return;
     if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!stage.paused) stage.skip(); }
     if (e.key === 'p' || e.key === 'P') stage.paused ? stage.resume() : stage.freeze();
@@ -794,6 +1110,13 @@
   });
 
   document.addEventListener('submit', e => {
+    if (e.target.id === 'rules-form') {
+      e.preventDefault();
+      const f = new FormData(e.target);
+      rules = { risk: f.get('risk'), edge: f.get('edge') };
+      saveRules(); ui.phase = 'intro'; go('trade');
+      return;
+    }
     if (e.target.id !== 'decide-form') return;
     e.preventDefault();
     if (!ready(LIST[history.length])) return;
@@ -815,10 +1138,10 @@
   window.addEventListener('resize', () => { if (stage && stage.paused) stage.placePins(); });
   window.addEventListener('hashchange', () => {
     const h = location.hash.replace('#', '');
-    if (['bench', 'profile', 'play'].includes(h) && h !== ui.view) { ui.phase = 'intro'; go(h); }
+    if (['bench', 'profile', 'play', 'market', 'trade'].includes(h) && h !== ui.view) { ui.phase = 'intro'; go(h); }
   });
 
   const initial = location.hash.replace('#', '');
-  if (['bench', 'profile', 'play'].includes(initial)) ui.view = initial;
+  if (['bench', 'profile', 'play', 'market', 'trade'].includes(initial)) ui.view = initial;
   render();
 })();

@@ -205,9 +205,21 @@ PP.Stage = class {
     if (st.act) this.act(id, st.act);
   }
 
+  // A set with a register shows the price on it; any other set gets a terminal-style alert.
   setScreen(text) {
     const el = this.root.querySelector('.reg-price');
-    if (el) el.textContent = text;
+    if (el) { el.textContent = text; return; }
+    let a = this.root.querySelector('.stage-alert');
+    if (!a) {
+      a = document.createElement('p');
+      a.className = 'stage-alert';
+      a.setAttribute('aria-live', 'polite');
+      this.stage.appendChild(a);
+    }
+    a.textContent = text;
+    a.classList.remove('is-on');
+    void a.offsetWidth;
+    a.classList.add('is-on');
   }
 
   // ───────── text

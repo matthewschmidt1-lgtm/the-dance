@@ -284,6 +284,7 @@ CINEMA = {
     'yard':       dict(focus=(1.0, 0.9, 1.4), fstop=4.0, haze=0.007, rim=None, dim=0.7),
     'bathroom':   dict(focus=(0.35, 1.5, 1.4), fstop=2.4, haze=0.02, rim=((0.6, 2.9, 2.3), '#cfe8ff', 300), dim=0.4),
     'lobby':      dict(focus=(0.0, 1.8, 1.4), fstop=2.4, haze=0.006, rim=((0.2, 5.4, 3.0), '#cfe8ff', 600), dim=0.45),
+    'trading':    dict(focus=(0.0, 1.3, 1.13), fstop=2.0, haze=0.004, rim=((1.6, 5.0, 2.6), '#9fc8d8', 260), dim=0.6),
 }
 
 
@@ -923,7 +924,127 @@ def env_lobby():
     }
 
 
-ENVS = {'checkout': env_checkout, 'desks': env_desks, 'kitchen': env_kitchen, 'conference': env_conference, 'street': env_street, 'yard': env_yard, 'bathroom': env_bathroom, 'lobby': env_lobby}
+TEX = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tex')
+
+
+def img_mat(fname, emit=0.0, rough=0.5):
+    """A material showing a texture from tools/blender/tex, optionally glowing like a screen."""
+    m = bpy.data.materials.new(fname)
+    m.use_nodes = True
+    nt = m.node_tree
+    p = nt.nodes['Principled BSDF']
+    t = nt.nodes.new('ShaderNodeTexImage')
+    t.image = bpy.data.images.load(os.path.join(TEX, fname))
+    nt.links.new(t.outputs['Color'], p.inputs['Base Color'])
+    p.inputs['Roughness'].default_value = rough
+    if emit:
+        nt.links.new(t.outputs['Color'], p.inputs['Emission Color'])
+        p.inputs['Emission Strength'].default_value = emit
+        p.inputs['Base Color'].default_value = (0, 0, 0, 1)
+        nt.links.remove(p.inputs['Base Color'].links[0])
+        p.inputs['Base Color'].default_value = (0.0, 0.0, 0.0, 1)
+        p.inputs['Roughness'].default_value = 0.08
+    return m
+
+
+def img_plane(name, fname, c, w, h, rot, layer='bg', emit=0.0, rough=0.5):
+    bm = bmesh.new()
+    verts = [bm.verts.new(v) for v in ((-w / 2, -h / 2, 0), (w / 2, -h / 2, 0), (w / 2, h / 2, 0), (-w / 2, h / 2, 0))]
+    f = bm.faces.new(verts)
+    uv = bm.loops.layers.uv.new()
+    for loop, co in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+        loop[uv].uv = co
+    ob = _finish(name, bm, img_mat(fname, emit, rough), layer)
+    ob.location = c
+    ob.rotation_euler = rot
+    return ob
+
+
+def env_trading():
+    """A private trading floor after hours: one lit desk, three screens, the city behind glass."""
+    world('#0b1114', 0.4)
+    box('floor', (0, 4, -0.01), (18, 16, 0.01), mat('#2a2d30', 0.4))
+    box('ceiling', (0, 4, 3.2), (18, 16, 0.05), mat('#16191c', 0.9))
+    # The window wall, and a night city far behind it.
+    box('glass', (0, 8.6, 0), (18, 0.04, 3.2), mat('#9fb7c4', 0.02, alpha=0.06))
+    # Dusk sky behind the towers, so they read as silhouettes.
+    box('sky', (0, 46, 0), (140, 0.2, 60), mat('#000', 0.5, emit='#1d2c3a', emit_strength=1.0))
+    boxes('mullions', [(x, 8.58, 0, 0.07, 0.07, 3.2) for x in range(-8, 9, 2)], mat('#20262b', 0.4, 0.6))
+    box('sill', (0, 8.5, 0), (18, 0.3, 0.42), mat('#1b1f23', 0.6))
+    r = random.Random(11)
+    lit = [mat('#000', 0.5, emit=c, emit_strength=e) for c in ('#ffd9a0', '#f3e6c8', '#bfe4ff') for e in (2.5, 5)]
+    for i in range(30):
+        x = -26 + i * 1.8 + r.uniform(-0.4, 0.4)
+        h = r.uniform(8, 30)
+        y = r.uniform(22, 40)
+        w = r.uniform(2.0, 4.0)
+        box(f'tower{i}', (x, y, -2), (w, w, h), mat('#0e1318', 0.8))
+        # A grid of small windows, about a third of them lit.
+        for k in range(int(h / 0.9)):
+            for j in range(int(w / 0.45)):
+                if r.random() < 0.32:
+                    box(f'tw{i}-{k}-{j}', (x - w / 2 + 0.22 + j * 0.45, y - w / 2 - 0.02, -1.2 + k * 0.9), (0.2, 0.02, 0.26), r.choice(lit))
+    # Rows of empty desks, screens dark, chairs pushed in.
+    for row, y in enumerate((3.4, 5.4, 7.2)):
+        for col, x in enumerate((-4.2, -1.6, 1.6, 4.2)):
+            if row == 0 and col in (1, 2):
+                continue
+            desk(f'd{row}{col}', x, y, 2.0, 0.8, top='#3a3d40', leg='#22252a')
+            for k in (-0.45, 0.45):
+                box(f'dm{row}{col}{k}', (x + k, y + 0.25, 0.95), (0.6, 0.04, 0.36), mat('#0c0e10', 0.25))
+                box(f'dms{row}{col}{k}', (x + k, y + 0.3, 0.75), (0.08, 0.08, 0.2), mat('#1d2024', 0.5))
+            office_chair(f'c{row}{col}', x, y - 0.75, col='#1c1f23')
+    # Dim linear lights over the floor; only one still on near the desk.
+    for i, y in enumerate((2.0, 4.4, 6.8)):
+        box(f'strip{i}', (0, y, 3.15), (6, 0.08, 0.02), mat('#000', 0.5, emit='#dbe8f0', emit_strength=0.4 if i else 1.4))
+    area('overhead', (0.3, 1.6, 3.0), 1.2, 70, '#d9e6ee', sy=0.5)
+
+    # The desk.
+    box('desk-top', (0, 1.0, 0.74), (2.6, 0.95, 0.04), mat('#33241a', 0.52), 'fg')
+    boxes('desk-legs', [(-1.22, 0.62, 0, 0.05, 0.05, 0.74), (1.22, 0.62, 0, 0.05, 0.05, 0.74), (-1.22, 1.4, 0, 0.05, 0.05, 0.74), (1.22, 1.4, 0, 0.05, 0.05, 0.74)], mat('#1a1c1f', 0.4, 0.6), 'fg')
+    box('modesty', (0, 1.44, 0.2), (2.4, 0.03, 0.5), mat('#2a2622', 0.6), 'fg')
+    # Three screens, the side ones turned in.
+    screens = [('screen-left.png', (-0.78, 1.22, 1.13), 22), ('screen-center.png', (0.0, 1.3, 1.13), 0), ('screen-right.png', (0.78, 1.22, 1.13), -22)]
+    for i, (tex, c, yaw) in enumerate(screens):
+        rot = (math.radians(90), 0, math.radians(yaw))
+        box(f'bezel{i}', (c[0], c[1] + 0.025, c[2] - 0.22), (0.74, 0.03, 0.44), mat('#0c0d0f', 0.3), 'fg', rot=(0, 0, math.radians(yaw)))
+        # Sit the glass just proud of the bezel, along the screen's facing direction.
+        n = (math.sin(math.radians(yaw)), -math.cos(math.radians(yaw)))
+        img_plane(f'screen{i}', tex, (c[0] + n[0] * 0.03, c[1] + n[1] * 0.03, c[2]), 0.7, 0.394, rot, 'fg', emit=2.2)
+        box(f'stand{i}', (c[0], c[1] + 0.07, 0.78), (0.06, 0.04, 0.2), mat('#1a1c1f', 0.4, 0.6), 'fg')
+        box(f'foot{i}', (c[0], c[1] + 0.05, 0.78), (0.24, 0.16, 0.012), mat('#1a1c1f', 0.4, 0.6), 'fg')
+    # The risk limit, stuck to the left screen's bezel.
+    img_plane('sticky', 'sticky-risk.png', (-0.47, 1.19, 0.99), 0.075, 0.075, (math.radians(90), 0, math.radians(22)), 'fg', rough=0.85)
+    # The handwritten thesis beside the keyboard, a pen across it.
+    img_plane('thesis', 'note-thesis.png', (-0.62, 0.8, 0.782), 0.2, 0.26, (0, 0, math.radians(8)), 'fg', rough=0.9)
+    cyl('pen', (-0.6, 0.76, 0.788), 0.004, 0.14, mat('#111', 0.3, 0.4), 'fg', rot=(0, math.radians(90), math.radians(30)))
+    box('keyboard', (0.0, 0.82, 0.78), (0.44, 0.14, 0.018), mat('#1d2024', 0.45), 'fg', bevel=0.004)
+    box('mouse', (0.34, 0.8, 0.78), (0.06, 0.1, 0.02), mat('#1d2024', 0.35), 'fg', bevel=0.008)
+    cyl('mug', (0.62, 0.86, 0.78), 0.042, 0.1, mat('#e9e4da', 0.45), 'fg')
+    cyl('coffee', (0.62, 0.86, 0.872), 0.036, 0.004, mat('#2a1a10', 0.15), 'fg')
+    box('phone', (0.84, 0.76, 0.78), (0.075, 0.15, 0.008), mat('#0d0e10', 0.2), 'fg', rot=(0, 0, math.radians(-12)))
+    box('notebooks', (-1.0, 0.95, 0.78), (0.3, 0.22, 0.05), mat('#26332e', 0.7), 'fg', rot=(0, 0, math.radians(-6)))
+    # A brass desk lamp: the warm key light, and the cool glow of the screens.
+    cyl('lamp-base', (1.05, 1.15, 0.78), 0.08, 0.02, mat('#a8844f', 0.3, 0.8), 'fg')
+    cyl('lamp-arm', (1.05, 1.15, 0.8), 0.008, 0.42, mat('#a8844f', 0.3, 0.8), 'fg')
+    cyl('lamp-shade', (1.05, 1.15, 1.17), 0.085, 0.1, mat('#1f3b33', 0.4, 0.3), 'fg', r2=0.04)
+    ball('bulb', (1.05, 1.15, 1.19), 0.03, mat('#fff', 0.5, emit='#ffd9a8', emit_strength=12), 'fg')
+    area('lamp', (1.02, 1.05, 1.13), 0.1, 40, '#ffcf96', rot=(math.radians(25), 0, 0))
+    area('screen-glow', (0.0, 1.05, 1.15), 1.6, 70, '#9fd6e0', rot=(math.radians(-90), 0, 0), sy=0.4)
+
+    camera((0.42, -1.3, 1.46), (0.05, 2.2, 1.14), 27)
+    return {
+        'spots': {'theo': spot((-2.6, 5.5, 0)), 'nadia': spot((1.85, 1.65, 0))},
+        'cams': {
+            'screens': point((0.0, 1.3, 1.13), 2.2),
+            'note': point((-0.62, 0.8, 0.79), 3.2),
+            'sticky': point((-0.47, 1.19, 0.99), 3.6),
+            'window': point((0.0, 8.6, 1.6), 1.6),
+        },
+    }
+
+
+ENVS = {'checkout': env_checkout, 'desks': env_desks, 'kitchen': env_kitchen, 'conference': env_conference, 'street': env_street, 'yard': env_yard, 'bathroom': env_bathroom, 'lobby': env_lobby, 'trading': env_trading}
 
 data = {}
 if os.path.exists(DATA):

@@ -25,6 +25,8 @@ PP.people = {
   luis:   { name: `Luis`,   look: { skin: '#b98a63', hair: 'short', hairColor: '#2a1d15', facial: 'stubble', top: 'tshirt', shirt: '#5b6b78', pants: '#4a5a6e', shoes: '#3a2e24', build: 1.1, h: 1.0 } },
   sam:    { name: `Sam`,    look: { skin: '#e8bfa0', hair: 'bob', hairColor: '#6b4a2e', top: 'blazer', topColor: '#3b4a5e', shirt: '#f2f2ee', pants: '#2a2f36', h: 0.97 } },
   alicia: { name: `Alicia`, look: { skin: '#8a5a3c', hair: 'long', hairColor: '#2a1c14', glasses: true, top: 'sweater', topColor: '#7a4f3c', shirt: '#ece5d9', pants: '#2f3338', h: 1.0 } },
+  theo:   { name: `Theo`,   look: { skin: '#e0b896', hair: 'bald', hairColor: '#b9b4ab', facial: 'beard', top: 'sweater', topColor: '#4a4f45', shirt: '#d9d4c8', glasses: true, pants: '#2e3136', build: 1.06, h: 1.0 } },
+  nadia:  { name: `Nadia`,  look: { skin: '#7a4f36', hair: 'bun', hairColor: '#17110d', top: 'blazer', topColor: '#2b2f36', shirt: '#e8e4dc', pants: '#2b2f36', h: 0.98 } },
   tom:    { name: `Tom`,    look: { skin: '#d8b08c', hair: 'short', hairColor: '#9a7b55', glasses: true, top: 'sweater', topColor: '#6b7a5a', pants: '#4a4a46', h: 0.98 } }
 };
 

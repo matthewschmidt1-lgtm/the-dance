@@ -302,7 +302,20 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 .bench-sec { padding-block: clamp(40px, 7vw, 80px); }
 .bench-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; margin-bottom: 16px; }
-.bench-card { background: var(--surface); padding: 18px 18px 20px; display: grid; gap: 4px; align-content: start; }
+.bench-grid > li { display: flex; }
+.bench-card { flex: 1; width: 100%; background: var(--surface); padding: 18px 18px 20px; display: grid; gap: 4px; align-content: start; text-align: left; border: 0; border-radius: 0; font: inherit; color: inherit; cursor: pointer; transition: background .15s; }
+.bench-card:hover { background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface)); }
+.bench-card:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; border-radius: 4px; }
+.bench-more { margin-top: 8px; font-size: var(--t-sm); font-weight: 650; color: var(--accent); }
+.bench-more::after { content: " →"; }
+.thinker-dialog { width: min(36rem, calc(100% - 32px)); max-height: calc(100% - 48px); padding: 0; border: 0; border-radius: 18px; background: var(--surface); color: var(--ink); box-shadow: 0 30px 80px -20px rgba(0,0,0,.5); overflow: auto; }
+.thinker-dialog::backdrop { background: rgba(8,10,14,.55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.thinker-pop { border: 0; border-radius: 0; padding: 28px 28px 8px; }
+.thinker-pop .thinker-head h2 { font-size: var(--t-xl); font-weight: 780; padding-right: 40px; }
+.thinker-close-row { display: flex; justify-content: flex-end; padding: 8px 28px 24px; }
+.thinker-x { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 1.4rem; line-height: 1; cursor: pointer; }
+.thinker-x:hover { border-color: var(--ink); }
+@media (prefers-reduced-motion: no-preference) { .thinker-dialog[open] { animation: popIn .22s ease-out; } @keyframes popIn { from { opacity: 0; transform: translateY(8px) scale(.98); } } }
 .bench-card.is-grand { background: var(--accent-soft); }
 .bench-badge { font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
 .bench-name { font-weight: 720; font-size: var(--t-lg); }

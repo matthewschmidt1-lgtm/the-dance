@@ -143,7 +143,7 @@
 
     const bench = thinkerOrder.map(k => {
       const t = thinkers[k];
-      return `<li class="bench-card ${t.grandfather ? 'is-grand' : ''}">${t.grandfather ? `<span class="bench-badge">Intellectual grandfather</span>` : ''}<span class="bench-name">${t.name}</span><span class="bench-teaches">teaches you ${t.teaches}</span></li>`;
+      return `<li><button type="button" class="bench-card ${t.grandfather ? 'is-grand' : ''}" data-thinker="${k}" aria-haspopup="dialog">${t.grandfather ? `<span class="bench-badge">Intellectual grandfather</span>` : ''}<span class="bench-name">${t.name}</span><span class="bench-teaches">teaches you ${t.teaches}</span><span class="bench-more" aria-hidden="true">Read more</span></button></li>`;
     }).join('');
 
     const ep2 = PP.episodes[1];
@@ -189,6 +189,11 @@
         <div class="section-head"><p class="eyebrow">The bench</p><h2>Six thinkers. One question each.</h2>
           <p class="lede">Each scene is seen through one of their lenses. Thomas Schelling sits at the head of the table: he studied people whose interests partly conflict and partly overlap, which describes almost everyone you'll meet.</p></div>
         <ul class="bench-grid">${bench}</ul>
+        <dialog class="thinker-dialog" id="thinker-dialog" aria-labelledby="thinker-dialog-h">
+          <div class="thinker thinker-pop"></div>
+          <form method="dialog" class="thinker-close-row"><button class="btn btn-ghost btn-sm" value="close">Close</button></form>
+          <form method="dialog"><button class="thinker-x" value="close" aria-label="Close">×</button></form>
+        </dialog>
         <button class="btn btn-link" data-act="bench">Read what each one teaches →</button>
       </section>
 
@@ -229,20 +234,20 @@
 
   // ───────────────────────── Bench
 
-  function viewBench() {
-    const cards = thinkerOrder.map(k => {
-      const t = thinkers[k];
-      const used = LIST.filter(s => s.lens[0] === k).map(s => s.title);
-      const also = LIST.filter(s => s.lens.slice(1).includes(k)).map(s => s.title);
-      return `<article class="thinker ${t.grandfather ? 'is-grand' : ''}">
-        <header class="thinker-head"><p class="thinker-field">${t.field}</p><h3>${t.name}</h3>${t.grandfather ? `<p class="thinker-badge">Intellectual grandfather of The Dance</p>` : ''}</header>
+  function thinkerEntry(k, h = 'h3', id = '') {
+    const t = thinkers[k];
+    const used = LIST.filter(s => s.lens[0] === k).map(s => s.title);
+    const also = LIST.filter(s => s.lens.slice(1).includes(k)).map(s => s.title);
+    return `<header class="thinker-head"><p class="thinker-field">${t.field}</p><${h}${id ? ` id="${id}"` : ''}>${t.name}</${h}>${t.grandfather ? `<p class="thinker-badge">Intellectual grandfather of The Dance</p>` : ''}</header>
         <p class="thinker-teaches">${t.short} teaches you ${t.teaches}.</p>
         <p>${t.idea}</p>
         <p class="thinker-ask"><span>The question to ask</span>${t.ask}</p>
         ${used.length ? `<p class="thinker-used">Main lens in: ${used.join(', ')}</p>` : ''}
-        ${also.length ? `<p class="thinker-used">Also in: ${also.join(', ')}</p>` : ''}
-      </article>`;
-    }).join('');
+        ${also.length ? `<p class="thinker-used">Also in: ${also.join(', ')}</p>` : ''}`;
+  }
+
+  function viewBench() {
+    const cards = thinkerOrder.map(k => `<article class="thinker ${thinkers[k].grandfather ? 'is-grand' : ''}">${thinkerEntry(k)}</article>`).join('');
     return `<section class="wrap page">
       <div class="section-head"><p class="eyebrow">The bench</p><h1>The thinkers behind the game</h1>
         <p class="lede">You won't be asked to memorize anything. Each scene puts one of these ideas in front of you as a situation, and the analysis afterward names it.</p></div>
@@ -554,6 +559,19 @@
     const clue = e.target.closest('[data-clue]');
     if (clue) { const i = Number(clue.dataset.clue); if (!draft.clues.includes(i)) draft.clues.push(i); renderPanel(); return; }
 
+    const who = e.target.closest('[data-thinker]');
+    if (who) {
+      const dlg = document.getElementById('thinker-dialog');
+      const box = dlg.querySelector('.thinker-pop');
+      box.className = `thinker thinker-pop ${thinkers[who.dataset.thinker].grandfather ? 'is-grand' : ''}`;
+      box.innerHTML = thinkerEntry(who.dataset.thinker, 'h2', 'thinker-dialog-h');
+      dlg.returnTo = who;
+      dlg.showModal();
+      return;
+    }
+    // A click on the dimmed backdrop (the dialog element itself) closes the popup.
+    if (e.target.id === 'thinker-dialog') { e.target.close(); return; }
+
     const tab = e.target.closest('[data-tab]');
     if (tab) {
       const before = tab.getBoundingClientRect().top;
@@ -620,6 +638,10 @@
     document.getElementById('stage-mount').scrollIntoView({ behavior: 'smooth', block: 'start' });
     playReaction();
   });
+
+  document.addEventListener('close', e => {
+    if (e.target.id === 'thinker-dialog' && e.target.returnTo) e.target.returnTo.focus();
+  }, true);
 
   window.addEventListener('resize', () => { if (stage && stage.paused) stage.placePins(); });
   window.addEventListener('hashchange', () => {

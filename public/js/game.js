@@ -248,21 +248,15 @@
 
   function thinkerEntry(k, h = 'h3', id = '') {
     const t = thinkers[k], I = PP.uiIcons;
-    const used = LIST.filter(s => s.lens[0] === k).map(s => s.title);
-    const also = LIST.filter(s => s.lens.slice(1).includes(k)).map(s => s.title);
-    const chips = list => list.map(x => `<li class="te-chip">${x}</li>`).join('');
     return `<header class="te-head">
           <span class="te-icon">${t.icon}</span>
           <div class="te-title"><p class="te-field">${t.field}</p><${h}${id ? ` id="${id}"` : ''}>${t.name}</${h}>${t.grandfather ? `<p class="te-badge">Intellectual grandfather of The Dance</p>` : ''}</div>
         </header>
         <p class="te-teaches"><span class="te-mark">${I.teaches}</span><span>${t.short} teaches you <strong>${t.teaches}</strong>.</span></p>
         <p class="te-idea">${t.idea}</p>
-        <div class="te-ask"><p class="te-label"><span class="te-mark">${I.ask}</span>The question to ask</p><p class="te-q">${t.ask}</p></div>
-        ${used.length || also.length ? `<div class="te-scenes"><p class="te-label"><span class="te-mark">${I.scenes}</span>Where you'll meet this idea</p>
-          ${used.length ? `<div class="te-row"><span class="te-row-k">Main lens</span><ul class="te-chips">${chips(used)}</ul></div>` : ''}
-          ${also.length ? `<div class="te-row"><span class="te-row-k">Also in</span><ul class="te-chips te-chips-soft">${chips(also)}</ul></div>` : ''}
-        </div>` : ''}`;
+        <div class="te-ask"><p class="te-label"><span class="te-mark">${I.ask}</span>The question to ask</p><p class="te-q">${t.ask}</p></div>`;
   }
+
 
   function viewBench() {
     const cards = thinkerOrder.map(k => `<article class="thinker ${thinkers[k].grandfather ? 'is-grand' : ''}" style="--tc:${thinkers[k].color}">${thinkerEntry(k)}</article>`).join('');

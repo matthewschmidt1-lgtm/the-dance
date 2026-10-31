@@ -68,8 +68,7 @@ Object.assign(PP.thinkers.duke, { color: '#5a85a8', icon: ico('<rect x="4" y="4"
 
 PP.uiIcons = {
   teaches: ico('<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1V16h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/>'),
-  ask: ico('<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.3c-.7.3-1.2.9-1.2 1.6v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor"/>'),
-  scenes: ico('<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7.5 6l2 4M12.5 6l2 4M17.5 6l2 4"/>')
+  ask: ico('<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.3c-.7.3-1.2.9-1.2 1.6v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor"/>')
 };
 
 // The ten measures of strategic intelligence. Getting your way is not one of them.

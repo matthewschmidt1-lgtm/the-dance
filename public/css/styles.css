@@ -400,12 +400,6 @@ button.ps-btn:hover { background: var(--accent-soft); }
 .te-label .te-mark { width: 18px; height: 18px; }
 .te-ask { display: grid; gap: 10px; padding: 18px 20px; border-radius: 14px; background: var(--tc-soft); border-left: 4px solid var(--tc); }
 .te-q { font-family: var(--f-read); font-style: italic; font-size: 1.1875rem; line-height: 1.55; }
-.te-scenes { display: grid; gap: 12px; }
-.te-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.te-row-k { font-size: var(--t-sm); color: var(--muted); min-width: 5.5rem; }
-.te-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.te-chip { font-size: var(--t-sm); font-weight: 650; padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--tc) 22%, var(--surface)); color: var(--tc-ink); border: 1px solid color-mix(in srgb, var(--tc) 45%, transparent); }
-.te-chips-soft .te-chip { background: transparent; font-weight: 560; }
 
 /* ───────── Play */
 .play { padding-block: 16px 64px; display: grid; gap: 14px; }

@@ -99,7 +99,7 @@
     const cap = Object.fromEntries(MK.capitals.map(c => [c.k, c.start]));
     let ruinedAt = null;
     const steps = hist.map((h, i) => {
-      const sc = TRACKS.market.list[i], opt = resolve(sc, {}, h.clues).find(o => o.key === h.key), oc = opt.outcomes[h.outcome];
+      const sc = TRACKS.market.list[i], opt = resolve(sc, { rel: {}, flags: {}, type: typeOf(sc, h) }, h.clues).find(o => o.key === h.key), oc = opt.outcomes[h.outcome];
       const before = { ...cap };
       cap.time -= 1;
       Object.entries(opt.cap || {}).forEach(([k, v]) => { cap[k] += v; });
@@ -125,6 +125,13 @@
         <span class="hud-bar" aria-hidden="true"><span style="width:${pct.toFixed(1)}%"></span>${c.k === 'fin' ? `<i class="hud-ruin" style="left:${MK.ruin / c.max * 100}%"></i>` : ''}</span>
       </div>`;
     }).join('');
+  }
+
+  // Before the world is rolled: each outcome's chance, averaged over the worlds it could be.
+  function priorOpts(sc, clues) {
+    if (!sc.types) return resolve(sc, {}, clues);
+    const per = sc.types.map(t => ({ t, opts: resolve(sc, { rel: {}, flags: {}, type: t.id }, clues) }));
+    return per[0].opts.map((o, k) => ({ ...o, outcomes: o.outcomes.map((x, i) => ({ ...x, p: per.reduce((a, { t, opts }) => a + t.p * opts[k].outcomes[i].p, 0) })) }));
   }
 
   // What each move could cost or earn, sized by likelihood. The far left is the end of the game.
@@ -184,7 +191,7 @@
       const b = vague ? { ...o, ...o.vague, vague } : { ...o, vague };
       // A vague version can keep the same results at different odds (pv), or bring its own.
       const outs = vague && o.vague.pv ? b.outcomes.map((x, i) => ({ ...x, p: o.vague.pv[i] })) : b.outcomes;
-      return { ...b, needs, q: val(b.q, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
+      return { ...b, needs, q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
     });
   }
   const optsNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return resolve(sc, { rel: d.rel, flags: d.flags, type: draft.type }, draft.clues); };
@@ -639,8 +646,8 @@
     const rule = rules ? ruleOf('risk', rules.risk) : null;
     const ruleLine = !rules ? '' : rules.risk === 'open'
       ? `You set no fixed limit, so nothing here broke a rule. Bruce Kovner would ask where you planned to get out before you got in.`
-      : breaks(opt) ? `You said you'd risk no more than a ${rule.label.toLowerCase()} position on one decision. This move <strong>${MK.exposureVerb[opt.exposure]}</strong>. You broke your own rule.`
-        : `You said: ${rule.label.toLowerCase()} risk per decision. This move stayed inside it.`;
+      : breaks(opt) ? `You said you'd risk no more than ${rule.label} of the account on one idea. This move <strong>${MK.exposureVerb[opt.exposure]}</strong>. You broke your own rule.`
+        : `You said you'd risk no more than ${rule.label} of the account on one idea. This move stayed inside it.`;
 
     let body = '';
     if (ui.tab === 'outcome') {
@@ -658,6 +665,7 @@
             <p class="verdict-why">${whyOf(opt, outcome)}</p>
           </div>
         </div>
+        ${(() => { const w = sc.types && sc.types.find(t => t.id === move.type); return w ? `<section class="their"><div><p class="their-k">What actually happened</p><p><strong>${w.label}.</strong> ${w.tell}</p><p class="their-note">That was about ${Math.round(w.p * 100)}% likely. Your grade judges the decision against what you could know, not the roll.</p></div></section>` : ''; })()}
         <ol class="timeline">
           <li><span class="tl-k">Right now</span><p>${outcome.text}</p></li>
           <li><span class="tl-k">What it means</span><p>${opt.later}</p></li>
@@ -666,8 +674,8 @@
         ${ruleLine ? `<p class="rule-line ${breaks(opt) ? 'is-broke' : ''}">${ruleLine}</p>` : ''}`;
     } else if (ui.tab === 'game') {
       body = `
-        <h3 class="viz-h">What each move could cost or earn</h3>${riskChart(sc, opt.key, move.outcomeIdx)}
-        <h3 class="viz-h">How often each move goes well</h3>${PP.viz.tree({ ...sc, options: move.opts }, opt.key, move.outcomeIdx)}
+        <h3 class="viz-h">What each move could cost or earn</h3>${riskChart({ ...sc, options: priorOpts(sc, move.clues) }, opt.key, move.outcomeIdx)}
+        <h3 class="viz-h">How often each move goes well</h3>${PP.viz.tree({ ...sc, options: priorOpts(sc, move.clues) }, opt.key, move.outcomeIdx)}
         <h3 class="viz-h">What reading the room would have shown</h3>
         <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${clueText(c, move.type)}</p></li>`).join('')}</ul>`;
     } else if (ui.tab === 'mind') {
@@ -942,6 +950,7 @@
       <section class="wrap mk-intro">
         <p class="hook-line">You don't need to know anything about markets.</p>
         <p class="hook-sub">This isn't a game about trading. It's about how exceptional performers think when nobody controls the outcome: how they size a risk, admit they're wrong, wait, adapt, and stay in the game. Five situations at one desk, with one account. The market won't care what you meant.</p>
+        <p class="small">Every company, person and price in this section is fictional.</p>
       </section>
       ${rulesCard}
       <section class="wrap mk-caps">
@@ -975,8 +984,8 @@
     const rr = rules ? ruleOf('risk', rules.risk) : null;
     const ruleSummary = !rules ? '' : rules.risk === 'open'
       ? `You set no fixed limit on risk. Every decision was sized by how you felt about it, which is exactly what a limit protects you from.`
-      : brokeN ? `You said you'd risk no more than a ${rr.label.toLowerCase()} position on any one decision. You broke that rule in ${NUM[brokeN]} of ${NUM[played]} decisions.`
-        : `You said you'd risk no more than a ${rr.label.toLowerCase()} position on any one decision, and you kept that promise every time.`;
+      : brokeN ? `You said you'd risk no more than ${rr.label} of the account on any one idea. You broke that rule in ${NUM[brokeN]} of ${NUM[played]} decisions.`
+        : `You said you'd risk no more than ${rr.label} of the account on any one idea, and you kept that promise every time.`;
     const eh = C.steps.find(x => x.sc.id === 'empty-hand');
     const edgeSummary = !rules || !eh ? '' : eh.opt.key === 'B' ? `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}, and when four ideas arrived you played only the one that fit it.`
       : eh.opt.key === 'C' ? `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}. On the slow Thursday you waited, which is never wrong, though one idea may have been yours.`

@@ -41,7 +41,9 @@ Episode 3 (*The Circle*: friends, family and the group chat) is shown as "in dev
 A separate section, inspired by Jack Schwager's *Market Wizards*: lessons from the people who learned to survive the market. It isn't about how to trade. It's about sizing a risk, admitting you're wrong, waiting, adapting and staying in the game.
 
 - **One desk, five challenges**, each asking one question about you: *The Losing Position* (can you accept being wrong?), *The Winning Streak* (overconfidence), *The Empty Hand* (waiting for an edge), *The Changing Market* (abandoning assumptions) and *The Last Player Standing* (protecting your ability to play again).
-- **Your rules first.** Before you sit down you choose how much you'll risk on one decision and what your edge is. Every option shows its risk, and the game tracks when you break your own rule.
+- **Your rules first.** Before you sit down you choose how much of the account you'll risk on one idea (1%, 2.5% or no limit) and what your edge is. Every option shows how much it puts at risk, and the game tracks when you break your own rule.
+- **One world per play.** Each challenge rolls its event once (did the customer leave, was the drug approved, is it a normal losing stretch or a new market), clues hint at which, and grades judge the decision against what you could know, not the roll.
+- **Fictional tech companies.** Corvane Cloud, Quorvia Bio, Nimbic AI, Ledgerline, Voltaic Cells, Hashgrid, Tensora, Cirrane and Saros Robotics are invented, because the scenes invent news about them.
 - **Five kinds of capital**: Account, Trust, Edge, Composure and Runway. Lose half the account and the desk pulls your capital, which ends the section early.
 - **After each decision**: the risk chart (what every move could cost or earn), what Theo or Nadia saw, and the same decision in everyday life.
 - **The review** reveals the five principles underneath (protect your downside, find your edge, follow the evidence, master yourself, stay in the game), scored from what you actually did.

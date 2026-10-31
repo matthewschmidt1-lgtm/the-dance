@@ -114,13 +114,14 @@ def left_screen():
     d = ImageDraw.Draw(img)
     r = random.Random(3)
     d.text((48, 34), 'WATCHLIST', font=font(MONO, 30), fill=DIM)
-    names = ['ARDN', 'BRVX', 'CELT', 'DORA', 'EMBR', 'FOXR', 'GRNT', 'HLX', 'IONA', 'JUNO', 'KELP', 'LUMA']
+    # Fictional companies only: the game invents news about them.
+    names = ['Arcton', 'Cirrane', 'Corvane', 'Hashgrid', 'Kestral', 'Ledgerln', 'Nimbic', 'Quorvia', 'Saros', 'Tensora', 'Voltaic', 'Wrenfold']
     for i, n in enumerate(names):
         y = 100 + i * 60
         ch = r.uniform(-4, 3) if n != 'HLX' else -3.8
         col = TEAL if ch >= 0 else RED
-        d.text((48, y), n, font=font(MONO, 34), fill=INK)
-        d.text((260, y), f'{r.uniform(12, 240):7.2f}', font=font(MONO, 34), fill=INK)
+        d.text((48, y), n, font=font(MONO, 30), fill=INK)
+        d.text((290, y), f'{r.uniform(12, 240):7.2f}', font=font(MONO, 34), fill=INK)
         d.text((520, y), f'{ch:+.1f}%', font=font(MONO, 34), fill=col)
         spark = series(24, i + 20, lambda t, c=ch: c / 12)
         lo, hi = min(spark), max(spark) + 0.01
@@ -191,11 +192,11 @@ def main():
     left_screen().save(os.path.join(OUT, 'screen-left.png'))
     right_screen().save(os.path.join(OUT, 'screen-right.png'))
     paper((900, 1160), (238, 233, 220), [
-        ('HLX  long @ 52', 64, None),
-        ('Original thesis:', 58, None),
-        ('Strong fundamentals.', 58, None),
-        ('Temporary market', 58, None),
-        ('weakness.', 58, None),
+        ('Corvane  880 @ 52.02', 60, None),
+        ('Thesis: retention is', 58, None),
+        ('strong. The drop is', 58, None),
+        ('market-wide, not', 58, None),
+        ('Corvane.', 58, None),
         ('', 30, None),
         ('Out if wrong.', 58, (150, 40, 34)),
     ], HAND, ruled=True, seed=2).save(os.path.join(OUT, 'note-thesis.png'))

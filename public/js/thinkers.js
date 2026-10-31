@@ -56,14 +56,15 @@ PP.thinkers = {
 
 PP.thinkerOrder = ['schelling', 'nash', 'aumann', 'axelrod', 'nalebuff', 'duke'];
 
-// Each thinker's accent colour and a line icon for their central idea.
+// Each thinker's colour comes from nature (lake water, sunset clay, oak, moss, dusk heather, open sky),
+// with a line icon for their central idea.
 const ico = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-Object.assign(PP.thinkers.schelling, { color: '#10b6a4', icon: ico('<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>') });
-Object.assign(PP.thinkers.nash, { color: '#ff6e4e', icon: ico('<path d="M12 4v16M8 20h8M5 7h14"/><path d="M5 7 2.5 13h5zM19 7l-2.5 6h5z"/><circle cx="12" cy="4" r="1"/>') });
-Object.assign(PP.thinkers.aumann, { color: '#e9a21c', icon: ico('<path d="M4 12a8 8 0 0 1 14-5.3"/><path d="M18 3v4h-4"/><path d="M20 12a8 8 0 0 1-14 5.3"/><path d="M6 21v-4h4"/>') });
-Object.assign(PP.thinkers.axelrod, { color: '#4fa865', icon: ico('<path d="M4 8h15l-3.5-3.5"/><path d="M20 16H5l3.5 3.5"/>') });
-Object.assign(PP.thinkers.nalebuff, { color: '#9b6bd1', icon: ico('<path d="M11 4a8 8 0 1 0 8 8h-8z"/><path d="M14.5 2.5a7 7 0 0 1 7 7h-7z"/>') });
-Object.assign(PP.thinkers.duke, { color: '#2f95d6', icon: ico('<rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="15" r="1.2" fill="currentColor"/>') });
+Object.assign(PP.thinkers.schelling, { color: '#3e7f86', icon: ico('<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>') });
+Object.assign(PP.thinkers.nash, { color: '#c0643e', icon: ico('<path d="M12 4v16M8 20h8M5 7h14"/><path d="M5 7 2.5 13h5zM19 7l-2.5 6h5z"/><circle cx="12" cy="4" r="1"/>') });
+Object.assign(PP.thinkers.aumann, { color: '#96683c', icon: ico('<path d="M4 12a8 8 0 0 1 14-5.3"/><path d="M18 3v4h-4"/><path d="M20 12a8 8 0 0 1-14 5.3"/><path d="M6 21v-4h4"/>') });
+Object.assign(PP.thinkers.axelrod, { color: '#6a8550', icon: ico('<path d="M4 8h15l-3.5-3.5"/><path d="M20 16H5l3.5 3.5"/>') });
+Object.assign(PP.thinkers.nalebuff, { color: '#86688a', icon: ico('<path d="M11 4a8 8 0 1 0 8 8h-8z"/><path d="M14.5 2.5a7 7 0 0 1 7 7h-7z"/>') });
+Object.assign(PP.thinkers.duke, { color: '#5a85a8', icon: ico('<rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="15" r="1.2" fill="currentColor"/>') });
 
 PP.uiIcons = {
   teaches: ico('<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1V16h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/>'),

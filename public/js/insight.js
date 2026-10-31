@@ -1,9 +1,6 @@
 // What the game notices about the player.
 //   buys     what each choice pursues (Seykota: everybody gets what they want)
 //   verdict  how the person most affected would describe you after that choice
-//   read     "Guess before you choose": what do you think this person is after?
-//            kind: right | part | suspicious | naive. Suspicious guesses assume bad
-//            intent the scene doesn't support; naive ones ignore real risk.
 window.PP = window.PP || {};
 
 PP.insight = {
@@ -20,11 +17,6 @@ PP.insight = {
 
   scenes: {
     'wrong-price': {
-      read: { who: 'maya', q: `What is Maya most worried about right now?`, options: [
-        { t: `Getting in trouble, and the line backing up`, kind: 'right' },
-        { t: `Protecting the store's profit`, kind: 'suspicious' },
-        { t: `Nothing much. She doesn't really care`, kind: 'suspicious' }
-      ], truth: `Maya wanted a moving line and no blame. Her sticky note and her nervous glance said so. The store's margin on one bottle wasn't on her mind.` },
       options: {
         A: { buys: ['right', 'win'], verdict: { who: 'maya', line: `Fair enough, I guess. Everyone in line was staring at me.` } },
         B: { buys: ['calm', 'time'], verdict: { who: 'maya', line: `Nice customer. Didn't seem to care about the price.` } },
@@ -34,11 +26,6 @@ PP.insight = {
       }
     },
     'just-this-once': {
-      read: { who: 'dana', q: `Why is Dana asking you?`, options: [
-        { t: `She's genuinely overloaded`, kind: 'right' },
-        { t: `She's offloading work she doesn't want`, kind: 'suspicious' },
-        { t: `A bit of both`, kind: 'part' }
-      ], truth: `The tracker showed a new onboarding dropped on her yesterday with no deadline relief. She was overloaded. She also knows you usually say yes.` },
       options: {
         A: { buys: ['liked', 'calm'], verdict: { who: 'dana', line: `Always says yes. I probably lean on that too much.` } },
         B: { buys: ['time'], verdict: { who: 'dana', line: `Guarded. Fair, I suppose. I didn't expect a flat no.` } },
@@ -48,11 +35,6 @@ PP.insight = {
       }
     },
     'the-spot': {
-      read: { who: 'gary', q: `Why do you think Gary keeps parking there?`, options: [
-        { t: `Something temporary is going on`, kind: 'right' },
-        { t: `He's claiming the spot`, kind: 'suspicious' },
-        { t: `He doesn't care about the neighbors`, kind: 'suspicious' }
-      ], truth: `His driveway was being resealed for a week. He'd never been told the block had an unwritten system.` },
       options: {
         A: { buys: ['right', 'win'], verdict: { who: 'gary', line: `Left me a note in my third week. Noted.` } },
         B: { buys: ['info', 'future', 'fair'], verdict: { who: 'gary', line: `Good neighbor. Asked before assuming.` } },
@@ -62,11 +44,6 @@ PP.insight = {
       }
     },
     'credit-taker': {
-      read: { who: 'jordan', q: `Why did Jordan present your work as his?`, options: [
-        { t: `He's deliberately taking credit`, kind: 'suspicious' },
-        { t: `He panicked before his review`, kind: 'part' },
-        { t: `You can't know yet`, kind: 'right' }
-      ], truth: `The footer proves he claimed the work. It doesn't prove why. His review was days away and his hands were shaking. Panic is likely, but the honest answer is that you couldn't know yet.` },
       options: {
         A: { buys: ['right', 'win'], verdict: { who: 'jordan', line: `Called me out in front of everyone. I deserved some of it.` } },
         B: { buys: ['fair', 'future'], verdict: { who: 'jordan', line: `Gave me a chance to fix it quietly. I owe them one.` } },
@@ -76,11 +53,6 @@ PP.insight = {
       }
     },
     'pick-a-side': {
-      read: { who: 'ellen', q: `What does Ellen care about most here?`, options: [
-        { t: `What it costs before the March budget review`, kind: 'right' },
-        { t: `Picking the technically best tool`, kind: 'part' },
-        { t: `Keeping Marcus happy`, kind: 'suspicious' }
-      ], truth: `Tom said it plainly: Ellen's real worry is spending before March. She'd take a good tool, but she needed one she could defend in the budget review.` },
       options: {
         A: { buys: ['liked', 'win'], verdict: { who: 'marcus', line: `Picked a side. Not mine.` } },
         B: { buys: ['calm', 'liked'], verdict: { who: 'priya', line: `Went with rank over evidence. I stopped asking for their view.` } },
@@ -90,11 +62,6 @@ PP.insight = {
       }
     },
     'the-fence': {
-      read: { who: 'gary', q: `What does Gary need most from this fence?`, options: [
-        { t: `To keep his dog in`, kind: 'right' },
-        { t: `A nicer yard, on your dime`, kind: 'suspicious' },
-        { t: `To test whether you'll give in`, kind: 'suspicious' }
-      ], truth: `His rescue dog had jumped the old fence twice. Six feet of cedar was about the dog, not about you.` },
       options: {
         A: { buys: ['liked', 'calm'], verdict: { who: 'gary', line: `Generous. Maybe too generous.` } },
         B: { buys: ['win', 'time'], verdict: { who: 'gary', line: `Wouldn't chip in. I remember that every time I look at the oak.` } },
@@ -104,11 +71,6 @@ PP.insight = {
       }
     },
     'change-order': {
-      read: { who: 'luis', q: `Is Luis padding the bill?`, options: [
-        { t: `Probably. Contractors always do this`, kind: 'suspicious' },
-        { t: `Probably not, but it's worth checking`, kind: 'right' },
-        { t: `No. He's the expert, so trust him`, kind: 'naive' }
-      ], truth: `The rot was real, and most contractors aren't padding. But the price was unverified and the deadline untested. Trust with a quick check was the honest read.` },
       options: {
         A: { buys: ['calm', 'time'], verdict: { who: 'luis', line: `Approved it fast. Easy client.` } },
         B: { buys: ['right', 'win'], verdict: { who: 'luis', line: `Held me to the bid and ignored the contract. I pulled my crew.` } },
@@ -118,11 +80,6 @@ PP.insight = {
       }
     },
     'the-offer': {
-      read: { who: 'alicia', q: `How much room is there in Northfield's offer?`, options: [
-        { t: `None. $92,000 is final`, kind: 'naive' },
-        { t: `Some, up to their posted range, and they need someone soon`, kind: 'right' },
-        { t: `They'll pay whatever it takes`, kind: 'naive' }
-      ], truth: `The posted range went to $110,000 and Alicia needed someone before November. There was real room, but not unlimited room.` },
       options: {
         A: { buys: ['calm', 'liked'], verdict: { who: 'sam', line: `Easiest close of the quarter.` } },
         B: { buys: ['win'], verdict: { who: 'alicia', line: `Mentioned an offer they couldn't show us. That stuck with me.` } },

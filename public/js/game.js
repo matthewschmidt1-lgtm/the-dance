@@ -20,9 +20,8 @@
   const pos = i => { const sc = LIST[i], eps = LIST.filter(s => s.ep === sc.ep); return { n: eps.indexOf(sc) + 1, of: eps.length, ep: sc.ep }; };
   const epEnd = i => !!LIST[i] && (!LIST[i + 1] || LIST[i + 1].ep !== LIST[i].ep);
   const DANCE_AT = EPS[0].scenes.length; // "Your Dance" opens once the first episode is played
-  const READ_LABEL = { right: `Spot on`, part: `Partly`, suspicious: `Too suspicious`, naive: `Too trusting`, hope: `Hope talking`, ego: `Ego talking`, fear: `Fear talking`, impulse: `Impulse talking`, crowd: `Following the crowd`, revenge: `Revenge talking` };
   const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
-  const fresh = (clues = [], read = null) => ({ selected: null, clues, read });
+  const fresh = (clues = []) => ({ selected: null, clues });
   const RECURRING = ['dana', 'gary', 'jordan', 'priya', 'marcus'];
   const app = document.getElementById('app');
 
@@ -83,6 +82,11 @@
   const ruleOf = (k, v) => MK.rules[k].options.find(o => o.v === v);
   const breaks = opt => !!rules && MK.exposure[opt.exposure] > ruleOf('risk', rules.risk).max;
   const money = k => k === 0 ? `$0` : `${k > 0 ? '+' : '−'}$${Math.abs(k)}k`;
+  // Market text can name the player's own rules and account: {rule}, {edge}, {account}.
+  const fill = t => typeof t !== 'string' || !t.includes('{') ? t : t
+    .replace(/\{rule\}/g, rules ? ruleOf('risk', rules.risk).label : 'your')
+    .replace(/\{edge\}/g, rules ? ruleOf('edge', rules.edge).label.toLowerCase() : 'your edge')
+    .replace(/\{account\}/g, `$${capitals().cap.fin}k`);
   function capitals(hist = history) {
     const cap = Object.fromEntries(MK.capitals.map(c => [c.k, c.start]));
     let ruinedAt = null;
@@ -150,20 +154,13 @@
       const opt = sc.options.find(o => o.key === h.key);
       Object.entries(opt.s || {}).forEach(([k, v]) => { totals[k] += v; });
       totals.inf += Math.min(h.clues.length, 2) * 0.5;
-      const read = readOf(sc, h);
-      if (read) totals.inc += read.kind === 'right' ? 0.5 : read.kind === 'part' ? 0 : -0.5;
       Object.entries(opt.rel || {}).forEach(([k, v]) => { rel[k] = (rel[k] || 0) + v; });
       Object.assign(flags, opt.flags || {});
       const before = rating;
       rating += (opt.q - 2) * 40;
-      return { sc, opt, read, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating };
+      return { sc, opt, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating };
     });
     return { totals, rel, flags, rating, moves };
-  }
-  function readOf(sc, h) {
-    const R = (PP.insight.scenes[sc.id] || {}).read;
-    if (!R || h.read == null || !R.options[h.read]) return null;
-    return { ...R.options[h.read], R };
   }
   const skillScore = t => Math.max(0, Math.min(100, Math.round(50 + t * 3.5)));
   const text = (v, ctx) => (typeof v === 'function' ? v(ctx) : v);
@@ -487,28 +484,22 @@
   function panelDecide(sc) {
     const options = sc.options.map(o => `<li>
       <input type="radio" name="move" id="move-${sc.id}-${o.key}" value="${o.key}" ${draft.selected === o.key ? 'checked' : ''}>
-      <label for="move-${sc.id}-${o.key}" class="option"><span class="option-key">${o.key}</span><span class="option-text">${o.text}${o.exposure ? `<span class="exp exp-${o.exposure} ${breaks(o) ? 'is-over' : ''}">${MK.exposureLabel[o.exposure]}${breaks(o) ? ' · over your limit' : ''}</span>` : ''}</span></label>
+      <label for="move-${sc.id}-${o.key}" class="option"><span class="option-key">${o.key}</span><span class="option-text">${fill(o.text)}${o.exposure ? `<span class="exp exp-${o.exposure} ${breaks(o) ? 'is-over' : ''}">${MK.exposureLabel[o.exposure]}${breaks(o) ? ' · over your limit' : ''}</span>` : ''}</span></label>
     </li>`).join('');
-    const R = (PP.insight.scenes[sc.id] || {}).read;
-    const read = R ? `<fieldset class="read"><legend class="read-q"><span class="read-k">First, your read</span>${R.q}</legend>
-        <ul class="read-opts">${R.options.map((o, i) => `<li><input type="radio" name="read" id="read-${sc.id}-${i}" value="${i}" ${draft.read === i ? 'checked' : ''}><label for="read-${sc.id}-${i}" class="read-opt">${o.t}</label></li>`).join('')}</ul>
-        <p class="read-note">You'll see how close you were after you move.</p></fieldset>` : '';
     return `<form id="decide-form" class="decide">
       <div class="decide-top">
-        ${read}
-        <fieldset><legend class="decide-q">${R ? `<span class="read-k">Then, your move</span>` : ''}${sc.question}</legend>
+        ${sc.facts ? `<section class="facts" aria-label="The situation"><p class="facts-k">The situation</p><ul>${sc.facts.map(f => `<li>${fill(f)}</li>`).join('')}</ul></section>` : ''}
+        <fieldset><legend class="decide-q">${sc.question}</legend>
           ${isMarket() && rules ? `<p class="rules-mini">Your rules: <strong>${ruleOf('risk', rules.risk).label}</strong> risk per decision · edge: <strong>${ruleOf('edge', rules.edge).label}</strong></p>` : ''}
           <ul class="options">${options}</ul></fieldset>
       </div>
       <div class="decide-bar">
         <button type="button" class="btn btn-ghost" data-act="freeze"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>Freeze and analyze</button>
-        <button type="submit" class="btn btn-primary" id="evaluate-btn" ${ready(sc) ? '' : 'disabled'}>${!R || draft.read !== null ? 'Make this move' : 'Make your read first'}</button>
+        <button type="submit" class="btn btn-primary" id="evaluate-btn" ${draft.selected ? '' : 'disabled'}>Make this move</button>
       </div>
       <p class="decide-hint">${draft.clues.length ? `You've read ${draft.clues.length} of ${sc.clues.length} details in the room.` : `Tip: freezing the scene lets you read the room before you commit.`} <button type="button" class="btn-link-sm" data-act="replay-intro">Watch the scene again</button></p>
     </form>`;
   }
-
-  const ready = sc => !!draft.selected && (draft.read !== null || !(PP.insight.scenes[sc.id] || {}).read);
 
   function panelFrozen(sc) {
     const cast = sc.stage.cast.map((c, i) => {
@@ -523,7 +514,7 @@
       const open = draft.clues.includes(i);
       return `<li class="clue ${open ? 'is-open' : ''}"><button type="button" class="clue-btn" data-clue="${i}" ${open ? 'disabled' : ''} aria-expanded="${open}"><span class="clue-label">${c.label}</span><span class="clue-state">${open ? 'Noted' : 'Look'}</span></button>${open ? `<p class="clue-text">${c.text}</p>` : ''}</li>`;
     }).join('');
-    const opts = sc.options.map(o => `<li><span class="option-key">${o.key}</span><div><p class="fo-text">${o.text}</p><p class="fo-prev">${sc.stage.options[o.key].preview}</p></div></li>`).join('');
+    const opts = sc.options.map(o => `<li><span class="option-key">${o.key}</span><div><p class="fo-text">${fill(o.text)}</p><p class="fo-prev">${sc.stage.options[o.key].preview}</p></div></li>`).join('');
     const canDecide = ui.phase === 'decide' || ui.phase === 'intro';
     return `<div class="frozen">
       <div class="frozen-head"><p class="eyebrow">Slow Motion Strategy · scene frozen</p>
@@ -546,7 +537,7 @@
   function lensBody(sc, opt) {
     const a = sc.analysis;
     const concept = c => { const t = thinkers[c.thinker]; return `<article class="concept ${t.grandfather ? 'is-grand' : ''}"><p class="concept-who">${t.name} · ${t.field}</p><h3>${c.name}</h3><p>${c.body}</p></article>`; };
-    const others = sc.options.map(o => `<li class="other ${o.key === opt.key ? 'is-mine' : ''}"><span class="other-glyph g${o.q}" title="${grades[o.q].name}">${grades[o.q].glyph}</span><span class="other-text"><strong>${o.key}.</strong> ${o.text}${o.key === opt.key ? ' <em>(your move)</em>' : ''}</span></li>`).join('');
+    const others = sc.options.map(o => `<li class="other ${o.key === opt.key ? 'is-mine' : ''}"><span class="other-glyph g${o.q}" title="${grades[o.q].name}">${grades[o.q].glyph}</span><span class="other-text"><strong>${o.key}.</strong> ${fill(o.text)}${o.key === opt.key ? ' <em>(your move)</em>' : ''}</span></li>`).join('');
     return `<div class="concepts">${concept(a.concept)}${concept(a.second)}</div>
         <dl class="analysis">${[['Where the leverage was', a.leverage], ['What information was missing', a.missing], ['Assumptions you might have made', a.assumptions]].map(([k, v]) => `<div class="arow"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
         <h3 class="viz-h">Every move on the board</h3><ul class="others">${others}</ul>
@@ -591,11 +582,6 @@
             <p class="verdict-why">${whyOf(opt, outcome)}</p>
           </div>
         </div>
-        ${move.read ? `<div class="read-reveal is-${move.read.kind === 'right' ? 'right' : move.read.kind === 'part' ? 'part' : 'naive'}">
-          <p class="rr-k">What was driving you <span class="rr-tag">${READ_LABEL[move.read.kind]}</span></p>
-          <p class="rr-guess">“${move.read.t}”</p>
-          <p class="rr-truth">${move.read.R.truth}</p>
-        </div>` : ''}
         <ol class="timeline">
           <li><span class="tl-k">Right now</span><p>${outcome.text}</p></li>
           <li><span class="tl-k">What it means</span><p>${opt.later}</p></li>
@@ -657,8 +643,7 @@
     if (ui.tab === 'outcome') {
       const deltas = Object.entries(opt.s || {}).filter(([, v]) => v).sort((x, y) => y[1] - x[1])
         .map(([k, v]) => `<li class="delta ${v > 0 ? 'up' : 'down'}"><span>${v > 0 ? '+' : '−'}${Math.abs(v)}</span>${skills[k]}</li>`).join('')
-        + (move.clues.length ? `<li class="delta up"><span>+${Math.min(move.clues.length, 2) * 0.5}</span>${skills.inf} (read the room)</li>` : '')
-        + (move.read && move.read.kind !== 'part' ? `<li class="delta ${move.read.kind === 'right' ? 'up' : 'down'}"><span>${move.read.kind === 'right' ? '+' : '−'}0.5</span>${skills.inc} (your read)</li>` : '');
+        + (move.clues.length ? `<li class="delta up"><span>+${Math.min(move.clues.length, 2) * 0.5}</span>${skills.inf} (read the room)</li>` : '');
       const rels = Object.entries(opt.rel || {}).filter(([, v]) => v).map(([k, v]) => `<li class="relchip ${v > 0 ? 'up' : 'down'}">${PP.people[k].name} ${v > 0 ? 'trusts you more' : 'trusts you less'}</li>`).join('');
       body = `
         <div class="verdict">
@@ -669,11 +654,6 @@
             <p class="verdict-why">${why}</p>
           </div>
         </div>
-        ${move.read ? `<div class="read-reveal is-${move.read.kind}">
-          <p class="rr-k">Your read <span class="rr-tag">${READ_LABEL[move.read.kind]}</span></p>
-          <p class="rr-guess">“${move.read.t}”</p>
-          <p class="rr-truth">${move.read.R.truth}</p>
-        </div>` : ''}
         <ol class="timeline">
           <li><span class="tl-k">Right now</span><p>${outcome.text}</p></li>
           <li><span class="tl-k">Later</span><p>${text(opt.later, ctxAfter)}</p>${rels ? `<ul class="relchips">${rels}</ul>` : ''}</li>
@@ -763,14 +743,6 @@
     const max = buys.length ? buys[0][1] : 1;
     const buyBars = buys.map(([t, c]) => `<li><span class="buy-name">${I.tags[t]}</span><span class="buy-track" aria-hidden="true"><span class="buy-fill" style="width:${Math.round(c / max * 100)}%"></span></span><span class="buy-n">${c}</span></li>`).join('');
 
-    const reads = d.moves.filter(m => m.read);
-    const kinds = { right: 0, part: 0, suspicious: 0, naive: 0 };
-    reads.forEach(m => { kinds[m.read.kind]++; });
-    const readLine = !reads.length ? '' : kinds.suspicious >= 2 ? `You assumed bad intent ${kinds.suspicious} times when the room didn't support it. Most people are mostly trying to get through their day.`
-      : kinds.naive >= 1 && kinds.naive >= kinds.suspicious ? `You gave the benefit of the doubt where a quick check was cheap. Trust is a good default. Checking is a better one.`
-        : kinds.right + kinds.part / 2 >= reads.length * 0.7 ? `You read people well. You looked for what they needed before deciding who they were.`
-          : `Your reads were mixed. The details in each room usually said more than first impressions did.`;
-
     const mo = moments(d).map(({ m, k, by, note }) => {
       const t = thinkers[by];
       return `<li class="moment">
@@ -785,18 +757,11 @@
         <p class="lede">Every person you met formed an opinion. Here's what each of them would say about you.</p></div>
       <svg width="0" height="0" class="defs-only" aria-hidden="true">${PP.art.DEFS}</svg>
       <ul class="said-list">${said}</ul>
-      <div class="dance-grid">
-        <section class="card"><h3 class="block-h">What your choices were buying</h3>
+      <section class="card dance-buys"><h3 class="block-h">What your choices were buying</h3>
           <ul class="buys">${buyBars}</ul>
           ${buys.length ? `<p class="buy-note">${I.buyNotes[buys[0][0]]}</p>` : ''}
           <aside class="mo-note" style="--tc:${thinkers.seykota.color}"><span class="mo-icon">${thinkers.seykota.icon}</span><p><strong>${thinkers.seykota.short}</strong> Everybody gets what they want. Your choices show what that was.</p></aside>
-        </section>
-        <section class="card"><h3 class="block-h">How you read people</h3>
-          ${reads.length ? `<p class="read-score"><span class="rs-n">${kinds.right}</span><span class="rs-of">of ${reads.length} reads spot on${kinds.part ? `, ${kinds.part} partly` : ''}</span></p>
-          <ul class="read-kinds">${['suspicious', 'naive'].filter(k => kinds[k]).map(k => `<li class="is-${k}">${READ_LABEL[k]} · ${kinds[k]}</li>`).join('')}</ul>
-          <p class="read-line">${readLine}</p>` : `<p class="small">Your reads start with your next scene. Before each move you'll guess what the other person is after.</p>`}
-        </section>
-      </div>
+      </section>
       <h3 class="block-h block-h-gap">Three moments</h3>
       <ol class="moments">${mo}</ol>
       <div class="carry"><p class="eyebrow">One question to take with you</p><p class="carry-q">${I.questions[weakest]}</p></div>
@@ -941,12 +906,11 @@
         : `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}. On the slow Thursday you played someone else's game.`;
 
     const review = C.steps.map((x, i) => {
-      const read = readOf(x.sc, x.h);
       return `<li class="dr">
         <span class="dr-n">${i + 1}</span>
         <div class="dr-main"><h4>${x.sc.title}</h4>
-          <p class="dr-row"><span class="dr-k">You knew</span>${x.h.clues.length} of ${x.sc.clues.length} details${read ? ` · your read: ${READ_LABEL[read.kind].toLowerCase()}` : ''}</p>
-          <p class="dr-row"><span class="dr-k">You chose</span><span class="mo-key">${x.opt.key}</span> ${x.opt.text}${x.broke ? ' <em class="dr-broke">Broke your rule</em>' : ''}</p>
+          <p class="dr-row"><span class="dr-k">You knew</span>${x.h.clues.length} of ${x.sc.clues.length} details in the room</p>
+          <p class="dr-row"><span class="dr-k">You chose</span><span class="mo-key">${x.opt.key}</span> ${fill(x.opt.text)}${x.broke ? ' <em class="dr-broke">Broke your rule</em>' : ''}</p>
           <p class="dr-row"><span class="dr-k">What happened</span>${toneLabel[x.oc.tone]} · ${x.oc.ruin ? 'the account was wiped out' : `account ${money(x.oc.fin)}`}</p></div>
         <span class="dr-q q-${quad(x).toLowerCase().replace(' ', '-')}"><span class="g${x.opt.q}">${grades[x.opt.q].glyph}</span>${quad(x)}</span>
       </li>`;
@@ -1068,7 +1032,7 @@
       case 'next': draft = fresh(); ui.phase = 'intro'; render(); window.scrollTo({ top: 0 }); break;
       case 'takeback': {
         const last = history.pop(); save();
-        draft = fresh(last.clues.slice(), last.read ?? null);
+        draft = fresh(last.clues.slice());
         ui.phase = 'decide';
         app.innerHTML = viewPlay();
         toDecision();
@@ -1102,11 +1066,10 @@
   });
 
   document.addEventListener('change', e => {
-    if (e.target.name !== 'move' && e.target.name !== 'read') return;
-    if (e.target.name === 'move') draft.selected = e.target.value;
-    else draft.read = Number(e.target.value);
+    if (e.target.name !== 'move') return;
+    draft.selected = e.target.value;
     const btn = document.getElementById('evaluate-btn');
-    if (btn) { btn.disabled = !ready(LIST[history.length]); btn.textContent = draft.read === null && (PP.insight.scenes[LIST[history.length].id] || {}).read ? 'Make your read first' : 'Make this move'; }
+    if (btn) btn.disabled = false;
   });
 
   document.addEventListener('submit', e => {
@@ -1119,11 +1082,11 @@
     }
     if (e.target.id !== 'decide-form') return;
     e.preventDefault();
-    if (!ready(LIST[history.length])) return;
+    if (!draft.selected) return;
     if (stage && stage.paused) stage.resume();
     const sc = LIST[history.length];
     const opt = sc.options.find(o => o.key === draft.selected);
-    history.push({ id: sc.id, key: opt.key, outcome: pickOutcome(opt), clues: draft.clues.slice(), read: draft.read });
+    history.push({ id: sc.id, key: opt.key, outcome: pickOutcome(opt), clues: draft.clues.slice() });
     save();
     draft = fresh();
     document.querySelector('.play-head').innerHTML = document.querySelector('.play-head').innerHTML.replace(/<ol class="file-strip"[\s\S]*?<\/ol>/, strip(history.length - 1, derive(history)));

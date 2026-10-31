@@ -39,7 +39,7 @@ A separate section, inspired by Jack Schwager's *Market Wizards*: lessons from t
 - **One desk, five challenges**, each asking one question about you: *The Losing Position* (can you accept being wrong?), *The Winning Streak* (overconfidence), *The Empty Hand* (waiting for an edge), *The Changing Market* (abandoning assumptions) and *The Last Player Standing* (protecting your ability to play again).
 - **Your rules first.** Before you sit down you choose how much you'll risk on one decision and what your edge is. Every option shows its risk, and the game tracks when you break your own rule.
 - **Five kinds of capital**: Account, Trust, Edge, Composure and Runway. Lose half the account and the desk pulls your capital, which ends the section early.
-- **After each decision**: the risk chart (what every move could cost or earn), what was driving you, what Theo or Nadia saw, and the same decision in everyday life.
+- **After each decision**: the risk chart (what every move could cost or earn), what Theo or Nadia saw, and the same decision in everyday life.
 - **The review** reveals the five principles underneath (protect your downside, find your edge, follow the evidence, master yourself, stay in the game), scored from what you actually did.
 
 The after-hours trading floor is rendered in Blender. `tools/make_trading_textures.py` draws its screens and handwritten notes first.
@@ -50,7 +50,7 @@ The after-hours trading floor is rendered in Blender. `tools/make_trading_textur
 2. **The situation plays out**: typed dialogue, camera push-ins on whoever is speaking, characters changing expression (11 moods), posture (15 poses) and gesturing (nod, head shake, flinch, sigh, lean, glance, walk).
 3. **Voices and speed**: characters, your lines and a narrator are spoken with the device's built-in voices, each character cast to a distinct natural voice. The speaker button turns voices off; the speed button cycles 0.75× to 1.5× and paces speech, typing and timing together. Both are remembered.
 4. **Slow Motion Strategy** (Slow-mo button, or press `P`): the scene freezes and desaturates over a strategy grid, numbered pins mark each person, and a panel shows what each wants, what you know, what's uncertain, details you can investigate, and where each option might lead. Resume, or replay from the start.
-5. **Guess before you choose.** First you make a read: what is this person after? Then you choose a move. The truth is revealed with the outcome, and accurate reads count toward *Reading incentives*.
+5. **You choose a move.**
 6. **The room reacts** in a short animated sequence. Results are partly random.
 7. **Analysis in four tabs**: *Outcome* (decision grade vs. result, now vs. later, trust changes), *The game* (payoff matrix with your cell highlighted, decision tree of every move's possible results, what reading the room would have shown), *The people* (relationship map, leverage scale, incentives), *The lens* (the thinkers' concepts, every move graded, the lesson).
 8. **Replay with another strategy**, or move on.
@@ -63,7 +63,6 @@ After Episode 1, the profile opens with a mirror rather than a lesson:
 
 - **What the room saw.** Each person you met says, in one line, how they'd describe you after your choice.
 - **What your choices were buying.** Every move pursues something: knowing more, a fair deal, the long game, being right, winning the round, being liked, avoiding friction, or protecting your time. Ed Seykota's line applies: everybody gets what they want.
-- **How you read people.** Your guesses against the truth, including whether you lean too suspicious or too trusting.
 - **Three moments**, your best call, where luck covered for you (or let you down), and what someone will remember, each with a one-line margin note from Nash, Duke or Schelling.
 - **One question to take with you**, chosen from your weakest measure.
 
@@ -89,7 +88,7 @@ public/
   js/thinkers.js        the bench, skills, grades
   js/scenarios.js       scenario substance: options, grading, analysis
   js/scenes.js          staging: people, places, beats, reactions, matrices, leverage
-  js/insight.js         reads, what each move pursues, what people say about you, closing questions
+  js/insight.js         what each move pursues, what people say about you, closing questions
   js/market.js          The Trader's Mind: challenges, staging, capital, rules and principles
   js/env-data.js        generated: where people stand in each render, camera targets
   js/art.js             character renderer (moods, poses) and environment layering

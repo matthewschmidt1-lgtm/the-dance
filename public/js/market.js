@@ -64,6 +64,13 @@ window.PP = window.PP || {};
     // ───────────────────────────────────────── 1
     {
       id: 'losing-position',
+      facts: [
+        `You <strong>bought</strong> 880 shares of Halcyon (HLX) at $52. You make money only if the price rises.`,
+        `HLX is now $41.62, down 20%. Your loss so far is <strong>$9,140</strong>, nearly a tenth of your account.`,
+        `Before buying, you wrote: sell if it falls below $47.80, an 8% loss. It passed that nine days ago.`,
+        `Tonight's news: Halcyon's biggest customer may cancel its contract.`,
+        `You can still sell tonight. Regular trading reopens at 9:30 tomorrow morning.`
+      ],
       tests: `Can you accept being wrong?`,
       level: `Sunk cost`,
       title: `The Losing Position`,
@@ -79,39 +86,30 @@ window.PP = window.PP || {};
         { label: `The sticky note`, text: `"MAX LOSS −8%. OUT BELOW 47.80." You wrote it before you bought, when you had nothing to defend. You're down 20%.` },
         { label: `The order book`, text: `Sellers are stacked at every price above $41.70. For two weeks, every bounce has been sold.` }
       ],
-      read: {
-        q: `What is the market telling you?`,
-        options: [
-          { t: `The thesis is breaking. The evidence has changed`, kind: 'right' },
-          { t: `It's noise. It'll come back`, kind: 'hope' },
-          { t: `It's down too much to sell now`, kind: 'ego' }
-        ],
-        truth: `Tonight's headline was about Halcyon, not the market. Your thesis was about temporary market weakness. When the reason for a position is gone, the price you paid for it stops mattering.`
-      },
       question: `Are you managing your position, or your ego?`,
       options: [
         {
-          key: 'A', text: `Sell everything now. Take the $9,140 loss.`, exposure: 'none',
+          key: 'A', text: `Sell all 880 shares now. Take the $9,140 loss.`, exposure: 'none',
           q: 4, s: { jdg: 2, reg: 2, bnd: 1, inf: 1 }, cap: { psy: 1, str: 1 },
           outcomes: [
-            { p: 0.6, tone: 'good', fin: -9, text: `You're out at $41.55. At 6:30 am Halcyon confirms the customer is leaving, and the stock opens at $33. Holding would have cost another $7,500.` },
-            { p: 0.4, tone: 'mixed', fin: -9, text: `You're out at $41.55. A week later the customer renews and HLX bounces to $46. It stings. You still sold a broken thesis at a loss you could afford.` }
+            { p: 0.6, tone: 'good', fin: -9, text: `You're out at $41.62. At 6:30 am Halcyon confirms the customer is leaving, and the stock opens at $33. Holding would have cost another $7,600.` },
+            { p: 0.4, tone: 'mixed', fin: -9, text: `You're out at $41.62. A week later the customer renews and HLX bounces to $46. It stings. You still sold a broken thesis at a loss you could afford.` }
           ],
           later: `Your account is smaller, and all of it is still yours to use tomorrow.`,
           verdict: { who: 'theo', line: `Took the loss without a speech. That's rarer than a good call.` }
         },
         {
-          key: 'B', text: `Hold. The fundamentals are still there. It'll come back.`, exposure: 'large',
+          key: 'B', text: `Keep all 880 shares. The company is still sound. It'll come back.`, exposure: 'large',
           q: 1, s: { jdg: -2, reg: -1, inf: -1 }, cap: { psy: -1 },
           outcomes: [
-            { p: 0.55, tone: 'bad', fin: -17, text: `The customer leaves. HLX opens at $33 and keeps sliding. Your loss is $16,700, and the decision you avoided tonight is waiting for you again, at a worse price.` },
+            { p: 0.55, tone: 'bad', fin: -17, text: `The customer leaves. HLX opens at $33. Your loss is $16,700, and the decision you avoided tonight is waiting for you again, at a worse price.` },
             { p: 0.45, tone: 'good', fin: -5, text: `The customer renews. HLX climbs back to $46 over two weeks and your loss shrinks to $5,300. It worked. It also taught you that waiting fixes things.` }
           ],
           later: `Hope isn't a risk limit. Whether or not it worked, you held a position your own rule told you to leave.`,
           verdict: { who: 'theo', line: `Said it would come back. Some do. That's what makes the habit so expensive.` }
         },
         {
-          key: 'C', text: `Double it. At $41 it's a bargain, and it lowers your average price.`, exposure: 'all',
+          key: 'C', text: `Buy 880 more at $41.62. It's a bargain, and it lowers your average cost per share.`, exposure: 'all',
           q: 0, s: { reg: -3, jdg: -3, bnd: -2 }, cap: { psy: -2, soc: -1 },
           outcomes: [
             { p: 0.55, tone: 'bad', fin: -30, text: `You buy 880 more at $41.60. The customer leaves. HLX opens at $33 and slides to $30 by Friday, when you finally sell. The loss is $29,600, almost a third of your account.` },
@@ -121,20 +119,20 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Doubled a position that had already blown through its stop. I flagged the account that night.` }
         },
         {
-          key: 'D', text: `Sell half now, and put a hard stop under the rest.`, exposure: 'small',
+          key: 'D', text: `Sell half (440 shares) now. For the rest, set an automatic sell order (a stop) at $40.50.`, exposure: 'small',
           q: 3, s: { jdg: 1, reg: 1, bnd: 1 }, cap: { psy: 1 },
           outcomes: [
-            { p: 0.55, tone: 'mixed', fin: -13, text: `You sell 440 shares. The stop can't save the rest: HLX opens at $33, below your stop, and the order fills there. Total loss $13,000. Better than holding, worse than a clean exit.` },
-            { p: 0.45, tone: 'good', fin: -7, text: `Half out at $41.55. The customer renews and the rest recovers to $46. Total loss $7,200.` }
+            { p: 0.55, tone: 'mixed', fin: -13, text: `You sell 440 shares. The stop can't save the rest: HLX opens at $33, below your stop, and the order fills there. Total loss $12,900. Better than holding, worse than a clean exit.` },
+            { p: 0.45, tone: 'good', fin: -7, text: `Half out at $41.62. The customer renews and the rest recovers to $46. Total loss $7,200.` }
           ],
           later: `You cut the risk in half and kept a written exit. A stop doesn't protect you from a gap, though. Only size does.`,
           verdict: { who: 'theo', line: `Cut it in half instead of all the way. Halfway honest. Still better than most.` }
         },
         {
-          key: 'E', text: `Close the screens. Decide in the morning with a clear head.`, exposure: 'large',
+          key: 'E', text: `Close the screens. Keep the shares overnight and decide in the morning with a clear head.`, exposure: 'large',
           q: 1, s: { reg: 1, jdg: -2 }, cap: {},
           outcomes: [
-            { p: 0.6, tone: 'bad', fin: -17, text: `At 6:30 am the news is confirmed. HLX opens at $33. The clear head costs $7,500 more than the decision you could have made last night.` },
+            { p: 0.6, tone: 'bad', fin: -17, text: `At 6:30 am the news is confirmed. HLX opens at $33. The clear head costs $7,600 more than the decision you could have made last night.` },
             { p: 0.4, tone: 'mixed', fin: -9, text: `Overnight, nothing changes. You sell at the open at $41.40. Same loss, one bad night of sleep.` }
           ],
           later: `Sleeping on it is wise when the problem is your mood. Here the problem was the position, and it stayed open all night.`,
@@ -160,6 +158,13 @@ window.PP = window.PP || {};
     // ───────────────────────────────────────── 2
     {
       id: 'winning-streak',
+      facts: [
+        `You've won seven trades in a row. Your trade sizes have doubled since January.`,
+        `Marco's tip: <strong>buy</strong> Vellum Bio shares. You make money only if its drug is approved.`,
+        `The FDA, the US drug regulator, decides at 7 am tomorrow. Nobody knows the answer.`,
+        `The stock is expected to jump about 50% on approval, or fall about 50% on rejection.`,
+        `A normal trade for you is about $10,000, so roughly +$5,000 or −$5,000. You also hold three other winning trades.`
+      ],
       tests: `Can you avoid overconfidence?`,
       level: `Overconfidence`,
       title: `The Winning Streak`,
@@ -175,29 +180,20 @@ window.PP = window.PP || {};
         { label: `Marco's track record`, text: `He's sent four tips like this in two years. One worked.` },
         { label: `The options market`, text: `Option prices imply a move of about 45% either way. The crowd has no idea either. It's priced as a coin flip.` }
       ],
-      read: {
-        q: `What does the streak tell you about this trade?`,
-        options: [
-          { t: `Nothing. This trade stands on its own`, kind: 'right' },
-          { t: `I'm reading the market well right now`, kind: 'ego' },
-          { t: `I'm due for a loss`, kind: 'fear' }
-        ],
-        truth: `The FDA doesn't know about your streak. Seven wins in a rising market said more about the market than about you, and nothing at all about Vellum.`
-      },
       question: `The streak is real. Is the edge?`,
       options: [
         {
-          key: 'A', text: `Go big: five times your usual size. You're seeing the market clearly right now.`, exposure: 'all',
+          key: 'A', text: `Go big: buy Vellum at five times your usual size, about $50,000. You're seeing the market clearly right now.`, exposure: 'all',
           q: 0, s: { reg: -2, jdg: -3, bnd: -1 }, cap: { psy: -1, soc: -1 },
           outcomes: [
-            { p: 0.45, tone: 'good', fin: 25, text: `Approved. Vellum opens up 52%. You make $25,000 in eight minutes, and you feel like you can't miss.` },
+            { p: 0.45, tone: 'good', fin: 26, text: `Approved. Vellum opens up 52%. You make $26,000 in eight minutes, and you feel like you can't miss.` },
             { p: 0.55, tone: 'bad', fin: -24, text: `Rejected. Vellum opens down 48%. You lose $24,000 before your coffee cools. Seven wins, gone in one.` }
           ],
           later: `A streak changes how you feel, not what you know. Your size followed the feeling.`,
           verdict: { who: 'nadia', line: `Five times normal size on a coin flip. Win or lose, that's the trade I worry about.` }
         },
         {
-          key: 'B', text: `Take your normal size. You've been right. Trust the process.`, exposure: 'normal',
+          key: 'B', text: `Buy Vellum at your normal size, about $10,000. You've been right. Trust the process.`, exposure: 'normal',
           q: 2, s: { jdg: -1 }, cap: {},
           outcomes: [
             { p: 0.45, tone: 'good', fin: 5, text: `Approved. Up 52%. A solid $5,200 gain.` },
@@ -207,7 +203,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Normal size. Fine. I just couldn't tell you what the edge was.` }
         },
         {
-          key: 'C', text: `Pass. A coin flip isn't an edge, and a streak isn't information.`, exposure: 'none',
+          key: 'C', text: `Don't buy Vellum. A coin flip isn't an edge, and a streak isn't information.`, exposure: 'none',
           q: 3, s: { jdg: 2, reg: 2, bnd: 1, inf: 1 }, cap: { psy: 1, str: 1 },
           outcomes: [
             { p: 0.45, tone: 'mixed', fin: 0, text: `Approved. Vellum opens up 52%. Marco texts a rocket emoji. You made nothing, and you made the right call.` },
@@ -217,7 +213,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Passed on a coin flip in the middle of a hot streak. That's the one I'd hire.` }
         },
         {
-          key: 'D', text: `Pass on the tip, and cut your size back to January levels for a while.`, exposure: 'none',
+          key: 'D', text: `Don't buy Vellum, and shrink all your trades back to January's size for a while.`, exposure: 'none',
           q: 4, s: { jdg: 2, reg: 2, bnd: 2, lng: 1 }, cap: { psy: 1, soc: 1, str: 1 },
           outcomes: [
             { p: 0.45, tone: 'mixed', fin: 0, text: `Approved, up 52%, and you weren't in it. Two weeks later the market turns, and your smaller positions take the hit gently.` },
@@ -227,11 +223,11 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Cut their own size before I had to ask. I trust that account more than its returns.` }
         },
         {
-          key: 'E', text: `Close everything and lock in the year. You've proven yourself.`, exposure: 'none',
+          key: 'E', text: `Sell everything you own and keep this year's gains. You've proven yourself.`, exposure: 'none',
           q: 1, s: { reg: -1, lng: -1, jdg: -1 }, cap: { time: -1 },
           outcomes: [
-            { p: 0.6, tone: 'mixed', fin: 0, text: `You're flat by noon. Your three remaining positions keep trending for another month, up 14%. You were safe, and you were out.` },
-            { p: 0.4, tone: 'good', fin: 0, text: `You're flat by noon. A week later the market drops 6%. It looks like genius. It was a mood.` }
+            { p: 0.6, tone: 'mixed', fin: 0, text: `You've sold everything by noon. Your three winning trades keep rising for another month, up 14%. You were safe, and you were out.` },
+            { p: 0.4, tone: 'good', fin: 0, text: `You've sold everything by noon. A week later the market drops 6%. It looks like genius. It was a mood.` }
           ],
           later: `Cutting winners to feel safe is the mirror image of holding losers to avoid feeling wrong. Both let comfort run the account.`,
           verdict: { who: 'theo', line: `Sold everything to protect a good feeling. I've done it. It never lasts.` }
@@ -256,6 +252,13 @@ window.PP = window.PP || {};
     // ───────────────────────────────────────── 3
     {
       id: 'empty-hand',
+      facts: [
+        `You own nothing right now. A normal trade for you is about $10,000. Your edge: <strong>{edge}</strong>.`,
+        `NOVA: everyone's buying before its earnings report, which could move it either way.`,
+        `Keel Foods: being bought by another company for $30 a share once the deal closes. Today it's $28.60.`,
+        `Arden Energy: just hit its highest price in two years, on unusually heavy trading.`,
+        `Tessel: down 40% this morning after its auditor, the firm that checks its books, quit. Nobody knows why.`
+      ],
       tests: `Can you wait for an edge?`,
       level: `Selective participation`,
       title: `The Empty Hand`,
@@ -271,15 +274,6 @@ window.PP = window.PP || {};
         { label: `Theo's screen`, text: `Theo hasn't placed a trade in nine days. He's having his best year in a decade.` },
         { label: `Tessel's news`, text: `Tessel fell after its auditor resigned. Nobody knows what the auditor found. Neither do you.` }
       ],
-      read: {
-        q: `Which of today's ideas is actually an edge for you?`,
-        options: [
-          { t: `One at most, and maybe none`, kind: 'right' },
-          { t: `All of them. A good trader stays active`, kind: 'impulse' },
-          { t: `The one everyone's talking about`, kind: 'crowd' }
-        ],
-        truth: `Each idea suited a different kind of trader. At most one matched the edge you wrote down. The others were games built for someone else, or for no one.`
-      },
       edgeNote: {
         research: `Your idea was Keel Foods. A merger spread where you've read every filing is exactly the trade a researcher should take.`,
         speed: `Your idea was Arden Energy. A clean breakout on heavy volume is what a trader who reads price is built for.`,
@@ -288,50 +282,50 @@ window.PP = window.PP || {};
       question: `Four ideas. How many deserve your money?`,
       options: [
         {
-          key: 'A', text: `Take all four. More shots, more chances.`, exposure: 'large',
+          key: 'A', text: `Buy all four, at normal size. More shots, more chances.`, exposure: 'large',
           q: 0, s: { reg: -2, jdg: -2, inf: -1 }, cap: { psy: -1, str: -1 },
           outcomes: [
-            { p: 0.6, tone: 'bad', fin: -8, text: `NOVA misses earnings, Tessel keeps falling, Arden reverses, and Keel barely moves. A busy day, $8,000 lighter.` },
+            { p: 0.6, tone: 'bad', fin: -7, text: `NOVA misses earnings, Tessel keeps falling, Arden reverses, and Keel barely moves. A busy day, $7,000 lighter.` },
             { p: 0.4, tone: 'mixed', fin: -2, text: `Two work, two don't. After costs you're down $2,000, and exhausted.` }
           ],
           later: `Activity felt like progress. Four positions you half understood cost more than they could earn.`,
           verdict: { who: 'theo', line: `Four trades before lunch. I remember being that busy. I don't remember it working.` }
         },
         {
-          key: 'B', text: `Take only the idea that fits your edge, at normal size. Pass on the rest.`, exposure: 'normal',
+          key: 'B', text: `Buy only the idea that fits your edge ({edge}), at normal size. Pass on the rest.`, exposure: 'normal',
           q: 4, s: { jdg: 2, inf: 2, bnd: 1, str: 1 }, cap: { str: 2, psy: 1 },
           outcomes: [
-            { p: 0.65, tone: 'good', fin: 6, text: `Your one trade works the way your trades are supposed to. Up $6,000 over three weeks. The other three ideas do what coin flips do.` },
-            { p: 0.35, tone: 'mixed', fin: -2, text: `Your trade stops out for a $2,000 loss. It was a good trade that didn't work. You'd take it again.` }
+            { p: 0.65, tone: 'good', fin: 3, text: `Your one trade works the way your trades are supposed to. Up $3,000 over three weeks. The other three ideas do what coin flips do.` },
+            { p: 0.35, tone: 'mixed', fin: -1, text: `Your automatic sell order takes you out for a $1,000 loss. It was a good trade that didn't work. You'd take it again.` }
           ],
           later: `You played the one game you're built for and declined the others.`,
           verdict: { who: 'theo', line: `Took one trade, the one that looked like them. I'd let them sit next to me.` }
         },
         {
-          key: 'C', text: `Take nothing today. None of it is good enough.`, exposure: 'none',
+          key: 'C', text: `Buy nothing today. None of it is good enough.`, exposure: 'none',
           q: 3, s: { jdg: 1, reg: 2, bnd: 1 }, cap: { psy: 1, time: -1 },
           outcomes: [
             { p: 0.5, tone: 'good', fin: 0, text: `You don't trade. NOVA misses earnings and Tessel keeps falling. A quiet, profitable day of doing nothing.` },
-            { p: 0.5, tone: 'mixed', fin: 0, text: `You don't trade. The Keel merger closes on schedule and the spread pays 5%. Waiting is right, until it becomes a habit.` }
+            { p: 0.5, tone: 'mixed', fin: 0, text: `You don't trade. Keel's deal closes on schedule, and anyone who bought at $28.60 makes 5%. Waiting is right, until it becomes a habit.` }
           ],
           later: `Not playing is a position. Here one idea may really have been yours, and passing on it had a cost too.`,
           verdict: { who: 'theo', line: `Didn't trade. Good. Next time, notice when the one you've been waiting for walks in.` }
         },
         {
-          key: 'D', text: `Buy Tessel. Down 40% in a morning, it has to bounce.`, exposure: 'normal',
+          key: 'D', text: `Buy Tessel at normal size. It fell 40% this morning, so it has to bounce.`, exposure: 'normal',
           q: 1, s: { jdg: -2, inf: -2 }, cap: { psy: -1 },
           outcomes: [
-            { p: 0.6, tone: 'bad', fin: -7, text: `The auditor's letter comes out Friday. Tessel falls another 35%. You lose $7,000 on a company you hadn't heard of yesterday.` },
-            { p: 0.4, tone: 'good', fin: 4, text: `Tessel bounces 15% by the close. You make $4,000 and can't explain why.` }
+            { p: 0.6, tone: 'bad', fin: -3.5, text: `The auditor's letter comes out Friday. Tessel falls another 35%. You lose $3,500 on a company you hadn't heard of yesterday.` },
+            { p: 0.4, tone: 'good', fin: 1.5, text: `Tessel bounces 15% by the close. You make $1,500 and can't explain why.` }
           ],
           later: `A falling price isn't a reason. It's a fact you don't understand yet.`,
           verdict: { who: 'nadia', line: `Bought a stock that was falling for reasons nobody knew. Nothing broke. That's the scary part.` }
         },
         {
-          key: 'E', text: `Buy a little NOVA. Everyone's in it, and you don't want to miss out.`, exposure: 'small',
+          key: 'E', text: `Buy NOVA at normal size. Everyone's in it, and you don't want to miss out.`, exposure: 'normal',
           q: 1, s: { jdg: -1, reg: -1 }, cap: {},
           outcomes: [
-            { p: 0.55, tone: 'bad', fin: -3, text: `NOVA misses earnings and drops 20%. The chat room goes silent. You lose $3,000.` },
+            { p: 0.55, tone: 'bad', fin: -2, text: `NOVA misses earnings and drops 20%. The chat room goes silent. You lose $2,000.` },
             { p: 0.45, tone: 'good', fin: 2, text: `NOVA beats. You make $2,000 and feel like part of something.` }
           ],
           later: `Fear of missing out is an edge, for whoever is selling to you.`,
@@ -357,6 +351,13 @@ window.PP = window.PP || {};
     // ───────────────────────────────────────── 4
     {
       id: 'changing-market',
+      facts: [
+        `Your method for two years: buy strong stocks right after a short price drop (a dip). A normal trade is about $10,000.`,
+        `It has lost money six weeks in a row. Interest rates rose sharply last autumn.`,
+        `Overnight a bank failed. The market is expected to open about 3% lower.`,
+        `Your account is 11% below its peak. At 15%, Nadia, who runs risk for the desk, halves how much you can trade.`,
+        `The market opens this morning.`
+      ],
       tests: `Can you abandon your assumptions?`,
       level: `Regime change`,
       title: `The Changing Market`,
@@ -373,15 +374,6 @@ window.PP = window.PP || {};
         { label: `The rate chart`, text: `Both of your good years happened with interest rates near zero. Cheap money is what kept buying the dips.` },
         { label: `Theo's desk`, text: `Theo has been in since 5 am. He hasn't placed a trade. He's reading.` }
       ],
-      read: {
-        q: `Why did your method stop working?`,
-        options: [
-          { t: `The conditions it depended on changed`, kind: 'right' },
-          { t: `Bad luck. It'll come back`, kind: 'hope' },
-          { t: `I'm executing it badly`, kind: 'part' }
-        ],
-        truth: `Your dips bounced because money was cheap and buyers were eager. Rates changed that in the autumn. The method didn't break. The world it was built for did.`
-      },
       edgeNote: {
         research: `Your edge travels better than most. Companies you know deeply are still worth knowing in a new rate world. Narrow to them while you relearn the rest.`,
         speed: `Reading price is the edge most exposed to a regime change. The patterns you trusted were partly made by cheap money. Test them again, small.`,
@@ -390,17 +382,17 @@ window.PP = window.PP || {};
       question: `Your method stopped working. Does the method change, or do you?`,
       options: [
         {
-          key: 'A', text: `Stay the course. Two good years don't disappear in six weeks.`, exposure: 'normal',
+          key: 'A', text: `Stay the course: keep buying the dips. Two good years don't disappear in six weeks.`, exposure: 'normal',
           q: 1, s: { jdg: -2, inf: -1 }, cap: { psy: -1 },
           outcomes: [
-            { p: 0.6, tone: 'bad', fin: -11, text: `You buy the dip at the open. It keeps dipping. Three more weeks cost you $11,000.` },
+            { p: 0.6, tone: 'bad', fin: -4, text: `You buy the dip at the open. It keeps dipping. Three more weeks cost you $4,000, and you're one bad day from Nadia's line.` },
             { p: 0.4, tone: 'good', fin: 4, text: `The bank scare fades within a week, and your dips bounce again for a while. Up $4,000, and none the wiser.` }
           ],
           later: `A strategy is a hypothesis. You kept defending it after the evidence turned.`,
           verdict: { who: 'nadia', line: `Kept buying dips in a market that had changed. I had to call them twice.` }
         },
         {
-          key: 'B', text: `Double your size to win back the six weeks.`, exposure: 'all',
+          key: 'B', text: `Double your trade sizes to win back the six weeks of losses.`, exposure: 'all',
           q: 0, s: { reg: -3, jdg: -3, bnd: -2 }, cap: { psy: -2, soc: -1 },
           outcomes: [
             { p: 0.65, tone: 'bad', fin: -22, text: `The bank news spreads to two more lenders. Your doubled positions fall together. You lose $22,000 in four days, and the desk cuts your limits.` },
@@ -410,7 +402,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Doubled up to get even. That's when I stop watching the numbers and start watching the person.` }
         },
         {
-          key: 'C', text: `Cut size in half and test whether the method still works, with small trades you write down.`, exposure: 'small',
+          key: 'C', text: `Halve your trade sizes and test whether the method still works, with small trades you write down.`, exposure: 'small',
           q: 4, s: { jdg: 2, inf: 2, reg: 2, lng: 1 }, cap: { str: 2, psy: 1 },
           outcomes: [
             { p: 0.6, tone: 'mixed', fin: -2, text: `Your small test trades confirm it: dips don't bounce the way they did. You lose $2,000 learning something worth far more.` },
@@ -420,11 +412,11 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Cut size and started measuring again. From the outside, adapting looks boring. Good.` }
         },
         {
-          key: 'D', text: `Switch to whatever's working now. Everyone's making money shorting banks.`, exposure: 'normal',
+          key: 'D', text: `Switch to what's working now: bet that bank shares will fall (short them), like everyone else.`, exposure: 'normal',
           q: 1, s: { jdg: -1, inf: -1, reg: -1 }, cap: { str: -1 },
           outcomes: [
-            { p: 0.55, tone: 'bad', fin: -8, text: `You short three banks the day the government steps in. They jump 20%. You lose $8,000 with a method you'd never used.` },
-            { p: 0.45, tone: 'good', fin: 5, text: `Banks keep falling for a week. You make $5,000, with no idea when to get out.` }
+            { p: 0.55, tone: 'bad', fin: -6, text: `You bet against three banks the day the government steps in. They jump 20%. You lose $6,000 with a method you'd never used.` },
+            { p: 0.45, tone: 'good', fin: 4, text: `Banks keep falling for a week. You make $4,000, with no idea when to get out.` }
           ],
           later: `Copying a strategy doesn't copy the edge. You left your own game for someone else's, at the worst moment.`,
           verdict: { who: 'theo', line: `Jumped to the hot trade with no map. I've seen people make money that way. Once.` }
@@ -459,6 +451,13 @@ window.PP = window.PP || {};
     // ───────────────────────────────────────── 5
     {
       id: 'final-bet',
+      facts: [
+        `Last trade of the year: the best setup you've seen in two years. It fits your edge, <strong>{edge}</strong>.`,
+        `You'd be <strong>buying</strong>, so you make money if the price rises. If it works, it should rise about 30%. If it fails, it could fall 30%.`,
+        `Your account: <strong>{account}</strong>, everything you've built this year. Your rule: {rule} risk on any one decision.`,
+        `Nadia will allow leverage: borrowed money that multiplies both gains and losses.`,
+        `With full leverage, a 30% fall wipes out the whole account.`
+      ],
       tests: `Can you protect your ability to play again?`,
       level: `Survival`,
       title: `The Last Player Standing`,
@@ -475,15 +474,6 @@ window.PP = window.PP || {};
         { label: `The fine print on leverage`, text: `With full leverage, a 30% drop wipes out the whole account. This kind of trade has done that twice in ten years.` },
         { label: `Theo's desk drawer`, text: `Theo keeps a list of traders he knew who were brilliant, until one trade. It's longer than you'd think.` }
       ],
-      read: {
-        q: `Why do you want to make this bet?`,
-        options: [
-          { t: `Because the setup is genuinely good`, kind: 'right' },
-          { t: `Because it would put me ahead of everyone`, kind: 'ego' },
-          { t: `To make up for a hard year`, kind: 'revenge' }
-        ],
-        truth: `The setup was real. It fit your edge better than anything all year, which made the question harder, not easier. A real edge still loses four times in ten. The only question was how much of yourself to put on the table.`
-      },
       edgeNote: {
         research: `It's your kind of trade: a company you know cold, mispriced for reasons you understand. That's exactly when overconfidence is most persuasive.`,
         speed: `It's your kind of trade: the cleanest trend you've seen in two years. Clean trends still reverse four times in ten.`,
@@ -492,41 +482,41 @@ window.PP = window.PP || {};
       question: `How much are you willing to risk to win?`,
       options: [
         {
-          key: 'A', text: `Everything, with leverage. This is the one.`, exposure: 'all',
+          key: 'A', text: `Everything, plus borrowed money (leverage). This is the one.`, exposure: 'all',
           q: 0, s: { reg: -3, jdg: -3, lng: -3, bnd: -2 }, cap: { psy: -2, soc: -2 },
           outcomes: [
-            { p: 0.55, tone: 'good', fin: 80, text: `It works. Your account nearly doubles in six weeks. You're the best performer on the floor, and you'll spend years trying to feel this again.` },
-            { p: 0.45, tone: 'bad', ruin: true, fin: -999, text: `A surprise announcement gaps the trade against you. With leverage, it's over by lunch. Your account is gone, and so is your seat.` }
+            { p: 0.6, tone: 'good', fin: 90, text: `It works. Your account nearly doubles in six weeks. You're the best performer on the floor, and you'll spend years trying to feel this again.` },
+            { p: 0.4, tone: 'bad', ruin: true, fin: -999, text: `A surprise announcement gaps the trade against you. With leverage, it's over by lunch. Your account is gone, and so is your seat.` }
           ],
           later: `Even a 60% edge loses four times in ten. Betting everything on one throw turned a good edge into a coin flip for your career.`,
           verdict: { who: 'nadia', line: `All in, with leverage, on a real edge. That's how good traders leave.` }
         },
         {
-          key: 'B', text: `A quarter of your account. Big enough to matter.`, exposure: 'large',
+          key: 'B', text: `Put a quarter of your account into it, with no exit planned. Big enough to matter.`, exposure: 'large',
           q: 2, s: { jdg: -1, reg: -1 }, cap: { psy: -1 },
           outcomes: [
-            { p: 0.6, tone: 'good', fin: 15, text: `It works. A $15,000 gain to close the year.` },
-            { p: 0.4, tone: 'bad', fin: -14, text: `It fails. You lose $14,000 and spend January rebuilding.` }
+            { p: 0.6, tone: 'good', fin: 7.5, text: `It works. A $7,500 gain to close the year.` },
+            { p: 0.4, tone: 'bad', fin: -7.5, text: `It fails, and with no exit planned you ride it all the way down. You lose $7,500 and spend January rebuilding.` }
           ],
           later: `Survivable, and painful. Sized for the story more than the odds.`,
           verdict: { who: 'theo', line: `A quarter of the account on one idea. Brave. I'd have slept worse than they did.` }
         },
         {
-          key: 'C', text: `Your normal size, with the exit written down before you enter.`, exposure: 'normal',
+          key: 'C', text: `Your normal size, about $10,000, with the price where you'll sell written down before you buy.`, exposure: 'normal',
           q: 4, s: { jdg: 2, reg: 2, lng: 2, bnd: 1 }, cap: { psy: 1, soc: 1, str: 1 },
           outcomes: [
-            { p: 0.6, tone: 'good', fin: 7, text: `It works. You make $7,000 and close the year on your own terms.` },
-            { p: 0.4, tone: 'mixed', fin: -3, text: `It fails. Your exit takes you out for $3,000. You'll be here in January, with your edge intact.` }
+            { p: 0.6, tone: 'good', fin: 3, text: `It works. You make $3,000 and close the year on your own terms.` },
+            { p: 0.4, tone: 'mixed', fin: -1, text: `It fails. Your written exit takes you out for $1,000. You'll be here in January, with your edge intact.` }
           ],
           later: `You sized a real edge so that losing would cost a little and winning would still matter. That's the whole game.`,
           verdict: { who: 'theo', line: `Normal size, exit written down, on the best setup of the year. That's the trader who's still here in ten years.` }
         },
         {
-          key: 'D', text: `Start small, and add only as it proves you right.`, exposure: 'small',
+          key: 'D', text: `Start with half your normal size, and buy more only as the price moves your way.`, exposure: 'small',
           q: 4, s: { jdg: 2, reg: 1, lng: 2, inf: 1 }, cap: { psy: 1, str: 1 },
           outcomes: [
-            { p: 0.6, tone: 'good', fin: 6, text: `It works, and you add twice as it does. Up $6,000, most of it on money the trade earned for you.` },
-            { p: 0.4, tone: 'mixed', fin: -1, text: `It fails early, while you're still small. A $1,000 loss.` }
+            { p: 0.6, tone: 'good', fin: 3, text: `It works, and you buy more twice as it does. Up $3,000, most of it on money the trade earned for you.` },
+            { p: 0.4, tone: 'mixed', fin: -0.5, text: `It fails early, while you're still small. A $500 loss.` }
           ],
           later: `Letting the market confirm you before you commit more is how winners run and losers stay small.`,
           verdict: { who: 'nadia', line: `Scaled in as it proved itself. I barely had to look at that account.` }
@@ -568,20 +558,21 @@ window.PP = window.PP || {};
       cast: [{ id: 'theo', spot: 'theo', mood: 'neutral', pose: 'pocket', wants: `Nothing from you. He's watched this night happen to a lot of people.` }],
       intro: [
         { cam: 'wide', caption: `8:47 pm. The trading floor is nearly empty.` },
-        { cam: 'screens', caption: `On the center screen, a position that was once profitable is twenty percent underwater.` },
+        { cam: 'screens', caption: `On the center screen: the Halcyon shares you bought at $52. They're at $41.62.` },
         { cam: 'note', caption: `Beside the keyboard, in your handwriting: "Original thesis: strong fundamentals. Temporary market weakness."` },
         { cam: 'screens', ...alert(`20:41 · Halcyon's largest customer said to review contract`), caption: `The news isn't about the market anymore. It's about Halcyon.` },
-        { cam: 'sticky', caption: `On the edge of the screen, a sticky note you wrote in March: max loss, 8%.` },
+        { cam: 'sticky', caption: `On the edge of the screen, a sticky note you wrote before you bought: max loss 8%, out below $47.80.` },
+        { cam: 'wide', caption: `Theo, thirty-one years on this desk, is packing up to go home.` },
         { who: 'theo', mood: 'neutral', say: `Long night?` },
         { you: `(It'll come back. It always comes back.)` },
         { who: 'theo', mood: 'thinking', pose: 'pocket', say: `Nobody's watching, you know. It's just you and the number.` },
-        { cam: 'screens', ...alert(`You can exit now. You can hold. Or you can double your position.`), caption: `The market will open in eleven hours. Tonight, you still get to choose.` }
+        { cam: 'screens', ...alert(`You can exit now. You can hold. Or you can double your position.`), caption: `Regular trading reopens at 9:30 tomorrow. Tonight, you can still sell.` }
       ],
       options: {
         A: { line: `(Sell. All of it.)`, preview: `Ends the damage. Admits you were wrong.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`SOLD 880 HLX @ 41.55 · Realized −9,140`) }, { who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'wide', caption: `6:30 am: the customer is leaving. HLX opens at $33.` }] },
-            { beats: [{ cam: 'screens', ...alert(`SOLD 880 HLX @ 41.55 · Realized −9,140`) }, { who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'wide', caption: `A week later the customer renews. HLX bounces to $46. You were wrong about the outcome and right about the decision.` }] }
+            { beats: [{ cam: 'screens', ...alert(`SOLD 880 HLX @ 41.62 · Loss −9,140`) }, { who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'wide', caption: `6:30 am: the customer is leaving. HLX opens at $33.` }] },
+            { beats: [{ cam: 'screens', ...alert(`SOLD 880 HLX @ 41.62 · Loss −9,140`) }, { who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'wide', caption: `A week later the customer renews. HLX bounces to $46. You were wrong about the outcome and right about the decision.` }] }
           ] },
         B: { line: `(Hold. The fundamentals haven't changed that much.)`, preview: `Keeps the hope. Keeps the risk.`,
           outcomes: [
@@ -590,13 +581,13 @@ window.PP = window.PP || {};
           ] },
         C: { line: `(Buy 880 more. At this price it's a bargain.)`, preview: `Doubles the bet on a thesis that's breaking.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`BOUGHT 880 HLX @ 41.60 · Position 1,760 sh`) }, { who: 'theo', mood: 'surprised', act: 'glance' }, { cam: 'screens', ...alert(`HLX 30.04 · Realized −29,600`), caption: `The customer leaves. By Friday you've lost almost a third of your account.` }] },
+            { beats: [{ cam: 'screens', ...alert(`BOUGHT 880 HLX @ 41.60 · Position 1,760 sh`) }, { who: 'theo', mood: 'surprised', act: 'glance' }, { cam: 'screens', ...alert(`HLX 30.04 · Loss −29,600`), caption: `The customer leaves. By Friday you've lost almost a third of your account.` }] },
             { beats: [{ cam: 'screens', ...alert(`BOUGHT 880 HLX @ 41.60 · Position 1,760 sh`) }, { who: 'theo', mood: 'skeptical' }, { cam: 'screens', ...alert(`HLX 46.02 · customer renews contract`), caption: `It works, and you'll remember that it worked.` }] }
           ] },
         D: { line: `(Sell half. Put a hard stop under the rest.)`, preview: `Cuts the risk. Keeps a foot in.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`SOLD 440 HLX @ 41.55 · STOP 40.50 set`) }, { cam: 'screens', ...alert(`HLX opens 33.10 · STOP filled @ 33.10`), caption: `The stock gaps below your stop. Stops don't protect you from gaps.` }] },
-            { beats: [{ cam: 'screens', ...alert(`SOLD 440 HLX @ 41.55 · STOP 40.50 set`) }, { who: 'theo', mood: 'neutral', act: 'nod' }, { cam: 'wide', caption: `The customer renews. The half you kept recovers.` }] }
+            { beats: [{ cam: 'screens', ...alert(`SOLD 440 HLX @ 41.62 · STOP 40.50 set`) }, { cam: 'screens', ...alert(`HLX opens 33.10 · STOP filled @ 33.10`), caption: `The stock gaps below your stop. Stops don't protect you from gaps.` }] },
+            { beats: [{ cam: 'screens', ...alert(`SOLD 440 HLX @ 41.62 · STOP 40.50 set`) }, { who: 'theo', mood: 'neutral', act: 'nod' }, { cam: 'wide', caption: `The customer renews. The half you kept recovers.` }] }
           ] },
         E: { line: `(Not tonight. I'll decide in the morning.)`, preview: `Rest for you. Not for the position.`,
           outcomes: [
@@ -612,16 +603,17 @@ window.PP = window.PP || {};
       cast: [{ id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `For you to still be trading next year.` }],
       intro: [
         { cam: 'wide', caption: `April. Seven winning trades in a row. The desk feels different when you're right.` },
+        { cam: 'wide', caption: `Nadia runs risk for the desk. She sets how much each trader may bet.` },
         { who: 'nadia', mood: 'smile', say: `Good month.` },
         { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `Your limits are fine. Your sizes have doubled since January. Just so you know that I know.` },
-        { cam: 'screens', ...alert(`Marco: Vellum Bio, FDA decision 7am. Hearing approval. Could double.`) },
+        { cam: 'screens', ...alert(`Marco: Vellum Bio, FDA decision 7am. Hearing approval. Buy it.`) },
         { you: `(Marco's been wrong before. But I'm seeing things clearly right now.)` },
-        { cam: 'screens', caption: `Tomorrow at 7 am, Vellum either doubles or halves. Nobody knows which.` }
+        { cam: 'screens', caption: `Tomorrow at 7 am, Vellum jumps about half or falls about half. Nobody knows which.` }
       ],
       options: {
         A: { line: `(Five times my usual size. This is my moment.)`, preview: `Sized for the feeling.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`VELLUM APPROVED · VLM +52%`) }, { who: 'nadia', mood: 'skeptical', act: 'glance', caption: `You made $25,000 in eight minutes. Nadia makes a note.` }] },
+            { beats: [{ cam: 'screens', ...alert(`VELLUM APPROVED · VLM +52%`) }, { who: 'nadia', mood: 'skeptical', act: 'glance', caption: `You made $26,000 in eight minutes. Nadia makes a note.` }] },
             { beats: [{ cam: 'screens', ...alert(`VELLUM REJECTED · VLM −48%`) }, { who: 'nadia', mood: 'awkward', pose: 'tablet', caption: `Seven wins, gone in one.` }] }
           ] },
         B: { line: `(Normal size. I've earned the benefit of the doubt.)`, preview: `Survivable. But where's the edge?`,
@@ -654,9 +646,9 @@ window.PP = window.PP || {};
       intro: [
         { cam: 'wide', caption: `A slow Thursday. Four ideas cross your desk before lunch.` },
         { cam: 'screens', ...alert(`Trading chat: everyone loading up on NOVA before earnings`) },
-        { cam: 'screens', ...alert(`Keel Foods: acquired at $30 · trades at $28.60`) },
+        { cam: 'screens', ...alert(`Keel Foods: being bought for $30 a share · trades at $28.60`) },
         { cam: 'screens', ...alert(`Arden Energy: breaks two-year high on heavy volume`) },
-        { cam: 'screens', ...alert(`Tessel −40% · auditor resigns`) },
+        { cam: 'screens', ...alert(`Tessel −40% · its auditor quits`) },
         { who: 'theo', mood: 'smile', pose: 'mug', say: `Busy morning?` },
         { you: `(Four ideas. It feels wrong to do nothing.)` },
         { cam: 'wide', caption: `Theo hasn't placed a trade in nine days. He's having his best year in a decade.` }
@@ -670,12 +662,12 @@ window.PP = window.PP || {};
         B: { line: `(Just the one that fits how I trade. Normal size.)`, preview: `One trade, the one you understand.`,
           outcomes: [
             { beats: [{ who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', caption: `Three weeks later, your one trade has done what your trades are supposed to do.` }] },
-            { beats: [{ who: 'theo', mood: 'neutral', act: 'nod' }, { cam: 'screens', ...alert(`STOPPED OUT · −2,000`), caption: `A good trade that didn't work. You'd take it again.` }] }
+            { beats: [{ who: 'theo', mood: 'neutral', act: 'nod' }, { cam: 'screens', ...alert(`AUTO-SELL HIT · −1,000`), caption: `A good trade that didn't work. You'd take it again.` }] }
           ] },
         C: { line: `(Nothing today.)`, preview: `Patience, at the cost of maybe missing yours.`,
           outcomes: [
             { beats: [{ who: 'theo', mood: 'smile', pose: 'mug', act: 'nod' }, { cam: 'screens', ...alert(`NOVA −20% · TSL −35%`), caption: `A quiet, profitable day of doing nothing.` }] },
-            { beats: [{ who: 'theo', mood: 'neutral', pose: 'mug' }, { cam: 'screens', ...alert(`Keel merger closes · spread +5%`), caption: `The one you'd researched paid. Waiting is right, until it becomes a habit.` }] }
+            { beats: [{ who: 'theo', mood: 'neutral', pose: 'mug' }, { cam: 'screens', ...alert(`Keel merger closes · spread +5%`), caption: `Keel's deal closes. Waiting is right, until it becomes a habit.` }] }
           ] },
         D: { line: `(Tessel. Down 40%, it has to bounce.)`, preview: `Cheap isn't the same as good.`,
           outcomes: [
@@ -685,7 +677,7 @@ window.PP = window.PP || {};
         E: { line: `(A little NOVA. Everyone's in it.)`, preview: `Small. Borrowed conviction.`,
           outcomes: [
             { beats: [{ cam: 'screens', ...alert(`NOVA misses · −20%`), caption: `The chat room goes quiet.` }] },
-            { beats: [{ cam: 'screens', ...alert(`NOVA beats · +9%`), caption: `You feel like part of something.` }] }
+            { beats: [{ cam: 'screens', ...alert(`NOVA beats · +20%`), caption: `You feel like part of something.` }] }
           ] }
       },
       links: []
@@ -700,8 +692,8 @@ window.PP = window.PP || {};
       intro: [
         { cam: 'wide', caption: `January. For two years one method made your money: buy strong stocks when they dip.` },
         { cam: 'screens', caption: `For six weeks, it has lost.` },
-        { cam: 'screens', ...alert(`06:02 · Regional lender placed in receivership · futures −3.1%`), caption: `Overnight, something nobody had in their forecast: a bank failed.` },
-        { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `Your drawdown is eleven percent. At fifteen we cut your limits in half.` },
+        { cam: 'screens', ...alert(`06:02 · Regional bank fails · market set to open 3% lower`), caption: `Overnight, something nobody had in their forecast: a bank failed.` },
+        { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `You're eleven percent below your peak. At fifteen, I halve how much you can trade.` },
         { who: 'nadia', mood: 'thinking', say: `I'm not telling you what to do. I'm telling you where the wall is.` },
         { you: `(Every dip I've bought for two years has come back.)` },
         { who: 'theo', mood: 'thinking', pose: 'thinking', caption: `Theo has been in since five. He isn't trading. He's reading.` }
@@ -709,12 +701,12 @@ window.PP = window.PP || {};
       options: {
         A: { line: `(Stay the course. It's a drawdown, not a verdict.)`, preview: `Loyal to the method. Is the method loyal to you?`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`3 weeks · dips keep dipping · −11,000`) }, { who: 'nadia', mood: 'skeptical', pose: 'tablet' }] },
+            { beats: [{ cam: 'screens', ...alert(`3 weeks · dips keep dipping · −4,000`) }, { who: 'nadia', mood: 'skeptical', pose: 'tablet' }] },
             { beats: [{ cam: 'screens', ...alert(`Bank scare fades · dips bounce`), caption: `It works for a while. You learn nothing.` }] }
           ] },
         B: { line: `(Double my size. Win it back.)`, preview: `Revenge, with a spreadsheet.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`Two more lenders under review · futures −4.4%`) }, { who: 'nadia', mood: 'frustrated', pose: 'crossed', say: `I'm cutting your limits. Today.` }] },
+            { beats: [{ cam: 'screens', ...alert(`Two more banks under pressure · market −4.4%`) }, { who: 'nadia', mood: 'frustrated', pose: 'crossed', say: `I'm cutting your limits. Today.` }] },
             { beats: [{ cam: 'screens', ...alert(`Panic passes · +9,000`) }, { who: 'nadia', mood: 'skeptical', act: 'glance', caption: `It worked. That makes next time more dangerous.` }] }
           ] },
         C: { line: `I'm cutting size in half and testing whether this still works. Small trades, all written down.`, preview: `Treat the method as a hypothesis.`,
@@ -743,7 +735,7 @@ window.PP = window.PP || {};
         { id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `To approve only what you can survive.` }
       ],
       intro: [
-        { cam: 'window', caption: `December. Twenty rounds this year. You've won some and lost some.` },
+        { cam: 'window', caption: `December. A year of decisions at this desk. You've won some and lost some.` },
         { cam: 'screens', caption: `Tonight: the best setup you've seen in two years. It fits your edge. It's real.` },
         { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `Your limits allow leverage on this. I want you to know that's not the same as a recommendation.` },
         { who: 'theo', mood: 'thinking', pose: 'pocket', say: `I keep a list of traders who were brilliant until one afternoon. It's longer than you'd think.` },
@@ -753,23 +745,23 @@ window.PP = window.PP || {};
       options: {
         A: { line: `Everything. With leverage.`, preview: `Ahead of everyone, or gone.`,
           outcomes: [
-            { beats: [{ who: 'nadia', mood: 'awkward', pose: 'tablet' }, { cam: 'screens', ...alert(`+80,000 · best on the floor`), caption: `It works. You'll spend years trying to feel this again.` }] },
+            { beats: [{ who: 'nadia', mood: 'awkward', pose: 'tablet' }, { cam: 'screens', ...alert(`+90,000 · best on the floor`), caption: `It works. You'll spend years trying to feel this again.` }] },
             { beats: [{ who: 'nadia', mood: 'surprised' }, { cam: 'screens', ...alert(`MARGIN CALL · ACCOUNT LIQUIDATED`) }, { who: 'theo', mood: 'neutral', act: 'sigh', caption: `It's over by lunch.` }] }
           ] },
         B: { line: `A quarter of the account.`, preview: `Big enough to matter. Big enough to hurt.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`+15,000`), caption: `It works.` }] },
-            { beats: [{ cam: 'screens', ...alert(`−14,000`), caption: `It fails. January will be about rebuilding.` }] }
+            { beats: [{ cam: 'screens', ...alert(`+7,500`), caption: `It works.` }] },
+            { beats: [{ cam: 'screens', ...alert(`−7,500`), caption: `It fails. January will be about rebuilding.` }] }
           ] },
         C: { line: `My normal size. The exit's written down before I enter.`, preview: `A real edge, sized to survive.`,
           outcomes: [
-            { beats: [{ who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`+7,000`), caption: `You close the year on your own terms.` }] },
-            { beats: [{ who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`EXIT HIT · −3,000`), caption: `It fails, and you'll be here in January.` }] }
+            { beats: [{ who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`+3,000`), caption: `You close the year on your own terms.` }] },
+            { beats: [{ who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`EXIT HIT · −1,000`), caption: `It fails, and you'll be here in January.` }] }
           ] },
         D: { line: `Small to start. I'll add only if it proves me right.`, preview: `Let the market confirm you first.`,
           outcomes: [
-            { beats: [{ who: 'nadia', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`Added twice · +6,000`), caption: `The winner ran. You let it.` }] },
-            { beats: [{ who: 'nadia', mood: 'neutral', act: 'nod' }, { cam: 'screens', ...alert(`−1,000 · position closed`), caption: `It failed while you were still small.` }] }
+            { beats: [{ who: 'nadia', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`Bought more twice · +3,000`), caption: `The winner ran. You let it.` }] },
+            { beats: [{ who: 'nadia', mood: 'neutral', act: 'nod' }, { cam: 'screens', ...alert(`−500 · position closed`), caption: `It failed while you were still small.` }] }
           ] },
         E: { line: `(Nothing. The year is done.)`, preview: `Safe. Is safe the same as surviving?`,
           outcomes: [
@@ -781,9 +773,9 @@ window.PP = window.PP || {};
     }
   };
 
-  // Reads and what the desk says about you plug into the same systems as the main game.
+  // What the desk says about you plugs into the same system as the main game.
   M.scenarios.forEach(s => {
-    PP.insight.scenes[s.id] = { read: s.read, options: Object.fromEntries(s.options.map(o => [o.key, { buys: [], verdict: o.verdict }])) };
+    PP.insight.scenes[s.id] = { options: Object.fromEntries(s.options.map(o => [o.key, { buys: [], verdict: o.verdict }])) };
   });
 
   PP.market = M;

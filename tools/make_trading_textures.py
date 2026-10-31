@@ -99,11 +99,11 @@ def center_screen():
     # Position panel.
     px = 1320
     d.rounded_rectangle([px, 210, W - 40, 520], 12, outline=(60, 34, 30), width=2, fill=(26, 14, 14))
-    d.text((px + 24, 230), 'POSITION', font=f_small, fill=DIM)
+    d.text((px + 24, 230), 'LONG 880 HLX', font=f_small, fill=DIM)
     d.text((px + 24, 266), '-9,140', font=font(SANS, 58), fill=RED)
-    d.text((px + 24, 340), '-20.0% from entry', font=font(MONO, 20), fill=RED)
+    d.text((px + 24, 340), 'Open loss  -20.0%', font=font(MONO, 20), fill=RED)
     d.text((px + 24, 392), 'Held 23 days', font=f_small, fill=DIM)
-    d.text((px + 24, 430), 'Size 880 sh', font=f_small, fill=DIM)
+    d.text((px + 24, 430), 'Bought at 52.00', font=f_small, fill=DIM)
     d.text((px + 24, 468), 'Risk limit -8%', font=f_small, fill=AMBER)
     return glow(img)
 

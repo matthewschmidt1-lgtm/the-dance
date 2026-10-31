@@ -24,7 +24,8 @@ if '--samples' in argv:
 ONLY = [a for a in argv[1:] if not a.startswith('--') and not a.isdigit()]
 OUT = os.path.join(ROOT, 'public', 'img', 'env')
 DATA = os.path.join(ROOT, 'public', 'js', 'env-data.js')
-W, H = 1600, 900
+W, H = 1600, 900          # coordinate space the game uses
+RW, RH = 2400, 1350       # actual render size, so camera close-ups stay sharp
 FIG_UNITS = 560      # height of a figure in the SVG character system
 PERSON_M = 1.72      # metres that figure represents
 os.makedirs(OUT, exist_ok=True)
@@ -54,6 +55,10 @@ def mat(color, rough=0.6, metal=0.0, emit=None, emit_strength=0.0, alpha=1.0, sp
     p.inputs['Metallic'].default_value = metal
     if 'Specular IOR Level' in p.inputs:
         p.inputs['Specular IOR Level'].default_value = spec
+    # A clear coat on smooth, solid surfaces gives floors and counters a lacquered sheen.
+    if rough <= 0.45 and alpha >= 1 and not emit and 'Coat Weight' in p.inputs:
+        p.inputs['Coat Weight'].default_value = 0.35
+        p.inputs['Coat Roughness'].default_value = 0.08
     if emit:
         p.inputs['Emission Color'].default_value = hexc(emit)
         p.inputs['Emission Strength'].default_value = emit_strength
@@ -245,7 +250,7 @@ def reset():
     COLL.clear()
     sc = bpy.context.scene
     sc.render.engine = 'CYCLES'
-    sc.render.resolution_x, sc.render.resolution_y = W, H
+    sc.render.resolution_x, sc.render.resolution_y = RW, RH
     sc.render.resolution_percentage = 100
     sc.cycles.samples = SAMPLES
     sc.cycles.use_denoising = True
@@ -266,7 +271,58 @@ def reset():
         pass
     sc.view_settings.exposure = -0.25
     sc.render.image_settings.file_format = 'WEBP'
-    sc.render.image_settings.quality = 84
+    sc.render.image_settings.quality = 82
+
+
+# Cinematic finish per set: where focus falls, how much haze, where the rim light sits.
+CINEMA = {
+    'checkout':   dict(focus=(0.05, 1.85, 1.4), fstop=2.4, haze=0.006, rim=((0.2, 7.0, 3.0), '#cfe8ff', 900), dim=0.3),
+    'desks':      dict(focus=(1.7, 0.45, 1.4), fstop=2.4, haze=0.005, rim=((1.5, 6.6, 2.6), '#cfe8ff', 700), dim=0.45),
+    'kitchen':    dict(focus=(1.0, 1.0, 1.4), fstop=2.4, haze=0.005, rim=((1.0, 6.6, 2.6), '#cfe8ff', 700), dim=0.45),
+    'conference': dict(focus=(-0.4, 2.15, 1.0), fstop=2.4, haze=0.006, rim=((1.2, 4.6, 2.8), '#cfe8ff', 600), dim=0.35),
+    'street':     dict(focus=(4.2, 3.0, 1.9), fstop=4.0, haze=0.007, rim=None, dim=0.7),
+    'yard':       dict(focus=(1.0, 0.9, 1.4), fstop=4.0, haze=0.007, rim=None, dim=0.7),
+}
+
+
+def cinematic(env):
+    c = CINEMA.get(env)
+    if not c:
+        return
+    sc = bpy.context.scene
+    cam = sc.camera
+    cam.data.dof.use_dof = True
+    cam.data.dof.focus_distance = (Vector(c['focus']) - cam.location).length
+    cam.data.dof.aperture_fstop = c['fstop']
+    if sc.world:
+        bgn = sc.world.node_tree.nodes['Background']
+        bgn.inputs['Strength'].default_value *= c['dim']
+    # Indoors, ceiling lights become focused pools instead of flat fill.
+    if c['rim']:
+        f = Vector(c['focus'])
+        for ob in COLL['lights'].objects:
+            if ob.data.type == 'AREA':
+                d = (Vector((ob.location.x, ob.location.y, f.z)) - f).length
+                ob.data.spread = math.radians(80)
+                ob.data.energy *= max(0.12, 1.6 - d / 4.5)
+    if c['rim']:
+        loc, col, energy = c['rim']
+        area('rim', loc, 3.0, energy, col, sy=1.2)
+        rim = bpy.data.objects['rim']
+        rim.rotation_euler = (Vector(c['focus']) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
+    fog = bpy.data.materials.new('haze')
+    fog.use_nodes = True
+    nt = fog.node_tree
+    nt.nodes.remove(nt.nodes['Principled BSDF'])
+    v = nt.nodes.new('ShaderNodeVolumePrincipled')
+    v.inputs['Density'].default_value = c['haze']
+    v.inputs['Anisotropy'].default_value = 0.3
+    nt.links.new(v.outputs[0], nt.nodes['Material Output'].inputs['Volume'])
+    # Indoors the haze stays in the room so windows still show the city.
+    if c['rim']:
+        box('haze', (1.5, 2.2, 0), (26, 10.6, 3.6), fog, 'bg')
+    else:
+        box('haze', (0, 10, 0), (60, 60, 12), fog, 'bg')
 
 
 def render(env):
@@ -664,8 +720,8 @@ def tree(name, x, y, s=1.0):
 
 
 def env_street():
-    world('#bcd6e6', 1.0)
-    sun((50, 0, -28), 3.6, '#fff0d8', 2.5)
+    world('#cdb9a0', 0.9)
+    sun((74, 0, -38), 4.6, '#ffc58a', 1.5)
     box('grass', (0, 11, -0.02), (60, 20, 0.02), mat('#8aa86e', 0.95))
     box('sidewalk', (0, 0.3, 0), (60, 1.6, 0.04), mat('#d9d5cd', 0.85))
     boxes('joints', [(x, 0.3, 0.04, 0.02, 1.6, 0.002) for x in range(-30, 30, 2)], mat('#bdb8ae', 0.9))
@@ -719,8 +775,8 @@ def env_street():
 
 
 def env_yard():
-    world('#bcd6e6', 1.0)
-    sun((48, 0, -30), 3.4, '#fff0d8', 2.5)
+    world('#cdb9a0', 0.9)
+    sun((74, 0, -40), 4.6, '#ffc58a', 1.5)
     box('grass', (0, 6, -0.02), (60, 30, 0.02), mat('#93ae72', 0.95))
     boxes('stripes', [(0, y, 0, 60, 0.5, 0.002) for y in range(-4, 3)], mat('#8aa56a', 0.95))
     box('gary-wall', (7.5, 8.0, 0), (6, 0.3, 5), mat('#a8b7ad', 0.85))
@@ -771,6 +827,7 @@ for name, fn in ENVS.items():
         continue
     reset()
     info = fn()
+    cinematic(name)
     info['layers'] = render(name)
     data[name] = info
     with open(DATA, 'w') as f:

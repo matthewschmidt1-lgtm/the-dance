@@ -218,7 +218,15 @@ for i in range(7):
     ld.size = 2.0
     o = link(bpy.data.objects.new(f'door{i}', ld))
     o.location = (0.55, y - 0.4, 3.4)
-exit_light = mat('exit', '#ffffff', 0.5, emit='#fff1dc', strength=14.0)
+# The exit glows softly through the haze rather than burning to white.
+exit_light = mat('exit', '#e8dcc6', 0.5, emit='#f3dfbf', strength=1.6)
+ld = bpy.data.lights.new('exit-glow', 'AREA')
+ld.energy = 260
+ld.color = lin('#f3dfbf')[:3]
+ld.size = 2.0
+eg = link(bpy.data.objects.new('exit-glow', ld))
+eg.location = (0.55, 6.0 + 7 * 3.6 - 0.6, 1.8)
+eg.rotation_euler = (math.radians(-90), 0, 0)
 box('exit', (0.55, 6.0 + 7 * 3.6, 1.8), (2.3, 0.05, 3.6), exit_light)
 
 # Dice at rest in the foreground.

@@ -43,11 +43,12 @@ PP.episodes = [
   },
   {
     id: 'ep2', number: 2, title: `The Deal`,
-    blurb: `Two deals where the other side knows more than you, and the clock is theirs.`,
-    scenes: ['change-order', 'the-offer'],
+    blurb: `Six deals. In most, the other side knows more than you. In one, you're the one who knows.`,
+    scenes: ['change-order', 'bidding-war', 'the-offer', 'the-counteroffer', 'used-car', 'trade-in'],
     places: [
-      { key: 'home', name: `Your Home`, theme: `Contractors, quotes and the cost of not checking.`, scenes: ['change-order'], preview: 'change-order' },
-      { key: 'offer', name: `The Offer`, theme: `Salary, deadlines and what your alternatives are really worth.`, scenes: ['the-offer'], preview: 'the-offer' }
+      { key: 'home', name: `Your Home`, theme: `Contractors, bids, and the cost of not checking.`, scenes: ['change-order', 'bidding-war'], preview: 'change-order' },
+      { key: 'offer', name: `The Offer`, theme: `Salary, deadlines, counteroffers, and what your word is worth.`, scenes: ['the-offer', 'the-counteroffer'], preview: 'the-offer' },
+      { key: 'marketplace', name: `The Marketplace`, theme: `Buying and selling when one side knows more than the other.`, scenes: ['used-car', 'trade-in'], preview: 'trade-in' }
     ]
   },
   {

@@ -23,12 +23,16 @@ Three places, six scenes. Characters remember you across scenes.
 
 ## Episode 2: The Deal
 
-Two deals where the other side knows more than you, and the clock is theirs.
+Six deals. In most, the other side knows more than you. In one, you're the one who knows.
 
-| # | Scene | Place | Lens |
-|---|---|---|---|
-| 1 | The Change Order | Your Home (a bathroom with no floor) | Thomas Schelling |
-| 2 | The Offer | The Offer (Northfield's lobby) | John Nash |
+| # | Scene | Place | Lens | Hidden type |
+|---|---|---|---|---|
+| 1 | The Change Order | Your Home | Thomas Schelling | Luis: honest or padding |
+| 2 | The Bidding War | Your Home (an open house) | John Nash | The market: crowded or quiet |
+| 3 | The Offer | The Offer (Northfield's lobby) | John Nash | |
+| 4 | The Counteroffer | The Offer (back at Brightline) | Thomas Schelling | Ellen: real counter or a stall |
+| 5 | The Used Car | The Marketplace (Alder Street) | Robert Aumann | Kim: careful or trusting |
+| 6 | The Trade-In | The Marketplace (a dealership) | Barry Nalebuff | Vince: four-square or straight |
 
 Episode 3 (*The Circle*: friends, family and the group chat) is shown as "in development".
 

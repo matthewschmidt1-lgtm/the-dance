@@ -184,7 +184,7 @@
       const b = vague ? { ...o, ...o.vague, vague } : { ...o, vague };
       // A vague version can keep the same results at different odds (pv), or bring its own.
       const outs = vague && o.vague.pv ? b.outcomes.map((x, i) => ({ ...x, p: o.vague.pv[i] })) : b.outcomes;
-      return { ...b, needs, q: val(b.q, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), text: val(x.text, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
+      return { ...b, needs, q: val(b.q, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
     });
   }
   const optsNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return resolve(sc, { rel: d.rel, flags: d.flags, type: draft.type }, draft.clues); };
@@ -724,7 +724,7 @@
         <h3 class="block-h">How it shaped your profile</h3><ul class="deltas">${deltas}</ul>`;
     } else if (ui.tab === 'game') {
       body = `
-        <h3 class="viz-h">Payoff matrix</h3>${PP.viz.matrix(sc.stage.matrix, st.row, st.outcomes[move.outcomeIdx].col)}
+        <h3 class="viz-h">Payoff matrix</h3>${PP.viz.matrix(sc.stage.matrix, st.row, sc.stage.matrix && sc.stage.matrix.byType ? sc.types.findIndex(t => t.id === move.type) : st.outcomes[move.outcomeIdx].col)}
         <h3 class="viz-h">Decision tree</h3>${PP.viz.tree({ ...sc, options: move.opts }, opt.key, move.outcomeIdx)}
         <h3 class="viz-h">What reading the room would have shown</h3>
         <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${clueText(c, move.type)}</p></li>`).join('')}</ul>`;

@@ -284,6 +284,8 @@ CINEMA = {
     'yard':       dict(focus=(1.0, 0.9, 1.4), fstop=4.0, haze=0.007, rim=None, dim=0.7),
     'bathroom':   dict(focus=(0.35, 1.5, 1.4), fstop=2.4, haze=0.02, rim=((0.6, 2.9, 2.3), '#cfe8ff', 300), dim=0.4),
     'lobby':      dict(focus=(0.0, 1.8, 1.4), fstop=2.4, haze=0.006, rim=((0.2, 5.4, 3.0), '#cfe8ff', 600), dim=0.45),
+    'openhouse':  dict(focus=(-0.4, 2.2, 1.4), fstop=2.8, haze=0.005, rim=((1.0, 4.4, 2.4), '#fff1dc', 300), dim=0.55),
+    'dealer':     dict(focus=(-1.15, 1.95, 1.4), fstop=2.8, haze=0.004, rim=((0.5, 5.5, 3.0), '#e8f2ff', 500), dim=0.6),
     'trading':    dict(focus=(0.0, 1.3, 1.13), fstop=2.0, haze=0.004, rim=((1.6, 5.0, 2.6), '#9fc8d8', 260), dim=0.6),
 }
 
@@ -1055,7 +1057,104 @@ def env_trading():
     }
 
 
-ENVS = {'checkout': env_checkout, 'desks': env_desks, 'kitchen': env_kitchen, 'conference': env_conference, 'street': env_street, 'yard': env_yard, 'bathroom': env_bathroom, 'lobby': env_lobby, 'trading': env_trading}
+def env_openhouse():
+    """A house for sale on a Saturday: staged living room, sign-in table, and a stain on the ceiling."""
+    world('#dfe6ea', 0.7)
+    box('floor', (0, 3, -0.01), (14, 12, 0.01), mat('#a77f5a', 0.32))
+    boxes('boards', [(x * 0.2 - 4, 3, 0, 0.004, 12, 0.002) for x in range(41)], mat('#8e6a49', 0.4))
+    box('back-wall', (0, 5.0, 0), (9, 0.15, 2.8), mat('#ece6dc', 0.85))
+    box('left-wall', (-4.2, 2.5, 0), (0.15, 5.2, 2.8), mat('#e6e0d5', 0.85))
+    box('right-wall', (4.3, 2.5, 0), (0.15, 5.2, 2.8), mat('#e6e0d5', 0.85))
+    box('ceiling', (0, 2.6, 2.8), (9, 5.2, 0.05), mat('#f2eee8', 0.9))
+    # The tell on the ceiling: a faint brown water stain near the corner.
+    for k, (dx, dy, r, col) in enumerate(((0, 0, 0.5, '#e4d6c0'), (0.14, 0.08, 0.34, '#d8c6a8'), (-0.06, 0.12, 0.18, '#ccb796'))):
+        ball(f'stain{k}', (-2.6 + dx, 4.2 + dy, 2.799 - k * 0.0005), r, mat(col, 0.95), scale=(1.2, 0.8, 0.002), sub=2)
+    # Big front window with light pouring in.
+    box('window', (1.6, 4.92, 0.7), (2.6, 0.05, 1.7), mat('#ffffff', 0.3, emit='#f4f8fb', emit_strength=3.2))
+    boxes('muntins', [(1.6, 4.9, 0.7, 0.05, 0.05, 1.7), (0.3, 4.9, 0.7, 0.05, 0.05, 1.7), (2.9, 4.9, 0.7, 0.05, 0.05, 1.7), (1.6, 4.9, 1.55, 2.6, 0.05, 0.05)], mat('#f7f5f0', 0.5))
+    area('window-light', (1.6, 4.4, 1.6), 2.6, 520, '#fff6e6', rot=(math.radians(-90), 0, 0), sy=1.7)
+    # Fireplace and mantel.
+    box('fireplace', (-1.9, 4.85, 0), (1.5, 0.3, 1.2), mat('#d9d2c6', 0.7))
+    box('firebox', (-1.9, 4.7, 0.15), (0.8, 0.05, 0.6), mat('#22201e', 0.9))
+    box('mantel', (-1.9, 4.75, 1.2), (1.8, 0.4, 0.08), mat('#6b4e36', 0.4))
+    cyl('vase', (-2.3, 4.75, 1.28), 0.07, 0.28, mat('#2f5d57', 0.3))
+    ball('flowers', (-2.3, 4.75, 1.62), 0.16, mat('#e9b8a0', 0.8), scale=(1, 1, 0.8), sub=2)
+    # Staging furniture.
+    box('sofa', (1.8, 2.6, 0), (2.2, 0.85, 0.42), mat('#c9c1b3', 0.85), bevel=0.06)
+    box('sofa-back', (1.8, 2.95, 0.42), (2.2, 0.18, 0.42), mat('#c9c1b3', 0.85), bevel=0.06)
+    box('rug', (1.2, 2.0, 0.002), (3.0, 2.0, 0.006), mat('#d8cdbb', 0.95))
+    box('coffee', (1.6, 1.8, 0.0), (1.0, 0.55, 0.4), mat('#5c4434', 0.35), bevel=0.02)
+    # Sign-in table near you with flyers and the offer deadline.
+    box('table', (-1.0, 0.6, 0.74), (1.2, 0.6, 0.04), mat('#efe9df', 0.4), 'fg')
+    boxes('table-legs', [(-1.5, 0.35, 0, 0.04, 0.04, 0.74), (-0.5, 0.35, 0, 0.04, 0.04, 0.74), (-1.5, 0.85, 0, 0.04, 0.04, 0.74), (-0.5, 0.85, 0, 0.04, 0.04, 0.74)], mat('#2b2b2b', 0.4, 0.6), 'fg')
+    for k in range(4):
+        box(f'flyer{k}', (-1.3 + k * 0.05, 0.55 + k * 0.01, 0.78 + k * 0.002), (0.22, 0.28, 0.002), mat('#ffffff', 0.7), 'fg', rot=(0, 0, math.radians(-8 + k * 4)))
+    box('sign', (-0.62, 0.62, 0.78), (0.32, 0.03, 0.22), mat('#1f6f6a', 0.5), 'fg')
+    text('sign-text', 'OPEN HOUSE', (-0.62, 0.6, 0.9), 0.045, mat('#ffffff', 0.5, emit='#ffffff', emit_strength=0.4), 'fg')
+    camera((0.0, -2.6, 1.55), (0.1, 3.4, 1.35), 26)
+    return {
+        'spots': {'rosa': spot((-0.4, 2.2, 0)), 'couple': spot((2.6, 3.6, 0))},
+        'cams': {'stain': point((-2.6, 4.2, 2.77), 2.6), 'flyers': point((-1.1, 0.6, 0.79), 2.6)},
+    }
+
+
+def car(name, x, y, col, layer='bg', yaw=0.0):
+    m = mat(col, 0.2, 0.55)
+    rot = (0, 0, yaw)
+    off = lambda dx, dy: (x + dx * math.cos(yaw) - dy * math.sin(yaw), y + dx * math.sin(yaw) + dy * math.cos(yaw))
+    box(f'{name}-body', (x, y, 0.3), (1.82, 4.5, 0.5), m, layer, rot=rot, bevel=0.16)
+    hx, hy = off(0, -1.55)
+    box(f'{name}-hood', (hx, hy, 0.72), (1.74, 1.3, 0.1), m, layer, rot=rot, bevel=0.05)
+    cx, cy = off(0, 0.25)
+    box(f'{name}-cab', (cx, cy, 0.78), (1.56, 2.1, 0.5), mat('#151b21', 0.06, 0.3), layer, rot=rot, bevel=0.22)
+    rx, ry = off(0, 0.25)
+    box(f'{name}-roof', (rx, ry, 1.22), (1.5, 1.7, 0.08), m, layer, rot=rot, bevel=0.04)
+    for side in (-0.62, 0.62):
+        lx, ly = off(side, -2.24)
+        box(f'{name}-head{side}', (lx, ly, 0.6), (0.36, 0.04, 0.1), mat('#000', 0.3, emit='#f4f6f8', emit_strength=2.5), layer, rot=rot)
+        tx, ty = off(side, 2.24)
+        box(f'{name}-tail{side}', (tx, ty, 0.62), (0.36, 0.04, 0.09), mat('#000', 0.3, emit='#e0352b', emit_strength=2.0), layer, rot=rot)
+    for k, (dx, dy) in enumerate(((-0.92, -1.35), (0.92, -1.35), (-0.92, 1.35), (0.92, 1.35))):
+        rx = x + dx * math.cos(yaw) - dy * math.sin(yaw)
+        ry = y + dx * math.sin(yaw) + dy * math.cos(yaw)
+        cyl(f'{name}-w{k}', (rx - 0.12 * math.cos(yaw), ry - 0.12 * math.sin(yaw), 0.33), 0.33, 0.24, mat('#141414', 0.6), layer, rot=(0, math.radians(90), yaw))
+
+
+def env_dealer():
+    """A dealership on a weekday: a polished showroom car, a sales desk, and the lot through the glass."""
+    world('#e3ebf0', 0.8)
+    box('floor', (0, 4, -0.01), (18, 14, 0.01), mat('#c9ccd0', 0.2))
+    box('back-glass', (0, 7.2, 0), (18, 0.05, 3.6), mat('#a9c4d6', 0.05, alpha=0.12))
+    box('sky', (0, 30, 0), (80, 0.2, 30), mat('#000', 0.5, emit='#dfeaf2', emit_strength=1.4))
+    box('lot', (0, 14, -0.02), (40, 14, 0.01), mat('#5d6166', 0.7))
+    boxes('glass-mullions', [(x, 7.15, 0, 0.08, 0.08, 3.6) for x in range(-8, 9, 2)], mat('#3a4048', 0.4, 0.6))
+    box('ceiling', (0, 4, 3.6), (18, 14, 0.05), mat('#f4f5f6', 0.9))
+    for i in range(3):
+        box(f'light{i}', (-3 + i * 3, 3.5, 3.55), (1.6, 0.4, 0.02), mat('#000', 0.5, emit='#ffffff', emit_strength=3))
+    area('showroom', (0, 3.2, 3.4), 6, 520, '#fbfbf8', sy=3)
+    sun((50, 0, 30), 2.2, '#fff4e2')
+    # Cars on the lot beyond the glass, and one in the showroom.
+    for k, (x, col) in enumerate(((-6, '#8a1f24'), (-2.8, '#d9dcdf'), (3.4, '#20252b'), (6.4, '#3d5a7a'))):
+        car(f'lot{k}', x, 10.5, col, yaw=math.radians(90))
+    car('show', 2.6, 4.6, '#b33a2c', yaw=math.radians(-62))
+    # The window sticker on the showroom car's rear side glass.
+    box('sticker', (2.25, 3.95, 0.86), (0.22, 0.004, 0.28), mat('#ffffff', 0.6, emit='#ffffff', emit_strength=0.3), rot=(0, 0, math.radians(-62)))
+    # Sales desk with a worksheet and a monitor, near you.
+    box('desk-top', (-1.2, 1.2, 0.74), (1.8, 0.85, 0.05), mat('#2a2f36', 0.3), 'fg')
+    box('desk-front', (-1.2, 0.8, 0), (1.8, 0.05, 0.74), mat('#3a4048', 0.4), 'fg')
+    box('worksheet', (-1.35, 1.05, 0.792), (0.24, 0.32, 0.002), mat('#ffffff', 0.7), 'fg', rot=(0, 0, math.radians(6)))
+    boxes('grid', [(-1.35, 1.05, 0.795, 0.004, 0.3, 0.001), (-1.35, 1.05, 0.795, 0.22, 0.004, 0.001)], mat('#1f2a35', 0.6), 'fg')
+    box('monitor', (-0.7, 1.45, 0.8), (0.5, 0.03, 0.32), mat('#0d0f12', 0.2), 'fg', rot=(0, 0, math.radians(-12)))
+    box('monitor-glow', (-0.7, 1.43, 0.84), (0.46, 0.005, 0.26), mat('#000', 0.3, emit='#cfe3f0', emit_strength=1.2), 'fg', rot=(0, 0, math.radians(-12)))
+    cyl('pen-cup', (-1.85, 1.35, 0.79), 0.04, 0.1, mat('#b33a2c', 0.4), 'fg')
+    camera((-0.3, -2.6, 1.55), (0.2, 4.0, 1.2), 27)
+    return {
+        'spots': {'vince': spot((-1.15, 1.95, 0))},
+        'cams': {'worksheet': point((-1.35, 1.05, 0.8), 3.2), 'sticker': point((2.25, 3.95, 1.0), 3.0)},
+    }
+
+
+ENVS = {'checkout': env_checkout, 'desks': env_desks, 'kitchen': env_kitchen, 'conference': env_conference, 'street': env_street, 'yard': env_yard, 'bathroom': env_bathroom, 'lobby': env_lobby, 'trading': env_trading, 'openhouse': env_openhouse, 'dealer': env_dealer}
 
 data = {}
 if os.path.exists(DATA):

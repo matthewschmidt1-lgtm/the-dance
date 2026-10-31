@@ -962,3 +962,4 @@ button.ps-btn:hover { background: var(--accent-soft); }
 .their em { font-style: normal; font-weight: 600; }
 .who-trust { font-size: var(--t-sm); font-weight: 600; margin-top: 2px; }
 .who-trust.up { color: var(--good); } .who-trust.down { color: var(--bad); }
+.their .their-note { font-size: var(--t-sm); color: var(--muted); margin-top: 4px; }

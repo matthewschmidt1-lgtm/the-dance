@@ -257,6 +257,7 @@ PP.scenes = {
       { cam: 'screen', caption: `Three days of your work, on the big screen.` },
       { cam: 'footer', caption: `"Prepared by J. Pike." Interesting.` },
       { who: 'jordan', mood: 'confident', say: `So when I modeled the regions, what jumped out was the Q2 freight spike.` },
+      { who: 'jordan', mood: 'confident', say: `It really came together over the weekend.`, if: ctx => ctx.type === 'schemer' },
       { who: 'ellen', mood: 'happy', act: 'nod', say: `Really sharp thinking, Jordan.` },
       { who: 'jordan', mood: 'awkward', pose: 'clicker', act: 'glance', caption: `Jordan looks directly at you. He says nothing.` },
       { if: ctx => (ctx.rel.dana || 0) > 0, who: 'dana', mood: 'skeptical', caption: `Dana catches your eye. She knows those slides were yours.` }
@@ -574,6 +575,7 @@ PP.scenes = {
       { who: 'luis', mood: 'neutral', say: `Morning. Got some news, and you're not going to love it.` },
       { cam: 'rot', caption: `Under the old tile, a dark, soft patch of plywood spreads out from the toilet flange.` },
       { who: 'luis', mood: 'confident', pose: 'gesture', say: `Rot in the subfloor. It's another twenty-six hundred.` },
+      { who: 'luis', mood: 'confident', say: `Could be more once we open it up. Hard to say.`, if: ctx => ctx.type === 'padder' },
       { who: 'luis', mood: 'neutral', pose: 'hips', say: `I need to know today. If I can't start this, my crew moves to another job and we're back in three weeks.` },
       { cam: 'wide', caption: `Your bid was a fixed $14,000. Your bathroom has no floor.` }
     ],

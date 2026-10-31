@@ -120,31 +120,35 @@ PP.scenarios = [
     ],
     known: [`Dana has asked three times this quarter.`, `You have a Friday noon deadline.`, `The report is due Monday.`],
     unknown: [`How big "the vendor section" is.`, `Why Dana is behind.`, `Whether your help will be acknowledged.`],
+    types: [
+      { id: 'overloaded', p: 0.6, who: `Dana`, label: `Dana was genuinely overloaded`, tell: `Ellen gave her a new client onboarding the day before, with no deadline relief.` },
+      { id: 'offloader', p: 0.4, who: `Dana`, label: `Dana was offloading`, tell: `Her own work was on track, and she'd asked three other people for "quick" help that month.` }
+    ],
     clues: [
-      { label: `Check the project tracker`, text: `Dana has four open items. Two are overdue. One is a new client onboarding Ellen assigned her yesterday, with no deadline relief.` },
-      { label: `Scroll back through the team channel`, text: `After the first time you helped: "Huge thanks for the vendor numbers, you saved me." After the second time: nothing.` }
+      { label: `Check the project tracker`, text: ctx => ctx.type === 'offloader' ? `Dana has two open items, both on track. Nothing new was assigned to her this week.` : `Dana has four open items. Two are overdue. One is a new client onboarding Ellen assigned her yesterday, with no deadline relief.` },
+      { label: `Scroll back through the team channel`, text: ctx => ctx.type === 'offloader' ? `She's asked three different people for "quick" help this month. She thanked one of them.` : `After the first time you helped: "Huge thanks for the vendor numbers, you saved me." After the second time: nothing.` }
     ],
     question: `How do you reply?`,
     options: [
       {
         key: 'A', text: `"Sure, send it over. I'll make it work."`,
         their: `Dana is overloaded, and you've said yes before. From her side, asking you again is the cheapest move she has, and today it worked again.`,
-        q: 2, s: { coo: 2, bnd: -2, lng: -1, inf: -1 }, rel: { dana: 1 }, flags: { danaPattern: 'always-yes' },
+        q: ctx => ctx.type === 'offloader' && ctx.clues.length > 0 ? 1 : 2, s: { coo: 2, bnd: -2, lng: -1, inf: -1 }, rel: { dana: 1 }, flags: { danaPattern: 'always-yes' },
         outcomes: [{ p: 1, tone: 'mixed', text: `Dana sends three hearts. You work until 9 pm on Thursday to fit it in, and your Henley summary goes in at 11:58 am Friday.` }],
         later: `Two weeks later Dana asks again. This time the message is shorter, and there's no "any chance." Unconditional cooperation teaches people what to expect from you.`
       },
       {
         key: 'B', text: `"I've covered for you twice this quarter, so I'm going to pass on this one."`,
-        needs: [1], vague: { text: `"I can't this time. I've got Henley due Friday."` },
-        their: `A flat no protects your Friday. Dana hears a door closing without knowing why, and she still has to solve her problem somewhere else.`,
-        q: 2, s: { bnd: 2, coo: -1, com: -1, inf: -1 }, rel: { dana: -1 },
+        needs: [1], vague: { q: ctx => ctx.type === 'offloader' && ctx.clues.length > 0 ? 3 : 2, text: `"I can't this time. I've got Henley due Friday."` },
+        their: ctx => ctx.type === 'offloader' ? `Dana's own work was on track. A clear no, with the history behind it, was the reply that ended the pattern.` : `A flat no protects your Friday. Dana hears a door closing without knowing why, and she still has to solve her problem somewhere else.`,
+        q: ctx => ctx.type === 'offloader' ? 4 : 2, s: { bnd: 2, coo: -1, com: -1, inf: -1 }, rel: { dana: -1 },
         outcomes: [{ p: 1, tone: 'mixed', text: `Dana replies "no worries!!" She's noticeably cooler at Friday's standup.` }],
         later: `Your time is protected. But you learned nothing about why Dana keeps asking, and you may have turned away someone who was genuinely stuck.`
       },
       {
         key: 'C', text: `"What's involved, and when do you need it? I'm on Henley until Friday noon."`,
         their: `A question costs Dana nothing to answer and shows you're open but not free. Her best reply was to shrink the ask to fit your schedule, which is what most people do when you ask.`,
-        q: ctx => ctx.clues.includes(0) ? 3 : 4, s: { inf: 2, neg: 2, com: 2, bnd: 1, coo: 1 }, rel: { dana: 1 }, flags: { danaPattern: 'trade' },
+        q: ctx => (ctx.type !== 'offloader' && ctx.clues.includes(0)) || (ctx.type === 'offloader' && ctx.clues.includes(1)) ? 3 : 4, s: { inf: 2, neg: 2, com: 2, bnd: 1, coo: 1 }, rel: { dana: 1 }, flags: { danaPattern: 'trade' },
         outcomes: [
           { p: 0.8, tone: 'good', text: `Dana explains: the numbers exist, they just need formatting, about two hours. You offer Friday afternoon. She offers to cover your Monday standup notes. Done.` },
           { p: 0.2, tone: 'mixed', text: `Dana goes quiet, then says she'll "figure it out." It turns out the section was most of the report. Asking saved you a weekend.` }
@@ -154,7 +158,7 @@ PP.scenarios = [
       {
         key: 'D', text: `"I can, if you ask Ellen to take something off my plate."`,
         their: `It's a fair trade, but it asks Dana to go to her manager about your workload. That's a cost she didn't plan on, so it often stalls.`,
-        q: 2, s: { neg: 1, bnd: 2, inc: 1, com: -1 },
+        q: ctx => ctx.type === 'offloader' && ctx.clues.length > 0 ? 3 : 2, s: { neg: 1, bnd: 2, inc: 1, com: -1 },
         outcomes: [
           { p: 0.5, tone: 'mixed', text: `Dana asks Ellen. Ellen, an Avoider, says "work it out between you." You end up doing it anyway, a day late.` },
           { p: 0.5, tone: 'good', text: `Ellen pushes your Henley deadline to Monday. You do the vendor section Friday. Fair trade.` }
@@ -163,13 +167,14 @@ PP.scenarios = [
       },
       {
         key: 'E', text: `"Ellen just gave you that onboarding, didn't she? Want to raise it with her together?"`,
-        their: `Going to Ellen together fixes the real problem, Dana's load, but it puts her on the spot in front of her boss. Some people welcome that. Others hear it as being managed.`,
-        needs: [0],
-        vague: { q: 2, s: { coo: 1, com: 1, neg: -1 }, later: `Kind instinct, wrong first step. You proposed a fix before you knew what Dana was actually dealing with.`, text: `"Sounds like you're swamped. Want to raise it with Ellen together?"` },
+        their: ctx => ctx.type === 'offloader' ? `Dana wasn't overloaded, so taking it to Ellen treated a habit as a workload problem.` : `Going to Ellen together fixes the real problem, Dana's load, but it puts her on the spot in front of her boss. Some people welcome that. Others hear it as being managed.`,
+        // There's no new onboarding to point to if Dana is offloading, so this never sharpens then.
+        needs: ctx => ctx.type === 'offloader' ? [-1] : [0],
+        vague: { q: ctx => ctx.type === 'offloader' && ctx.clues.length > 0 ? 1 : 2, s: { coo: 1, com: 1, neg: -1 }, later: `Kind instinct, wrong first step. You proposed a fix before you knew what Dana was actually dealing with.`, text: `"Sounds like you're swamped. Want to raise it with Ellen together?"` },
         q: 4, s: { inc: 2, coo: 2, com: 1, inf: 1 }, rel: { dana: 0 },
         outcomes: [
-          { p: 0.6, tone: 'mixed', text: `Dana hesitates. She doesn't want Ellen to think she's struggling. "It's fine, I'll manage." She manages, badly.` },
-          { p: 0.4, tone: 'good', text: `Dana agrees. Ellen, cornered by two people at once, actually moves the onboarding deadline.` }
+          { p: ctx => ctx.type === 'offloader' ? 0.9 : 0.6, tone: 'mixed', text: `Dana hesitates. She doesn't want Ellen to think she's struggling. "It's fine, I'll manage." She manages, badly.` },
+          { p: ctx => ctx.type === 'offloader' ? 0.1 : 0.4, tone: 'good', text: `Dana agrees. Ellen, cornered by two people at once, actually moves the onboarding deadline.` }
         ],
         later: `You found the real cause, Ellen's new assignment, and offered to take it to the source together. Whether Dana was ready for that was up to her. It was the right problem to solve.`
       }
@@ -297,9 +302,13 @@ PP.scenarios = [
     ],
     known: [`You built most of the analysis.`, `Jordan didn't credit you.`, `Ellen praised Jordan in front of the team.`],
     unknown: [`Whether Jordan did this deliberately.`, `What Ellen already knows about who did the work.`, `How Ellen reacts to public correction.`],
+    types: [
+      { id: 'scared', p: 0.6, who: `Jordan`, label: `Jordan was scared, not scheming`, tell: `His hand shook on the clicker, his review is Thursday, and the footer was changed in a hurry that morning.` },
+      { id: 'schemer', p: 0.4, who: `Jordan`, label: `Jordan took the credit on purpose`, tell: `He was calm and rehearsed, and the version history shows he removed your name from the title slide on Friday, days before the meeting.` }
+    ],
     clues: [
-      { label: `Check the file's version history`, text: `The deck's history shows you as the author of 31 of its 38 slides. That record exists whatever anyone says in this room.` },
-      { label: `Watch Jordan closely`, text: `His hand shakes slightly on the clicker. You heard last week that his performance review is on Thursday. He might be scared, not scheming. Or both.` }
+      { label: `Check the file's version history`, text: ctx => ctx.type === 'schemer' ? `The deck's history shows you as the author of 31 of its 38 slides. On Friday, Jordan removed your name from the title slide and changed the footer.` : `The deck's history shows you as the author of 31 of its 38 slides. That record exists whatever anyone says in this room. The footer was changed to his name this morning, at 9:52.` },
+      { label: `Watch Jordan closely`, text: ctx => ctx.type === 'schemer' ? `He's relaxed, almost rehearsed, and hasn't looked at his notes once. His review is Thursday, but he doesn't look worried.` : `His hand shakes slightly on the clicker. You heard last week that his performance review is on Thursday. He might be scared, not scheming. Or both.` }
     ],
     question: `What do you do?`,
     options: [
@@ -308,7 +317,7 @@ PP.scenarios = [
         needs: [0], vague: { text: `"Actually, I built most of that analysis. Happy to walk everyone through how it works."` },
         their: `Jordan's review is Thursday, and he can't afford to look like he took your work. Corrected in public, his best reply is to defend himself, and the room watches the two of you instead of the analysis.`,
         shaped: ctx => (ctx.rel.dana || 0) > 0 ? `Dana trusts you after Just This Once. Her nodding along made the room more likely to believe you: about 70% instead of 50%.` : (ctx.rel.dana || 0) < 0 ? `Dana is cool on you after Just This Once. Her silence made the room more likely to doubt you: about 65% instead of 50%.` : null,
-        q: 1, s: { reg: -1, com: -1, bnd: 2, lng: -1, str: -1 }, rel: { jordan: -2 },
+        q: ctx => ctx.type === 'schemer' && ctx.clues.length > 0 ? 2 : 1, s: { reg: -1, com: -1, bnd: 2, lng: -1, str: -1 }, rel: { jordan: -2 },
         outcomes: [
           { p: ctx => (ctx.rel.dana || 0) > 0 ? 0.7 : (ctx.rel.dana || 0) < 0 ? 0.35 : 0.5, tone: 'mixed', text: `"Actually, I built most of that." The room goes quiet. Ellen says "Let's take that offline." You're right, and you're now part of an awkward moment.` },
           { p: ctx => (ctx.rel.dana || 0) > 0 ? 0.3 : (ctx.rel.dana || 0) < 0 ? 0.65 : 0.5, tone: 'bad', text: `Jordan says "It was a team effort, obviously." Ellen moves on quickly. You look like you cared more about credit than the work.` }
@@ -317,43 +326,43 @@ PP.scenarios = [
       },
       {
         key: 'B', text: `Stay quiet now, and talk to Jordan privately right after the meeting.`,
-        their: `In private, Jordan can fix it without losing face, which is what a scared person most wants. It also means nobody else saw your work today.`,
-        q: 3, s: { reg: 2, com: 1, coo: 1, bnd: 1 }, rel: { jordan: 1 },
+        their: ctx => ctx.type === 'schemer' ? `Jordan took the credit on purpose. In private, his best reply was to deny it, and now he knew you'd noticed.` : `In private, Jordan can fix it without losing face, which is what a scared person most wants. It also means nobody else saw your work today.`,
+        q: ctx => ctx.type === 'schemer' && ctx.clues.length > 0 ? 1 : 3, s: { reg: 2, com: 1, coo: 1, bnd: 1 }, rel: { jordan: 1 },
         outcomes: [
-          { p: 0.6, tone: 'good', text: `Jordan is embarrassed. "I froze up. I'll fix it." He sends the team an email crediting your analysis by name.` },
-          { p: 0.4, tone: 'mixed', text: `Jordan gets defensive. "We're a team, I didn't think it mattered." Nothing changes in Ellen's mind.` }
+          { p: ctx => ctx.type === 'schemer' ? 0.15 : 0.8, tone: 'good', text: `Jordan is embarrassed. "I froze up. I'll fix it." He sends the team an email crediting your analysis by name.` },
+          { p: ctx => ctx.type === 'schemer' ? 0.85 : 0.2, tone: 'mixed', text: ctx => ctx.type === 'schemer' ? `Jordan smiles. "I think you're remembering it differently." By Thursday, his version is the official one.` : `Jordan gets defensive. "We're a team, I didn't think it mattered." Nothing changes in Ellen's mind.` }
         ],
         later: `You gave Jordan a private way to correct course. Whether he takes it tells you a lot about him.`
       },
       {
         key: 'C', text: `Ask Jordan a question that shows you built it: "Should we include the Q2 outliers I flagged?"`,
         their: `Your question gave Jordan an easy, face-saving reply: credit you while answering. Refusing would have exposed him, so his best reply was to share the stage.`,
-        q: 4, s: { str: 2, com: 2, reg: 1, inc: 1, bnd: 1 }, rel: { jordan: 0 },
+        q: ctx => ctx.type === 'schemer' && ctx.clues.includes(0) ? 3 : 4, s: { str: 2, com: 2, reg: 1, inc: 1, bnd: 1 }, rel: { jordan: 0 },
         outcomes: [
-          { p: 0.75, tone: 'good', text: `Ellen looks at you. "You built the model?" "Most of it, yes." Ellen asks you to walk through slide 12. Jordan, to his credit, hands you the clicker.` },
-          { p: 0.25, tone: 'mixed', text: `Jordan answers smoothly and the meeting moves on. Ellen may or may not have registered it. Your claim is on record, quietly.` }
+          { p: ctx => ctx.type === 'schemer' ? 0.55 : 0.75, tone: 'good', text: `Ellen looks at you. "You built the model?" "Most of it, yes." Ellen asks you to walk through slide 12. Jordan, to his credit, hands you the clicker.` },
+          { p: ctx => ctx.type === 'schemer' ? 0.45 : 0.25, tone: 'mixed', text: `Jordan answers smoothly and the meeting moves on. Ellen may or may not have registered it. Your claim is on record, quietly.` }
         ],
         later: `You established ownership as a fact without accusing anyone. The tone mattered: asked with curiosity, it reads as collaboration. Asked with an edge, it reads as a jab.`
       },
       {
         key: 'D', text: `Bring the file's version history to Ellen after the meeting and ask how ownership should show.`,
-        their: `Ellen avoids conflict, but a record is hard to wave away. The version history let her act without having to decide who was lying.`,
+        their: ctx => ctx.type === 'schemer' ? `Against someone doing it on purpose, a record is the only thing that works. The version history settled it without a debate.` : `Ellen avoids conflict, but a record is hard to wave away. The version history let her act without having to decide who was lying.`,
         needs: [0],
         vague: { s: { bnd: 1, reg: 1, com: -1 }, later: `You raised it the right way, but with nothing in hand. The version history was one click away.`, text: `Talk to Ellen afterward about who did most of the work.`, q: 2, their: `Ellen avoids conflict. Without evidence, her easiest reply was to call it a team effort and move on.`, outcomes: [
               { p: 0.35, tone: 'good', text: `Ellen listens and promises to keep an eye on it. Without anything to show her, it's your word against Jordan's.` },
               { p: 0.65, tone: 'mixed', text: `Ellen says "I'm sure it was a team effort" and changes the subject. You had nothing to show her.` }
             ] },
-        q: 4, s: { inf: 2, bnd: 1, lng: 2, reg: 1, com: -1 },
+        q: ctx => ctx.type === 'schemer' ? 4 : 3, s: { inf: 2, bnd: 1, lng: 2, reg: 1, com: -1 },
         outcomes: [
-          { p: 0.7, tone: 'good', text: `You bring Ellen the version history, framed around clarity: "I want to make sure my work is visible for review season." Ellen thanks you. She'd assumed it was joint work.` },
-          { p: 0.3, tone: 'mixed', text: `Ellen, an Avoider, says "I'm sure it was a team effort" and changes the subject. The documentation is still yours to keep.` }
+          { p: ctx => ctx.type === 'schemer' ? 0.8 : 0.7, tone: 'good', text: `You bring Ellen the version history, framed around clarity: "I want to make sure my work is visible for review season." Ellen thanks you. She'd assumed it was joint work.` },
+          { p: ctx => ctx.type === 'schemer' ? 0.2 : 0.3, tone: 'mixed', text: `Ellen, an Avoider, says "I'm sure it was a team effort" and changes the subject. The documentation is still yours to keep.` }
         ],
         later: `Slower and less satisfying than a public moment, but you built a record that lasts.`
       },
       {
         key: 'E', text: `Let it go this time, and put your name on every slide from now on.`,
         their: `Jordan learns that taking credit cost him nothing. You protect next time, but this time's work stays his in Ellen's mind.`,
-        q: 2, s: { reg: 2, lng: 1, bnd: -1, com: -1 },
+        q: ctx => ctx.type === 'schemer' && ctx.clues.length > 0 ? 0 : 2, s: { reg: 2, lng: 1, bnd: -1, com: -1 },
         outcomes: [{ p: 1, tone: 'mixed', text: `You put your name on future slide footers and send recap emails after each working session. Today's credit is gone.` }],
         later: `Smart systems going forward. But Ellen's impression of who drove this project is now set, and impressions are hard to revise.`
       }
@@ -393,20 +402,25 @@ PP.scenarios = [
     ],
     known: [`The bid was fixed at $14,000.`, `The floor is open.`, `Luis wants an answer today.`],
     unknown: [`How bad the rot really is.`, `Whether $2,600 is a fair price.`, `Whether the three-week delay is real.`],
+    types: [
+      { id: 'honest', p: 0.65, who: `Luis`, label: `Luis was honest`, tell: `The rot was real and the price was fair. The tell: he could break the $2,600 down line by line.` },
+      { id: 'padder', p: 0.35, who: `Luis`, label: `Luis was padding the bill`, tell: `The rot was real but small. The tell: he wouldn't break down the $2,600, and "it probably runs under the tub" was doing a lot of work.` }
+    ],
     clues: [
       { label: `Read your contract`, text: `Section 7: "Unforeseen conditions will be billed at documented cost plus 15%, with the owner's written approval of a change order." The bid was fixed, with a written exception for exactly this.` },
-      { label: `Look at the floor yourself`, text: `Near the toilet flange, about a 3-by-4-foot area of plywood is dark and soft. It looks like a slow leak over many years. The rot appears real.` }
+      { label: `Look at the floor yourself`, text: ctx => ctx.type === 'padder' ? `Near the toilet flange there's a soft patch, maybe two feet square. Luis says it "probably runs under the tub," but he hasn't opened that up.` : `Near the toilet flange, about a 3-by-4-foot area of plywood is dark and soft. It looks like a slow leak over many years. The rot appears real.` },
+      { label: `Ask how he got to $2,600`, text: ctx => ctx.type === 'padder' ? `"That's just what these run," he says. He doesn't break it down, and changes the subject to the crew's schedule.` : `He doesn't hesitate: "Two sheets of plywood, a sister joist, a day and a half of labor, plus 15% like the contract says."` }
     ],
     question: `What do you say to Luis?`,
     options: [
       {
         key: 'A', text: `"I've seen the rot myself, and it's real. Go ahead, and keep the crew here."`,
         needs: [1], vague: { text: `"Go ahead. I trust you, and I need the crew here."` },
-        their: `Luis is probably honest, but nothing you said made honesty his best move. Approving on the spot makes padding free.`,
-        q: 1, s: { coo: 1, jdg: -1, inf: -2, neg: -2 },
+        their: ctx => ctx.type === 'padder' ? `Luis was padding. Approving on the spot meant he never had to justify the number.` : `Luis is probably honest, but nothing you said made honesty his best move. Approving on the spot makes padding free.`,
+        q: ctx => ctx.type === 'padder' && (ctx.clues.includes(1) || ctx.clues.includes(2)) ? 0 : 1, s: { coo: 1, jdg: -1, inf: -2, neg: -2 },
         outcomes: [
-          { p: 0.6, tone: 'mixed', text: `The work is done well. The final invoice shows $2,600 for materials and labor you never saw itemized. It was probably fair. You'll never know.` },
-          { p: 0.4, tone: 'bad', text: `The work is done. Later a friend in construction looks at the photos: "Documented, that's about $1,900." You paid $700 extra under a deadline you never tested.` }
+          { p: ctx => ctx.type === 'padder' ? 0.15 : 0.7, tone: 'mixed', text: `The work is done well. The final invoice shows $2,600 for materials and labor you never saw itemized. It was probably fair. You'll never know.` },
+          { p: ctx => ctx.type === 'padder' ? 0.85 : 0.3, tone: 'bad', text: `The work is done. Later a friend in construction looks at the photos: "Documented, that's about $1,900." You paid $700 extra under a deadline you never tested.` }
         ],
         later: `Luis learned that urgency works on you.`
       },
@@ -419,23 +433,23 @@ PP.scenarios = [
       },
       {
         key: 'C', text: `"Show me the damage and send a written change order, itemized. I can sign tonight."`,
-        their: `Asking to see it and get it in writing costs an honest contractor nothing and makes padding a losing move. You also met his deadline, so his best reply was to document it and keep the crew.`,
+        their: ctx => ctx.type === 'padder' ? `A written, itemized order is the one thing a padded bill can't survive. Luis's best reply was to price it honestly or lose your approval.` : `Asking to see it and get it in writing costs an honest contractor nothing and makes padding a losing move. You also met his deadline, so his best reply was to document it and keep the crew.`,
         needs: [0],
         vague: { s: { inf: 1, neg: 1, bnd: 1, com: 2, jdg: 1 }, later: `You met his deadline and asked to check. Section 7 already gave you exactly this process, and you didn't know to name it.`, text: `"Show me the damage, and send me the cost in writing. I'll decide tonight."`, q: 3, pv: [0.6, 0.4] },
         q: 4, s: { inf: 2, neg: 2, bnd: 1, com: 2, jdg: 2, inc: 1 },
         outcomes: [
-          { p: 0.7, tone: 'good', text: `Luis walks you through it and sends a change order at 4 pm: $1,940 at documented cost plus 15%. You sign it at 6. The crew starts Thursday.` },
-          { p: 0.3, tone: 'mixed', text: `The itemized order comes in at $2,550. It's legitimate, just expensive. You approve it knowing exactly what you're paying for.` }
+          { p: ctx => ctx.type === 'padder' ? 0.85 : 0.7, tone: 'good', text: `Luis walks you through it and sends a change order at 4 pm: $1,940 at documented cost plus 15%. You sign it at 6. The crew starts Thursday.` },
+          { p: ctx => ctx.type === 'padder' ? 0.15 : 0.3, tone: 'mixed', text: ctx => ctx.type === 'padder' ? `The itemized order includes a $600 "contingency" line. You ask what it covers, and it disappears. Final: $1,950.` : `The itemized order comes in at $2,550. It's legitimate, just expensive. You approve it knowing exactly what you're paying for.` }
         ],
         later: `You met his deadline and kept your right to check. Luis now knows you read contracts, which shapes every future conversation about money.`
       },
       {
         key: 'D', text: `"I'd like a second opinion from another contractor before I approve anything extra."`,
-        their: `A second opinion is fair, but Luis's crew can't wait. His best reply was to move them to another job, so the check cost you time.`,
-        q: 2, s: { inf: 2, jdg: 0, coo: -1, lng: -1 },
+        their: ctx => ctx.type === 'padder' ? `With a padded number, a second opinion was worth the wait: it gave you a price Luis had to match.` : `A second opinion is fair, but Luis's crew can't wait. His best reply was to move them to another job, so the check cost you time.`,
+        q: ctx => ctx.type === 'padder' && (ctx.clues.includes(1) || ctx.clues.includes(2)) ? 3 : 2, s: { inf: 2, jdg: 0, coo: -1, lng: -1 },
         outcomes: [
-          { p: 0.5, tone: 'mixed', text: `The second contractor can come Monday and says the price is fair. The crew has left. You lose three weeks to save nothing.` },
-          { p: 0.5, tone: 'mixed', text: `The second opinion says $1,500 is reasonable. Luis comes down to $2,000 but the job slips nine days.` }
+          { p: ctx => ctx.type === 'padder' ? 0.15 : 0.8, tone: 'mixed', text: `The second contractor can come Monday and says the price is fair. The crew has left. You lose three weeks to save nothing.` },
+          { p: ctx => ctx.type === 'padder' ? 0.85 : 0.2, tone: 'mixed', text: `The second opinion says $1,500 is reasonable. Luis comes down to $2,000 but the job slips nine days.` }
         ],
         later: `Information has a cost. Sometimes it's worth paying, but here a cheaper version of the same check was available on the spot.`
       },

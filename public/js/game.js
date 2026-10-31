@@ -21,7 +21,15 @@
   const epEnd = i => !!LIST[i] && (!LIST[i + 1] || LIST[i + 1].ep !== LIST[i].ep);
   const DANCE_AT = EPS[0].scenes.length; // "Your Dance" opens once the first episode is played
   const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
-  const fresh = (clues = []) => ({ selected: null, clues });
+  const fresh = (clues = [], type = null) => ({ selected: null, clues, type });
+  // Some people are one of several hidden types (Luis honest or padding). Each play draws one.
+  function drawType(sc) {
+    if (!sc.types) return null;
+    let r = Math.random();
+    for (const t of sc.types) { r -= t.p; if (r <= 0) return t.id; }
+    return sc.types[sc.types.length - 1].id;
+  }
+  const typeOf = (sc, h) => (h && h.type) || (sc.types ? sc.types[0].id : null);
   const RECURRING = ['dana', 'gary', 'jordan', 'priya', 'marcus'];
   const app = document.getElementById('app');
 
@@ -151,7 +159,7 @@
     let rating = START_RATING;
     const moves = hist.map((h, i) => {
       const sc = LIST[i];
-      const ctx = { rel: { ...rel }, flags: { ...flags } };
+      const ctx = { rel: { ...rel }, flags: { ...flags }, type: typeOf(sc, h) };
       const opts = resolve(sc, ctx, h.clues);
       const opt = opts.find(o => o.key === h.key);
       Object.entries(opt.s || {}).forEach(([k, v]) => { totals[k] += v; });
@@ -160,7 +168,7 @@
       Object.assign(flags, opt.flags || {});
       const before = rating;
       rating += (opt.q - 2) * 40;
-      return { sc, opt, opts, ctx, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating };
+      return { sc, opt, opts, ctx, type: ctx.type, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating };
     });
     return { totals, rel, flags, rating, moves };
   }
@@ -171,14 +179,16 @@
   function resolve(sc, ctx = { rel: {}, flags: {} }, clues = []) {
     const c = { ...ctx, rules, clues };
     return sc.options.map(o => {
-      const vague = !!o.needs && !o.needs.every(i => clues.includes(i));
+      const needs = val(o.needs, c);
+      const vague = !!needs && !needs.every(i => clues.includes(i));
       const b = vague ? { ...o, ...o.vague, vague } : { ...o, vague };
       // A vague version can keep the same results at different odds (pv), or bring its own.
       const outs = vague && o.vague.pv ? b.outcomes.map((x, i) => ({ ...x, p: o.vague.pv[i] })) : b.outcomes;
-      return { ...b, q: val(b.q, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
+      return { ...b, needs, q: val(b.q, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), text: val(x.text, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
     });
   }
-  const optsNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return resolve(sc, { rel: d.rel, flags: d.flags }, draft.clues); };
+  const optsNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return resolve(sc, { rel: d.rel, flags: d.flags, type: draft.type }, draft.clues); };
+  const clueText = (c, type) => val(c.text, { type });
   // Staging for the version actually played: a vague option may have its own line and reactions.
   const staged = (sc, opt) => {
     const so = sc.stage.options[opt.key];
@@ -437,8 +447,10 @@
   function mountStage(sc, idx) {
     if (stage) stage.destroy();
     const d = derive(history.slice(0, idx));
+    if (idx >= history.length && sc.types && !draft.type) draft.type = drawType(sc);
+    const type = idx < history.length ? typeOf(sc, history[idx]) : draft.type;
     stage = new PP.Stage(document.getElementById('stage-mount'), sc.stage, {
-      ctx: { rel: d.rel, flags: d.flags, account: isMarket() ? capitals(history.slice(0, idx)).cap.fin : null, rules },
+      ctx: { rel: d.rel, flags: d.flags, type, account: isMarket() ? capitals(history.slice(0, idx)).cap.fin : null, rules },
       label: `${sc.title}. ${sc.setting}`,
       onFreeze: () => { ui.frozen = true; renderPanel(); },
       onResume: () => { ui.frozen = false; renderPanel(); }
@@ -541,7 +553,7 @@
     }).join('');
     const clues = sc.clues.map((c, i) => {
       const open = draft.clues.includes(i);
-      return `<li class="clue ${open ? 'is-open' : ''}"><button type="button" class="clue-btn" data-clue="${i}" ${open ? 'disabled' : ''} aria-expanded="${open}"><span class="clue-label">${c.label}</span><span class="clue-state">${open ? 'Noted' : 'Look'}</span></button>${open ? `<p class="clue-text">${c.text}</p>` : ''}</li>`;
+      return `<li class="clue ${open ? 'is-open' : ''}"><button type="button" class="clue-btn" data-clue="${i}" ${open ? 'disabled' : ''} aria-expanded="${open}"><span class="clue-label">${c.label}</span><span class="clue-state">${open ? 'Noted' : 'Look'}</span></button>${open ? `<p class="clue-text">${clueText(c, draft.type)}</p>` : ''}</li>`;
     }).join('');
     const opts = optsNow(sc).map(o => `<li><span class="option-key">${o.key}</span><div><p class="fo-text">${fill(o.text)}</p><p class="fo-prev">${staged(sc, o).preview}</p></div></li>`).join('');
     const canDecide = ui.phase === 'decide' || ui.phase === 'intro';
@@ -565,7 +577,9 @@
 
   // Why it went the way it did, from the other side: their reasoning, what your history with
   // them changed, and whether you found what you needed to make the strong version of your move.
-  function theirSide(sc, opt) {
+  function theirSide(sc, opt, type) {
+    const t = sc.types && sc.types.find(x => x.id === type);
+    const who = t ? `<div><p class="their-k">Who they were this time</p><p><strong>${t.label}.</strong> ${t.tell}</p><p class="their-note">Play it again and ${t.who} may be different.</p></div>` : '';
     let knew = '';
     if (opt.needs) {
       const labels = opt.needs.map(i => `“${sc.clues[i].label}”`).join(' and ');
@@ -573,8 +587,9 @@
         ? `You hadn't checked ${labels}, so you could only make the general version of this move. With it, you could have said: <em>${sc.options.find(o => o.key === opt.key).text}</em>`
         : `You checked ${labels}, which let you make the sharper version of this move. Sharper isn't always better: what matters is whether it fits the other side's incentives.`;
     }
-    if (!opt.their && !opt.shaped && !knew) return '';
+    if (!opt.their && !opt.shaped && !knew && !who) return '';
     return `<section class="their">
+      ${who}
       ${opt.their ? `<div><p class="their-k">The other side</p><p>${opt.their}</p></div>` : ''}
       ${opt.shaped ? `<div><p class="their-k">What earlier scenes changed</p><p>${opt.shaped}</p></div>` : ''}
       ${knew ? `<div><p class="their-k">What you knew</p><p>${knew}</p></div>` : ''}
@@ -640,7 +655,7 @@
         <h3 class="viz-h">What each move could cost or earn</h3>${riskChart(sc, opt.key, move.outcomeIdx)}
         <h3 class="viz-h">How often each move goes well</h3>${PP.viz.tree({ ...sc, options: move.opts }, opt.key, move.outcomeIdx)}
         <h3 class="viz-h">What reading the room would have shown</h3>
-        <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${c.text}</p></li>`).join('')}</ul>`;
+        <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${clueText(c, move.type)}</p></li>`).join('')}</ul>`;
     } else if (ui.tab === 'mind') {
       const v = opt.verdict;
       body = `
@@ -705,14 +720,14 @@
           <li><span class="tl-k">Right now</span><p>${outcome.text}</p></li>
           <li><span class="tl-k">Later</span><p>${text(opt.later, ctxAfter)}</p>${rels ? `<ul class="relchips">${rels}</ul>` : ''}</li>
         </ol>
-        ${theirSide(sc, opt)}
+        ${theirSide(sc, opt, move.type)}
         <h3 class="block-h">How it shaped your profile</h3><ul class="deltas">${deltas}</ul>`;
     } else if (ui.tab === 'game') {
       body = `
         <h3 class="viz-h">Payoff matrix</h3>${PP.viz.matrix(sc.stage.matrix, st.row, st.outcomes[move.outcomeIdx].col)}
         <h3 class="viz-h">Decision tree</h3>${PP.viz.tree({ ...sc, options: move.opts }, opt.key, move.outcomeIdx)}
         <h3 class="viz-h">What reading the room would have shown</h3>
-        <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${c.text}</p></li>`).join('')}</ul>`;
+        <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${clueText(c, move.type)}</p></li>`).join('')}</ul>`;
     } else if (ui.tab === 'people') {
       const nodes = sc.stage.cast.map((c, i) => ({ id: c.id, name: PP.people[c.id].name, short: PP.people[c.id].short, trust: all.rel[c.id] || 0, recurring: RECURRING.includes(c.id), role: (sc.cast[i] || {}).role }));
       const mainThem = PP.people[sc.stage.cast[0].id].name;
@@ -1080,7 +1095,7 @@
       case 'next': draft = fresh(); ui.phase = 'intro'; render(); window.scrollTo({ top: 0 }); break;
       case 'takeback': {
         const last = history.pop(); save();
-        draft = fresh(last.clues.slice());
+        draft = fresh(last.clues.slice(), last.type || null);
         ui.phase = 'decide';
         app.innerHTML = viewPlay();
         toDecision();
@@ -1134,7 +1149,7 @@
     if (stage && stage.paused) stage.resume();
     const sc = LIST[history.length];
     const opt = optsNow(sc).find(o => o.key === draft.selected);
-    history.push({ id: sc.id, key: opt.key, outcome: pickOutcome(opt), clues: draft.clues.slice() });
+    history.push({ id: sc.id, key: opt.key, outcome: pickOutcome(opt), clues: draft.clues.slice(), type: draft.type });
     save();
     draft = fresh();
     document.querySelector('.play-head').innerHTML = document.querySelector('.play-head').innerHTML.replace(/<ol class="file-strip"[\s\S]*?<\/ol>/, strip(history.length - 1, derive(history)));

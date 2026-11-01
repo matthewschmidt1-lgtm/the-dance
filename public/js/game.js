@@ -278,31 +278,97 @@
     return `<li><span class="ps-btn is-locked" aria-disabled="true"><span class="ps-n">${pos(i).n}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-lock"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Unlocks after ${LIST[i - 1].title}</span></span></li>`;
   }
 
-  // ───────────────────────── Where to? (the Play link)
+  // ───────────────────────── The campaign index (the Play link)
+  // An editorial index of every scene: where you are, what's open, what each episode holds.
+
+  const IX_ARROW = `<svg class="ix-arrow" viewBox="0 0 40 10" aria-hidden="true"><path d="M0 5h38M33 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.25"/></svg>`;
+  const IX_LOCK = `<svg class="ix-lock" viewBox="0 0 12 14" aria-hidden="true"><rect x="1.5" y="6" width="9" height="7" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M3.5 6V4a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>`;
+  const ixNo = i => `${LIST[i].ep.number}.${pos(i).n}`;
+
+  // One scene, as a row in the index. Same rules as everywhere: replay what you've played
+  // (it resets what comes after), start what's next, the rest open in order.
+  function ixRow(i, d) {
+    const n = history.length, m = d.moves[i], sc = LIST[i];
+    const lead = `<span class="ix-no">${ixNo(i)}</span><span class="ix-name">${sc.title}</span>`;
+    if (i < n) {
+      const asking = confirmScene === i, later = n - 1 - i, g = grades[m.opt.q];
+      if (asking) {
+        const lastEp = LIST[n - 1].ep;
+        const what = !later ? 'Nothing after it changes.' : `Resets ${later === 1 ? 'the next scene' : `the ${NUM[later] || later} scenes after it`}${lastEp !== sc.ep ? `, through Episode ${lastEp.number}` : ''}.`;
+        return `<li><button type="button" class="ix-row is-asking" data-act="scene" data-i="${i}">${lead}
+          <span class="ix-state"><span class="ix-warn">${what}</span><span class="ix-act">Confirm replay</span></span></button></li>`;
+      }
+      return `<li><button type="button" class="ix-row is-done" data-act="scene" data-i="${i}" aria-label="${sc.title}, played, ${g.name}. Replay.">${lead}
+        <span class="ix-state"><span class="ix-act">Replay</span><span class="ix-grade ix-q${m.opt.q}" title="${g.name}">${g.glyph}</span></span></button></li>`;
+    }
+    if (i === n) return `<li><button type="button" class="ix-row is-next" data-act="scene" data-i="${i}" aria-label="${sc.title}, next scene. Play.">${lead}
+      <span class="ix-state"><span class="ix-act">Play</span>${IX_ARROW}</span></button></li>`;
+    return `<li><span class="ix-row is-locked" aria-disabled="true">${lead}
+      <span class="ix-state">${IX_LOCK}<span class="ix-cond">After ${ixNo(i - 1)}</span></span></span></li>`;
+  }
 
   function viewEpisodes() {
     const d = derive(history), n = history.length, done = n >= LIST.length;
     const at = done ? null : pos(n);
-    const cont = done
-      ? `<button class="where-go" data-act="profile"><span class="where-k">Every scene played</span><span class="where-t">See your dance</span><span class="where-d">Replay any scene below, or start again from your profile.</span><span class="nm-go" aria-hidden="true">→</span></button>`
-      : `<button class="where-go" data-act="play"><span class="where-k">${n ? (at.n === 1 ? 'Start the next episode' : 'Continue where you left off') : 'Start here'} · Episode ${at.ep.number}, Scene ${at.n} of ${at.of}</span><span class="where-t">${LIST[n].title}</span><span class="where-d">${placeOf(LIST[n].id).name}. ${at.ep.title}.</span><span class="nm-go" aria-hidden="true">→</span></button>`;
-    const eps = EPS.map(ep => {
-      const total = ep.scenes.length, played = LIST.filter((sc, i) => sc.ep === ep && i < n).length;
-      return `<section class="where-ep ep-panel ep-${ep.number}">
-        <header class="ep-head">
-          <span class="ep-num" aria-hidden="true">${ep.number}</span>
-          <div class="ep-titles"><p class="eyebrow">Episode ${ep.number}</p><h2>${ep.title}</h2></div>
-          <span class="ep-progress">${played === total ? 'Complete' : played ? `${played} of ${total} played` : `${total} scenes`}</span>
+    const epsDone = EPS.filter(ep => LIST.every((sc, i) => sc.ep !== ep || i < n)).length;
+    const sharp = d.moves.filter(m => m.opt.q >= 3).length;
+
+    const resume = done
+      ? `<button type="button" class="ix-resume" data-act="profile">
+          <span class="ix-resume-k">Campaign complete</span>
+          <span class="ix-resume-main"><span class="ix-resume-t">Review your dance</span><span class="ix-resume-d">Every scene played. Replay any of them below.</span></span>
+          <span class="ix-resume-go">Open profile ${IX_ARROW}</span></button>`
+      : `<button type="button" class="ix-resume" data-act="play">
+          <span class="ix-resume-k">${!n ? 'Begin' : at.n === 1 ? 'Next episode' : 'Resume'}</span>
+          <span class="ix-resume-main"><span class="ix-resume-no">Scene ${ixNo(n)} · ${placeOf(LIST[n].id).name}</span><span class="ix-resume-t">${LIST[n].title}</span><span class="ix-resume-d">Episode ${at.ep.number}, ${at.ep.title}. Scene ${at.n} of ${at.of}.</span></span>
+          <span class="ix-resume-go">Enter scene ${IX_ARROW}</span></button>`;
+
+    const chapters = EPS.map(ep => {
+      const idx = LIST.map((sc, i) => i).filter(i => LIST[i].ep === ep);
+      const played = idx.filter(i => i < n).length, total = idx.length;
+      const current = !done && LIST[n].ep === ep;
+      const status = played === total ? 'Complete' : current ? (played ? `In progress · ${played} of ${total}` : 'Open') : `Opens after Episode ${ep.number - 1}`;
+      const ticks = idx.map(i => `<span class="ix-tick ${i < n ? 'is-done' : i === n ? 'is-next' : ''}"></span>`).join('');
+      return `<article class="ix-ch ${current ? 'is-current' : ''} ${played === total ? 'is-complete' : ''}" aria-labelledby="ix-ch-${ep.number}">
+        <header class="ix-ch-head">
+          <p class="ix-ch-id">Episode ${String(ep.number).padStart(2, '0')}</p>
+          <h2 class="ix-ch-title" id="ix-ch-${ep.number}">${ep.title}</h2>
+          <p class="ix-ch-deck">${ep.blurb}</p>
+          <div class="ix-ch-status"><span class="ix-ticks" aria-hidden="true">${ticks}</span><span>${status}</span></div>
         </header>
-        <div class="where-places">${ep.places.map(p => `<div class="where-place"><h3>${p.name}</h3><ul class="place-scenes">${p.scenes.map(id => sceneBtn(LIST.findIndex(s => s.id === id), d)).join('')}</ul></div>`).join('')}</div>
-      </section>`;
+        <div class="ix-places">${ep.places.map(p => `<section class="ix-place">
+          <h3 class="ix-place-h">${p.name}</h3>
+          <p class="ix-place-d">${p.theme}</p>
+          <ol class="ix-rows">${p.scenes.map(id => ixRow(LIST.findIndex(s => s.id === id), d)).join('')}</ol>
+        </section>`).join('')}</div>
+      </article>`;
     }).join('');
-    return `<section class="wrap page where">
-      <div class="section-head"><p class="eyebrow">Play</p><h1>Where to?</h1>
-        <p class="lede">Pick up where you left off, or replay any scene you've played. Scenes unlock in order, because later ones remember what you did.</p></div>
-      ${cont}
-      ${eps}
-      <button class="btn btn-link where-mk" data-act="market">Or play The Trader's Mind →</button>
+
+    return `<section class="ix">
+      <div class="wrap ix-in">
+        <header class="ix-mast">
+          <div class="ix-mast-main">
+            <p class="ix-kicker">The campaign</p>
+            <h1 class="ix-title">Where to next.</h1>
+            <p class="ix-lede">${NUM[LIST.length] ? NUM[LIST.length][0].toUpperCase() + NUM[LIST.length].slice(1) : LIST.length} situations in ${NUM[EPS.length] || EPS.length} episodes. Each scene remembers the ones before it, so they open in order.</p>
+          </div>
+          <dl class="ix-ledger">
+            <div><dt>Scenes played</dt><dd>${n}<span>/${LIST.length}</span></dd></div>
+            <div><dt>Episodes complete</dt><dd>${epsDone}<span>/${EPS.length}</span></dd></div>
+            <div><dt>Strong decisions</dt><dd>${sharp}<span>/${n || 0}</span></dd></div>
+            <div><dt>Strategic rating</dt><dd>${d.rating}</dd></div>
+          </dl>
+        </header>
+        ${resume}
+        <div class="ix-key" aria-hidden="true"><span><i class="ix-tick is-done"></i>Played</span><span><i class="ix-tick is-next"></i>Next</span><span><i class="ix-tick"></i>Not yet open</span><span class="ix-key-g">!! ! !? ?! ? &nbsp;Decision grade</span></div>
+        ${chapters}
+        <button type="button" class="ix-aside" data-act="market">
+          <span class="ix-aside-k">Separate track</span>
+          <span class="ix-aside-t">The Trader's Mind</span>
+          <span class="ix-aside-d">Five challenges at one desk, with one account.</span>
+          <span class="ix-aside-go">Open ${IX_ARROW}</span>
+        </button>
+      </div>
     </section>`;
   }
 

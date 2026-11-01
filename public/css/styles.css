@@ -1162,15 +1162,15 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .hm-hero-at { margin-left: auto; color: var(--ix-brass); }
 
 /* ── The premise: a statement, and the five principles of the board ── */
-.hm-intro { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: var(--ix-s7); padding-block: 120px 112px; align-items: start; }
-.hm-statement { margin-top: var(--ix-s4); font-family: var(--f-read); font-size: clamp(1.5rem, 2.7vw, 2.25rem); line-height: 1.32; letter-spacing: -.008em; color: var(--ix-ink); }
-.hm-intro-sub { margin-top: var(--ix-s5); max-width: 54ch; font-family: var(--f-read); font-size: 1.1875rem; line-height: 1.6; color: var(--ix-ink-2); }
-.hm-quote { margin-top: var(--ix-s5); padding-left: var(--ix-s4); border-left: 2px solid var(--ix-brass); font-family: var(--f-read); font-style: italic; font-size: 1.125rem; color: var(--ix-slate); }
+.hm-intro { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: var(--ix-s6); padding-block: 72px 64px; align-items: start; }
+.hm-statement { margin-top: var(--ix-s3); font-family: var(--f-read); font-size: clamp(1.1875rem, 1.9vw, 1.5rem); line-height: 1.4; letter-spacing: -.008em; color: var(--ix-ink); }
+.hm-intro-sub { margin-top: var(--ix-s4); max-width: 58ch; font-family: var(--f-read); font-size: 1rem; line-height: 1.55; color: var(--ix-ink-2); }
+.hm-quote { margin-top: var(--ix-s4); padding-left: var(--ix-s3); border-left: 2px solid var(--ix-brass); font-family: var(--f-read); font-style: italic; font-size: .9375rem; color: var(--ix-slate); }
 .hm-axioms { list-style: none; margin: var(--ix-s2) 0 0; padding: 0; border-top: var(--ix-heavy); }
-.hm-axioms li { display: grid; grid-template-columns: 3rem minmax(0, 1fr); column-gap: var(--ix-s3); row-gap: 4px; padding: var(--ix-s4) 0; border-bottom: var(--ix-hair); }
-.hm-ax-n { grid-row: 1 / 3; font-family: var(--f-mono); font-size: .75rem; font-weight: 600; color: var(--ix-accent); padding-top: 4px; }
-.hm-ax-t { font-size: 1.25rem; font-weight: 600; font-stretch: 94%; letter-spacing: -.012em; line-height: 1.25; }
-.hm-ax-d { font-family: var(--f-read); font-size: .9688rem; line-height: 1.5; color: var(--ix-slate); }
+.hm-axioms li { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); column-gap: var(--ix-s2); row-gap: 2px; padding: var(--ix-s3) 0; border-bottom: var(--ix-hair); }
+.hm-ax-n { grid-row: 1 / 3; font-family: var(--f-mono); font-size: .6875rem; font-weight: 600; color: var(--ix-accent); padding-top: 3px; }
+.hm-ax-t { font-size: 1rem; font-weight: 600; font-stretch: 94%; letter-spacing: -.012em; line-height: 1.25; }
+.hm-ax-d { font-family: var(--f-read); font-size: .875rem; line-height: 1.45; color: var(--ix-slate); }
 
 /* ── Episodes as chapters ── */
 .hm-eps { padding-block: var(--ix-s6) 128px; border-top: var(--ix-hair); }
@@ -1270,7 +1270,7 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
   .hm-hero-actions { flex-direction: column; align-items: stretch; }
   .hm-hero-foot { gap: var(--ix-s2) var(--ix-s4); }
   .hm-hero-at { margin-left: 0; flex-basis: 100%; }
-  .hm-intro { padding-block: 72px; gap: var(--ix-s5); }
+  .hm-intro { padding-block: 48px; gap: var(--ix-s4); }
   .hm-eps { padding-block: var(--ix-s5) 88px; }
   .hm-sec-head { margin-bottom: var(--ix-s5); }
   .hm-ch-head { grid-template-columns: minmax(0, 1fr); gap: var(--ix-s3); }

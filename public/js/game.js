@@ -466,7 +466,7 @@
         <div class="hm-mk-art" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
         <div class="hm-mk-board" aria-hidden="true"></div>
         <div class="wrap hm-mk-in">
-          <p class="hm-mk-k"><span class="ix-node" aria-hidden="true"></span>A second environment · Advanced</p>
+          <p class="hm-mk-k"><span class="ix-node" aria-hidden="true"></span>Playing the Odds · Inspired by Market Wizards</p>
           <h2 id="hm-mk-h">The Trader's Mind</h2>
           <p class="hm-mk-sub">You don't have to predict the future. You have to survive it.</p>
           <p class="hm-mk-body">A harder board, with fewer people and more noise. Five challenges at one trading desk, with one account and no way to see what's coming. Inspired by <em>Market Wizards</em>, it tests what markets punish: how you size a risk, admit you're wrong, wait, adapt, and stay in the game.</p>

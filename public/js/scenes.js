@@ -32,7 +32,7 @@ PP.people = {
 
 PP.episodes = [
   {
-    id: 'ep1', number: 1, title: `Ordinary Life`,
+    id: 'ep1', number: 1, title: `Ordinary Life`, forces: ['power', 'relationships'],
     blurb: `Three places you already know. Six situations you've probably been in.`,
     scenes: ['wrong-price', 'just-this-once', 'the-spot', 'credit-taker', 'pick-a-side', 'the-fence'],
     places: [
@@ -42,7 +42,7 @@ PP.episodes = [
     ]
   },
   {
-    id: 'ep2', number: 2, title: `The Deal`,
+    id: 'ep2', number: 2, title: `The Deal`, forces: ['incentives', 'information'],
     blurb: `Six deals. In most, the other side knows more than you. In one, you're the one who knows.`,
     scenes: ['change-order', 'bidding-war', 'the-offer', 'the-counteroffer', 'used-car', 'trade-in'],
     places: [
@@ -52,7 +52,7 @@ PP.episodes = [
     ]
   },
   {
-    id: 'ep3', number: 3, title: `The Circle`,
+    id: 'ep3', number: 3, title: `The Circle`, forces: ['incentives', 'relationships'],
     blurb: `Friends, family and the group chat. The games you play with people you can't walk away from.`,
     scenes: ['the-rental', 'the-bill', 'the-date', 'the-loan', 'the-holidays', 'the-parents-house'],
     places: [

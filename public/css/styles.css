@@ -1018,165 +1018,216 @@ button.ps-btn:hover { background: var(--accent-soft); }
 .profile-next { margin-top: 14px; }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   The campaign index (the Play link). Editorial, ruled, restrained:
-   typography carries the hierarchy, colour only marks state.
+   The campaign index (the Play link). A strategic map: every scene a node on
+   a path, every episode a chapter, and the logo's 2×2 matrix as the signature,
+   read as the four forces the scenes turn on.
    ───────────────────────────────────────────────────────────────────────── */
 .ix {
   --ix-paper: #f3eee3; --ix-paper-2: #ebe5d8; --ix-ink: #141619; --ix-ink-2: #3b3f45;
-  --ix-slate: #6a6e72; --ix-stone: #9c968a; --ix-rule: #d6cdbc; --ix-rule-2: #141619;
-  --ix-accent: #1e4d48; --ix-accent-wash: rgba(30, 77, 72, .1); --ix-brass: #8a6a33; --ix-brass-wash: rgba(138, 106, 51, .09); --ix-oxblood: #7d2f2a;
+  --ix-slate: #6a6e72; --ix-stone: #a39d91; --ix-rule: #d6cdbc; --ix-rule-2: #141619;
+  --ix-accent: #1e4d48; --ix-accent-wash: rgba(30, 77, 72, .085); --ix-brass: #8a6a33; --ix-brass-wash: rgba(138, 106, 51, .1); --ix-oxblood: #7d2f2a;
   --ix-on-ink: #f3eee3;
-  --ix-s1: 4px; --ix-s2: 8px; --ix-s3: 12px; --ix-s4: 20px; --ix-s5: 32px; --ix-s6: 56px; --ix-s7: 88px;
+  --ix-s1: 4px; --ix-s2: 8px; --ix-s3: 12px; --ix-s4: 20px; --ix-s5: 32px; --ix-s6: 56px; --ix-s7: 96px;
+  --ix-node: 11px; --ix-rail: calc(var(--ix-node) / 2); --ix-row-pad: 20px; --ix-node-y: calc(var(--ix-row-pad) + 12px);
   --ix-r: 2px; --ix-hair: 1px solid var(--ix-rule); --ix-heavy: 2px solid var(--ix-rule-2);
-  --ix-ease: .18s ease;
+  --ix-ease: .2s cubic-bezier(.2, .7, .2, 1);
   background: var(--ix-paper); color: var(--ix-ink);
   padding-block: var(--ix-s6) var(--ix-s7);
   font-family: var(--f-display); font-stretch: 100%;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .ix {
-    --ix-paper: #111315; --ix-paper-2: #181b1e; --ix-ink: #ebe6db; --ix-ink-2: #c6c0b3;
-    --ix-slate: #8d918e; --ix-stone: #5d605d; --ix-rule: #2a2e32; --ix-rule-2: #ebe6db;
-    --ix-accent: #7fb3a9; --ix-accent-wash: rgba(127, 179, 169, .08); --ix-brass: #c49d5e; --ix-brass-wash: rgba(196, 157, 94, .1); --ix-oxblood: #cf7a6f;
+    --ix-paper: #111315; --ix-paper-2: #191c1f; --ix-ink: #ebe6db; --ix-ink-2: #c6c0b3;
+    --ix-slate: #8d918e; --ix-stone: #5a5d5a; --ix-rule: #2a2e32; --ix-rule-2: #ebe6db;
+    --ix-accent: #7fb3a9; --ix-accent-wash: rgba(127, 179, 169, .09); --ix-brass: #c49d5e; --ix-brass-wash: rgba(196, 157, 94, .1); --ix-oxblood: #cf7a6f;
     --ix-on-ink: #111315;
   }
 }
 :root[data-theme="dark"] .ix {
-  --ix-paper: #111315; --ix-paper-2: #181b1e; --ix-ink: #ebe6db; --ix-ink-2: #c6c0b3;
-  --ix-slate: #8d918e; --ix-stone: #5d605d; --ix-rule: #2a2e32; --ix-rule-2: #ebe6db;
-  --ix-accent: #7fb3a9; --ix-accent-wash: rgba(127, 179, 169, .08); --ix-brass: #c49d5e; --ix-brass-wash: rgba(196, 157, 94, .1); --ix-oxblood: #cf7a6f;
+  --ix-paper: #111315; --ix-paper-2: #191c1f; --ix-ink: #ebe6db; --ix-ink-2: #c6c0b3;
+  --ix-slate: #8d918e; --ix-stone: #5a5d5a; --ix-rule: #2a2e32; --ix-rule-2: #ebe6db;
+  --ix-accent: #7fb3a9; --ix-accent-wash: rgba(127, 179, 169, .09); --ix-brass: #c49d5e; --ix-brass-wash: rgba(196, 157, 94, .1); --ix-oxblood: #cf7a6f;
   --ix-on-ink: #111315;
 }
 :where(.ix) button { font: inherit; color: inherit; }
 .ix :focus-visible { outline: 2px solid var(--ix-accent); outline-offset: 2px; }
-.ix-arrow { width: 34px; height: 10px; flex-shrink: 0; transition: transform var(--ix-ease); }
+.ix-arrow { width: 34px; height: 10px; flex-shrink: 0; transition: transform var(--ix-ease), opacity var(--ix-ease); }
 
-/* Labels: small, uppercase, spaced. */
-.ix-kicker, .ix-ch-id, .ix-resume-k, .ix-aside-k, .ix-ledger dt, .ix-place-h, .ix-key, .ix-act, .ix-cond, .ix-resume-go, .ix-aside-go, .ix-ch-status {
-  font-family: var(--f-mono); font-size: .6875rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
-}
+/* One label voice for every piece of metadata and status. */
+.ix-label { font-family: var(--f-mono); font-size: .6875rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; line-height: 1.3; }
 
-/* Masthead: title and deck on the left, a ledger of figures on the right. */
-.ix-mast { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--ix-s5); align-items: end; padding-bottom: var(--ix-s5); border-bottom: var(--ix-heavy); }
+/* ── Signature: the 2×2 matrix of forces ── */
+.ix-matrix { display: block; width: 22px; height: 22px; flex-shrink: 0; }
+.ix-matrix rect { fill: none; stroke: var(--ix-stone); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.ix-matrix rect.is-on { fill: var(--ix-ink); stroke: var(--ix-ink); }
+.ix-matrix.is-big { width: 124px; height: 124px; }
+.ix-matrix.is-big rect { stroke: var(--ix-ink); stroke-width: 1; }
+.ix-matrix.is-big rect:nth-child(1), .ix-matrix.is-big rect:nth-child(4) { fill: var(--ix-ink); }
+.ix-matrix.is-big rect:nth-child(2), .ix-matrix.is-big rect:nth-child(3) { fill: var(--ix-accent); stroke: var(--ix-accent); }
+.ix-forces { position: relative; isolation: isolate; margin: 0; display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto auto; justify-items: center; align-items: center; gap: var(--ix-s2) var(--ix-s5); padding-inline: var(--ix-s2); }
+.ix-forces .ix-matrix { grid-column: 1 / 3; grid-row: 2; }
+.ix-forces::before, .ix-forces::after { content: ""; position: absolute; background: var(--ix-rule); }
+.ix-forces::before { left: 50%; top: 0; bottom: 0; width: 1px; transform: translateX(-.5px); z-index: -1; }
+.ix-forces::after { top: 50%; left: 0; right: 0; height: 1px; z-index: -1; }
+.ix-f { font-family: var(--f-mono); font-size: .625rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ix-slate); background: var(--ix-paper); padding: 2px 4px; }
+.ix-f-tl, .ix-f-bl { justify-self: end; } .ix-f-tr, .ix-f-br { justify-self: start; }
+.ix-f-bl, .ix-f-br { grid-row: 3; }
+
+/* ── Masthead and ledger ── */
+.ix-mast { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--ix-s6); align-items: center; padding-bottom: var(--ix-s5); }
 .ix-kicker { color: var(--ix-accent); margin-bottom: var(--ix-s3); }
-.ix-title { font-size: clamp(2.5rem, 6vw, 4.25rem); font-weight: 600; font-stretch: 92%; letter-spacing: -.025em; line-height: .98; }
-.ix-lede { margin-top: var(--ix-s4); max-width: 44ch; font-family: var(--f-read); font-size: 1.125rem; line-height: 1.5; color: var(--ix-ink-2); }
-.ix-ledger { display: grid; grid-template-columns: repeat(2, minmax(9.5rem, auto)); border-top: var(--ix-hair); border-left: var(--ix-hair); }
-.ix-ledger > div { padding: var(--ix-s3) var(--ix-s4) var(--ix-s3) var(--ix-s3); border-right: var(--ix-hair); border-bottom: var(--ix-hair); }
+.ix-title { font-size: clamp(2.75rem, 6.5vw, 4.75rem); font-weight: 600; font-stretch: 90%; letter-spacing: -.03em; line-height: .96; }
+.ix-lede { margin-top: var(--ix-s4); max-width: 46ch; font-family: var(--f-read); font-size: 1.1875rem; line-height: 1.5; color: var(--ix-ink-2); }
+.ix-ledger { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border-top: var(--ix-heavy); border-bottom: var(--ix-hair); }
+.ix-ledger > div { padding: var(--ix-s3) var(--ix-s4) var(--ix-s3) 0; }
+.ix-ledger > div + div { padding-left: var(--ix-s4); border-left: var(--ix-hair); }
 .ix-ledger dt { color: var(--ix-slate); font-size: .625rem; }
-.ix-ledger dd { margin: var(--ix-s1) 0 0; font-family: var(--f-mono); font-size: 1.5rem; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.ix-ledger dd span { font-size: .875rem; color: var(--ix-stone); font-weight: 400; }
+.ix-ledger dd { margin: var(--ix-s1) 0 0; font-family: var(--f-mono); font-size: 1.625rem; font-weight: 500; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.ix-ledger dd span { font-size: .875rem; color: var(--ix-stone); }
 
-/* Resume: the one dark, decisive block on the page. */
-.ix-resume { display: grid; grid-template-columns: 9rem minmax(0, 1fr) auto; align-items: center; gap: var(--ix-s4); width: 100%; margin-top: var(--ix-s5); padding: var(--ix-s4) var(--ix-s5) var(--ix-s4) var(--ix-s4); border: 0; border-left: 3px solid var(--ix-brass); border-radius: var(--ix-r); background: var(--ix-ink); color: var(--ix-on-ink); text-align: left; cursor: pointer; transition: background var(--ix-ease); }
-.ix-resume:hover { background: color-mix(in srgb, var(--ix-ink) 88%, var(--ix-accent)); }
-.ix-resume:hover .ix-arrow, .ix-aside:hover .ix-arrow, .ix-row.is-next:hover .ix-arrow { transform: translateX(4px); }
-.ix-resume-k { color: var(--ix-brass); align-self: start; padding-top: 6px; }
-.ix-resume-main { display: grid; gap: 2px; }
+/* ── Nodes and the path ── */
+.ix-node { display: inline-block; width: var(--ix-node); height: var(--ix-node); flex-shrink: 0; background: var(--ix-paper); border: 1px solid var(--ix-stone); transition: box-shadow var(--ix-ease), transform var(--ix-ease); }
+.ix-step.is-done .ix-node { background: var(--ix-ink); border-color: var(--ix-ink); }
+.ix-step.is-next .ix-node, .ix-resume .ix-node { background: var(--ix-accent); border-color: var(--ix-accent); box-shadow: 0 0 0 3px var(--ix-paper), 0 0 0 4px var(--ix-accent); }
+.ix-step.is-locked .ix-node { background: transparent; }
+.ix-step.is-asking .ix-node { background: var(--ix-brass); border-color: var(--ix-brass); }
+
+.ix-path { list-style: none; margin: 0; padding: 0; }
+.ix-step { position: relative; }
+/* The rail through every node: solid where you've been, dotted where you haven't. */
+.ix-path .ix-step::before { content: ""; position: absolute; left: var(--ix-rail); top: 0; bottom: 0; width: 1px; transform: translateX(-.5px);
+  background: repeating-linear-gradient(to bottom, var(--ix-stone) 0 2px, transparent 2px 5px); }
+.ix-path .ix-step.is-done::before { background: var(--ix-ink); }
+.ix-path .ix-step.is-next::before { background: linear-gradient(to bottom, var(--ix-ink) 0 var(--ix-node-y), transparent var(--ix-node-y)); }
+.ix-path .ix-step.is-next::after { content: ""; position: absolute; left: var(--ix-rail); top: var(--ix-node-y); bottom: 0; width: 1px; transform: translateX(-.5px); background: repeating-linear-gradient(to bottom, var(--ix-stone) 0 2px, transparent 2px 5px); }
+.ix-path .ix-step:last-child.is-next::after { display: none; }
+.ix-path .ix-step:first-child::before { top: var(--ix-node-y); }
+.ix-path .ix-step:last-child::before { bottom: auto; height: var(--ix-node-y); }
+.ix-path .ix-step:first-child:last-child::before { display: none; }
+
+/* ── A scene: the focal point ── */
+.ix-row { position: relative; display: grid; grid-template-columns: var(--ix-node) 2.5rem minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: start; column-gap: var(--ix-s3); row-gap: 5px; width: 100%; min-height: 72px; padding: var(--ix-row-pad) var(--ix-s3) var(--ix-row-pad) 0; border: 0; border-bottom: var(--ix-hair); background: transparent; text-align: left; transition: background var(--ix-ease); }
+.ix-path .ix-step:last-child .ix-row { border-bottom: 0; }
+.ix-row .ix-node { position: relative; z-index: 1; }
+.ix-no { font-family: var(--f-mono); font-size: .75rem; color: var(--ix-slate); font-variant-numeric: tabular-nums; }
+.ix-name { font-size: 1.1875rem; font-weight: 560; font-stretch: 98%; letter-spacing: -.01em; line-height: 1.25; text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1px; text-underline-offset: 6px; transition: text-decoration-color var(--ix-ease); }
+.ix-row > .ix-node, .ix-row > .ix-no { grid-row: 1; }
+.ix-row > .ix-node { margin-top: 6.5px; }
+.ix-row > .ix-no { margin-top: 4px; }
+.ix-name { grid-column: 3; grid-row: 1; }
+.ix-meta { grid-column: 3; grid-row: 2; display: grid; gap: 3px; }
+.ix-meta .ix-label { color: var(--ix-slate); font-size: .625rem; }
+.ix-end { grid-column: 4; grid-row: 1 / 3; justify-self: end; align-self: center; display: inline-flex; align-items: center; }
+button.ix-row { cursor: pointer; }
+button.ix-row:hover { background: linear-gradient(90deg, transparent 0 calc(var(--ix-node) + 6px), var(--ix-paper-2) calc(var(--ix-node) + 6px)); }
+button.ix-row:hover .ix-name, button.ix-row:focus-visible .ix-name { text-decoration-color: currentColor; }
+button.ix-row:hover .ix-node { transform: scale(1.18); }
+
+/* Completed: the grade in the margin; the label turns to Replay on hover. */
+.ix-grade { font-family: var(--f-mono); font-size: .875rem; font-weight: 600; min-width: 1.6em; text-align: right; }
+.ix-q4, .ix-q3 { color: var(--ix-accent); } .ix-q2 { color: var(--ix-ink-2); } .ix-q1 { color: var(--ix-brass); } .ix-q0 { color: var(--ix-oxblood); }
+.ix-hover { display: none; }
+button.ix-row:hover .ix-rest, button.ix-row:focus-visible .ix-rest { display: none; }
+button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: inline; color: var(--ix-ink); }
+
+/* Next scenario: the one row that is lit. */
+.ix-step.is-next .ix-row { background: linear-gradient(90deg, transparent 0 calc(var(--ix-node) + 6px), var(--ix-accent-wash) calc(var(--ix-node) + 6px)); box-shadow: inset 0 -1px 0 var(--ix-accent), inset 0 1px 0 var(--ix-accent); border-bottom-color: transparent; }
+.ix-step.is-next .ix-name { font-weight: 680; }
+.ix-step.is-next .ix-no, .ix-step.is-next .ix-meta .ix-label, .ix-step.is-next .ix-arrow { color: var(--ix-accent); }
+.ix-step.is-next .ix-row:hover .ix-arrow { transform: translateX(5px); }
+
+/* Requires the one before: present, legible, quieter. */
+.ix-step.is-locked .ix-name { color: var(--ix-slate); font-weight: 450; }
+.ix-step.is-locked .ix-no, .ix-step.is-locked .ix-meta .ix-label { color: var(--ix-stone); }
+
+/* Confirming a replay: brass, with the consequence spelled out. */
+.ix-step.is-asking .ix-row { background: linear-gradient(90deg, transparent 0 calc(var(--ix-node) + 6px), var(--ix-brass-wash) calc(var(--ix-node) + 6px)); }
+.ix-step.is-asking .ix-meta .ix-label { color: var(--ix-brass); }
+.ix-warn { font-family: var(--f-read); font-size: .875rem; color: var(--ix-ink-2); }
+
+/* ── Resume ── */
+.ix-resume { display: grid; grid-template-columns: 10rem minmax(0, 1fr) auto; align-items: center; gap: var(--ix-s4); width: 100%; margin-top: var(--ix-s5); padding: var(--ix-s5) var(--ix-s5) var(--ix-s5) var(--ix-s4); border: 0; border-left: 3px solid var(--ix-brass); border-radius: var(--ix-r); background: var(--ix-ink); color: var(--ix-on-ink); text-align: left; cursor: pointer; transition: background var(--ix-ease); --ix-paper: var(--ix-ink); }
+.ix-resume:hover { background: color-mix(in srgb, var(--ix-ink) 90%, var(--ix-accent)); }
+.ix-resume:hover .ix-arrow, .ix-aside:hover .ix-arrow { transform: translateX(5px); }
+.ix-resume-k { display: inline-flex; align-items: center; gap: var(--ix-s3); align-self: start; padding-top: 4px; color: var(--ix-brass); font-family: var(--f-mono); font-size: .6875rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.ix-resume-main { display: grid; gap: var(--ix-s1); }
 .ix-resume-no { font-family: var(--f-mono); font-size: .75rem; opacity: .7; }
-.ix-resume-t { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 600; font-stretch: 95%; letter-spacing: -.015em; line-height: 1.1; }
-.ix-resume-d { font-family: var(--f-read); font-size: .9375rem; opacity: .75; }
-.ix-resume-go { display: inline-flex; align-items: center; gap: var(--ix-s3); white-space: nowrap; }
+.ix-resume-t { font-size: clamp(1.75rem, 3.4vw, 2.375rem); font-weight: 600; font-stretch: 94%; letter-spacing: -.02em; line-height: 1.05; }
+.ix-resume-d { font-family: var(--f-read); font-size: 1rem; opacity: .75; }
+.ix-resume-go { display: inline-flex; align-items: center; gap: var(--ix-s3); white-space: nowrap; font-family: var(--f-mono); font-size: .6875rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
 
-/* Key to the markers. */
-.ix-key { display: flex; flex-wrap: wrap; gap: var(--ix-s2) var(--ix-s4); margin-top: var(--ix-s5); color: var(--ix-slate); font-size: .625rem; }
-.ix-key span { display: inline-flex; align-items: center; gap: var(--ix-s2); }
+/* ── Key ── */
+.ix-key { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ix-s2) var(--ix-s5); margin-top: var(--ix-s5); color: var(--ix-slate); font-family: var(--f-mono); font-size: .625rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.ix-key > span { display: inline-flex; align-items: center; gap: var(--ix-s3); }
+.ix-key .ix-step { display: inline-flex; }
 .ix-key-g { margin-left: auto; letter-spacing: .08em; }
 
-/* Progress ticks: small squares, filled when played, accent when next. */
-.ix-tick { display: inline-block; width: 7px; height: 7px; border: 1px solid var(--ix-stone); }
-.ix-tick.is-done { background: var(--ix-ink); border-color: var(--ix-ink); }
-.ix-tick.is-next { background: var(--ix-accent); border-color: var(--ix-accent); }
-.ix-ticks { display: inline-flex; gap: 3px; }
-
-/* A chapter: identity on the left, the places on the right. */
-.ix-ch { display: grid; grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr); gap: var(--ix-s5); padding-block: var(--ix-s5) var(--ix-s6); border-top: var(--ix-heavy); margin-top: var(--ix-s4); }
+/* ── A chapter ── */
+.ix-ch { padding-block: var(--ix-s5) var(--ix-s6); border-top: var(--ix-heavy); margin-top: var(--ix-s5); }
 .ix-key + .ix-ch { margin-top: var(--ix-s3); }
-.ix-ch-head { align-self: start; position: sticky; top: calc(var(--head-h, 64px) + var(--ix-s4)); }
-.ix-ch-id { color: var(--ix-slate); display: flex; align-items: center; gap: var(--ix-s2); }
-.ix-ch.is-current .ix-ch-id { color: var(--ix-accent); }
-.ix-ch.is-current .ix-ch-id::after { content: "Current"; padding-left: var(--ix-s2); border-left: var(--ix-hair); color: var(--ix-accent); }
-.ix-ch-title { margin-top: var(--ix-s2); font-size: clamp(1.875rem, 3.4vw, 2.625rem); font-weight: 600; font-stretch: 92%; letter-spacing: -.02em; line-height: 1.02; }
-.ix-ch-deck { margin-top: var(--ix-s3); font-family: var(--f-read); font-size: 1rem; line-height: 1.5; color: var(--ix-ink-2); }
-.ix-ch-status { margin-top: var(--ix-s4); padding-top: var(--ix-s3); border-top: var(--ix-hair); display: flex; flex-wrap: wrap; align-items: center; gap: var(--ix-s3); color: var(--ix-slate); letter-spacing: .1em; }
-.ix-ch.is-complete .ix-ch-status { color: var(--ix-ink); }
+.ix-ch-head { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 17rem; gap: var(--ix-s5); align-items: start; padding-bottom: var(--ix-s5); margin-bottom: var(--ix-s4); border-bottom: var(--ix-hair); }
+.ix-ch-id { display: grid; gap: var(--ix-s2); color: var(--ix-slate); }
+.ix-ch-num { font-family: var(--f-mono); font-size: 2.75rem; font-weight: 400; letter-spacing: -.04em; line-height: .9; color: var(--ix-ink-2); }
+.ix-ch-now .ix-ch-num, .ix-ch-now .ix-ch-id .ix-label { color: var(--ix-accent); }
+.ix-ch-later .ix-ch-num { color: var(--ix-stone); }
+.ix-ch-title { font-size: clamp(2.125rem, 4.2vw, 3.25rem); font-weight: 600; font-stretch: 90%; letter-spacing: -.025em; line-height: 1; }
+.ix-ch-deck { margin-top: var(--ix-s3); max-width: 44ch; font-family: var(--f-read); font-size: 1.0625rem; line-height: 1.5; color: var(--ix-ink-2); }
+.ix-ch-side { display: grid; gap: var(--ix-s4); padding-top: var(--ix-s1); }
+.ix-ch-forces { display: flex; align-items: center; gap: var(--ix-s3); }
+.ix-ch-forces > span { display: grid; gap: 2px; }
+.ix-ch-forces .ix-label { color: var(--ix-slate); font-size: .625rem; }
+.ix-forces-list { font-size: .9375rem; font-weight: 560; }
+.ix-ch-status { display: grid; gap: var(--ix-s2); color: var(--ix-slate); }
+.ix-ch-done .ix-ch-status { color: var(--ix-ink); }
+.ix-bar { display: block; height: 2px; background: var(--ix-rule); }
+.ix-bar span { display: block; height: 100%; background: var(--ix-ink); }
+.ix-ch-now .ix-bar span { background: var(--ix-accent); }
 
-/* Places as ruled columns. */
-.ix-places { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-left: var(--ix-hair); }
-.ix-place { padding: 0 var(--ix-s3); border-right: var(--ix-hair); display: flex; flex-direction: column; }
-.ix-place-h { color: var(--ix-ink); padding-bottom: var(--ix-s2); }
-.ix-place-d { font-family: var(--f-read); font-size: .875rem; line-height: 1.45; color: var(--ix-slate); min-height: 3.9em; padding-bottom: var(--ix-s3); }
-.ix-rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ix-ink); }
-.ix-rows li { border-bottom: var(--ix-hair); }
+/* Places: columns with room to breathe. */
+.ix-places { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ix-s5) var(--ix-s6); }
+.ix-place-h { color: var(--ix-ink); font-family: var(--f-mono); font-size: .6875rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+.ix-place-d { margin-top: var(--ix-s1); font-family: var(--f-read); font-size: .9375rem; line-height: 1.45; color: var(--ix-slate); min-height: 2.9em; padding-bottom: var(--ix-s2); border-bottom: 1px solid var(--ix-ink); }
 
-/* A scene row: number, title, state. */
-.ix-row { position: relative; display: grid; grid-template-columns: 2rem minmax(0, 1fr) auto; align-items: baseline; gap: var(--ix-s2); width: 100%; min-height: 52px; padding: var(--ix-s3) var(--ix-s2) var(--ix-s3) var(--ix-s2); border: 0; background: transparent; text-align: left; transition: background var(--ix-ease); }
-button.ix-row { cursor: pointer; }
-.ix-no { font-family: var(--f-mono); font-size: .75rem; color: var(--ix-slate); font-variant-numeric: tabular-nums; }
-.ix-name { font-size: 1rem; font-weight: 560; line-height: 1.3; letter-spacing: -.005em; }
-.ix-state { display: inline-flex; align-items: center; gap: var(--ix-s2); justify-self: end; white-space: nowrap; }
-.ix-act { font-size: .625rem; color: var(--ix-slate); }
-
-/* Played: quiet, with the grade in the margin; Replay surfaces on hover. */
-.ix-row.is-done .ix-act { opacity: 0; transition: opacity var(--ix-ease); }
-.ix-row.is-done:hover, .ix-row.is-done:focus-visible { background: var(--ix-paper-2); }
-.ix-row.is-done:hover .ix-act, .ix-row.is-done:focus-visible .ix-act { opacity: 1; }
-.ix-grade { font-family: var(--f-mono); font-size: .8125rem; font-weight: 600; min-width: 1.6em; text-align: right; }
-.ix-q4, .ix-q3 { color: var(--ix-accent); } .ix-q2 { color: var(--ix-ink-2); } .ix-q1 { color: var(--ix-brass); } .ix-q0 { color: var(--ix-oxblood); }
-
-/* Next: an accent rule and a faint wash; the one row that invites you in. */
-.ix-row.is-next { background: var(--ix-accent-wash); box-shadow: inset 2px 0 0 var(--ix-accent); }
-.ix-row.is-next .ix-no, .ix-row.is-next .ix-act, .ix-row.is-next .ix-arrow { color: var(--ix-accent); }
-.ix-row.is-next .ix-name { font-weight: 650; }
-.ix-row.is-next:hover { background: color-mix(in srgb, var(--ix-accent-wash) 100%, var(--ix-accent) 6%); }
-
-/* Not yet open: legible, lighter, with the condition stated. */
-.ix-row.is-locked .ix-name { color: var(--ix-slate); font-weight: 450; }
-.ix-row.is-locked .ix-no { color: var(--ix-stone); }
-.ix-lock { width: 10px; height: 12px; color: var(--ix-stone); }
-.ix-cond { color: var(--ix-stone); font-size: .5938rem; }
-
-/* Confirming a replay: brass, and the consequence spelled out. */
-.ix-row.is-asking { background: var(--ix-brass-wash); box-shadow: inset 2px 0 0 var(--ix-brass); grid-template-columns: 2.25rem minmax(0, 1fr); }
-.ix-row.is-asking .ix-state { grid-column: 2; justify-self: start; flex-wrap: wrap; white-space: normal; margin-top: var(--ix-s1); }
-.ix-warn { font-family: var(--f-read); font-size: .8125rem; color: var(--ix-ink-2); }
-.ix-row.is-asking .ix-act { color: var(--ix-brass); border-bottom: 1px solid currentColor; }
-
-/* The other track, set apart at the foot. */
-.ix-aside { display: grid; grid-template-columns: 9rem minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: var(--ix-s4); align-items: baseline; width: 100%; padding: var(--ix-s4) 0; border: 0; border-top: var(--ix-heavy); border-bottom: var(--ix-hair); background: none; text-align: left; cursor: pointer; }
-.ix-aside-k { grid-row: 1 / 3; color: var(--ix-slate); }
-.ix-aside-t { font-size: 1.25rem; font-weight: 600; font-stretch: 95%; }
-.ix-aside-d { grid-column: 2; font-family: var(--f-read); color: var(--ix-slate); font-size: .9375rem; }
+/* ── The other track ── */
+.ix-aside { display: grid; grid-template-columns: 10rem minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: var(--ix-s4); align-items: baseline; width: 100%; margin-top: var(--ix-s4); padding: var(--ix-s4) 0; border: 0; border-top: var(--ix-heavy); border-bottom: var(--ix-hair); background: none; text-align: left; cursor: pointer; }
+.ix-aside > .ix-label:first-child { grid-row: 1 / 3; color: var(--ix-slate); }
+.ix-aside-t { font-size: 1.375rem; font-weight: 600; font-stretch: 94%; }
+.ix-aside-d { grid-column: 2; font-family: var(--f-read); color: var(--ix-slate); font-size: 1rem; }
 .ix-aside-go { grid-column: 3; grid-row: 1 / 3; align-self: center; display: inline-flex; align-items: center; gap: var(--ix-s3); color: var(--ix-accent); }
-.ix-aside:hover .ix-aside-t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+.ix-aside:hover .ix-aside-t { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }
 
-/* Tablet: the chapter identity sits above its places. */
-@media (max-width: 1020px) {
-  .ix-ch { grid-template-columns: minmax(0, 1fr); gap: var(--ix-s4); }
-  .ix-ch-head { position: static; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--ix-s5); }
-  .ix-ch-head > * { grid-column: 1; }
-  .ix-ch-status { grid-column: 2; grid-row: 1 / 4; align-self: end; border-top: 0; margin: 0; padding: 0; }
-  .ix-ch-deck { max-width: 52ch; }
+/* Tablet: places in two columns, chapter side beneath the title. */
+@media (max-width: 1080px) {
+  .ix-places { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ix-ch-head { grid-template-columns: 6rem minmax(0, 1fr); }
+  .ix-ch-side { grid-column: 2; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--ix-s5); }
 }
-/* Narrow: one column of places, ledger in a row, resume stacked. */
+/* Phone: one column, the matrix beside the title, ledger as a 2×2. */
 @media (max-width: 760px) {
-  .ix { padding-block: var(--ix-s5) var(--ix-s6); }
+  .ix { padding-block: var(--ix-s5) var(--ix-s6); --ix-s6: 40px; }
   .ix-mast { grid-template-columns: minmax(0, 1fr); gap: var(--ix-s4); }
+  .ix-forces { justify-self: start; gap: var(--ix-s1) var(--ix-s4); }
+  .ix-matrix.is-big { width: 84px; height: 84px; }
   .ix-ledger { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ix-ledger dd { font-size: 1.25rem; }
+  .ix-ledger > div:nth-child(3) { padding-left: 0; border-left: 0; }
+  .ix-ledger > div:nth-child(n + 3) { border-top: var(--ix-hair); }
+  .ix-ledger dd { font-size: 1.375rem; }
   .ix-resume { grid-template-columns: minmax(0, 1fr); gap: var(--ix-s2); padding: var(--ix-s4); }
-  .ix-resume-k { padding-top: 0; }
-  .ix-resume-go { margin-top: var(--ix-s2); }
+  .ix-resume-go { margin-top: var(--ix-s3); }
+  .ix-key { gap: var(--ix-s2) var(--ix-s4); }
   .ix-key-g { margin-left: 0; }
-  .ix-ch-head { grid-template-columns: minmax(0, 1fr); }
-  .ix-ch-status { grid-column: 1; grid-row: auto; margin-top: var(--ix-s3); padding-top: var(--ix-s3); border-top: var(--ix-hair); }
-  .ix-places { grid-template-columns: minmax(0, 1fr); border-left: 0; gap: var(--ix-s4); }
-  .ix-place { padding: 0; border-right: 0; }
+  .ix-ch-head { grid-template-columns: minmax(0, 1fr); gap: var(--ix-s3); }
+  .ix-ch-id { grid-template-columns: auto 1fr; align-items: end; gap: var(--ix-s3); }
+  .ix-ch-num { font-size: 2rem; }
+  .ix-ch-side { grid-column: 1; grid-template-columns: minmax(0, 1fr); gap: var(--ix-s3); }
+  .ix-places { grid-template-columns: minmax(0, 1fr); gap: var(--ix-s5); }
   .ix-place-d { min-height: 0; }
-  .ix-row.is-done .ix-act { opacity: 1; }
+  .ix { --ix-row-pad: 14px; }
+  .ix-row { grid-template-columns: var(--ix-node) 2.25rem minmax(0, 1fr) auto; min-height: 64px; }
+  .ix-name { font-size: 1.125rem; }
   .ix-aside { grid-template-columns: minmax(0, 1fr) auto; }
-  .ix-aside-k { grid-row: auto; grid-column: 1 / 3; margin-bottom: var(--ix-s1); }
+  .ix-aside > .ix-label:first-child { grid-row: auto; grid-column: 1 / 3; margin-bottom: var(--ix-s1); }
   .ix-aside-t, .ix-aside-d { grid-column: 1; }
   .ix-aside-go { grid-column: 2; grid-row: 2 / 4; }
 }
-@media (prefers-reduced-motion: reduce) { .ix-arrow, .ix-row, .ix-resume { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ix-arrow, .ix-row, .ix-resume, .ix-node { transition: none; } }

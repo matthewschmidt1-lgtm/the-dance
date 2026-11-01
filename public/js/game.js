@@ -279,32 +279,37 @@
   }
 
   // ───────────────────────── The campaign index (the Play link)
-  // An editorial index of every scene: where you are, what's open, what each episode holds.
+  // Every scene as a position on a path: completed, next, or waiting on the one before.
+  // The signature is the logo's 2×2 matrix, read as the four forces every scene turns on.
 
   const IX_ARROW = `<svg class="ix-arrow" viewBox="0 0 40 10" aria-hidden="true"><path d="M0 5h38M33 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.25"/></svg>`;
-  const IX_LOCK = `<svg class="ix-lock" viewBox="0 0 12 14" aria-hidden="true"><rect x="1.5" y="6" width="9" height="7" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M3.5 6V4a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>`;
+  const FORCES = ['incentives', 'information', 'power', 'relationships'];
+  const FORCE_NAME = { incentives: 'Incentives', information: 'Information', power: 'Power', relationships: 'Relationships' };
+  // The matrix: four cells, the ones in play filled. Large and labelled in the masthead, small on each episode.
+  const forceMatrix = (on, big) => `<svg class="ix-matrix ${big ? 'is-big' : ''}" viewBox="0 0 40 40" aria-hidden="true">${FORCES.map((f, k) =>
+    `<rect class="${on.includes(f) ? 'is-on' : ''}" x="${(k % 2) * 21}" y="${Math.floor(k / 2) * 21}" width="19" height="19"/>`).join('')}</svg>`;
   const ixNo = i => `${LIST[i].ep.number}.${pos(i).n}`;
 
-  // One scene, as a row in the index. Same rules as everywhere: replay what you've played
-  // (it resets what comes after), start what's next, the rest open in order.
+  // One scene: a node on the path, its number, its title, and its status in a fixed vocabulary.
   function ixRow(i, d) {
     const n = history.length, m = d.moves[i], sc = LIST[i];
-    const lead = `<span class="ix-no">${ixNo(i)}</span><span class="ix-name">${sc.title}</span>`;
+    const node = `<span class="ix-node" aria-hidden="true"></span>`;
+    const lead = `${node}<span class="ix-no">${ixNo(i)}</span><span class="ix-name">${sc.title}</span>`;
     if (i < n) {
       const asking = confirmScene === i, later = n - 1 - i, g = grades[m.opt.q];
       if (asking) {
         const lastEp = LIST[n - 1].ep;
         const what = !later ? 'Nothing after it changes.' : `Resets ${later === 1 ? 'the next scene' : `the ${NUM[later] || later} scenes after it`}${lastEp !== sc.ep ? `, through Episode ${lastEp.number}` : ''}.`;
-        return `<li><button type="button" class="ix-row is-asking" data-act="scene" data-i="${i}">${lead}
-          <span class="ix-state"><span class="ix-warn">${what}</span><span class="ix-act">Confirm replay</span></span></button></li>`;
+        return `<li class="ix-step is-done is-asking"><button type="button" class="ix-row" data-act="scene" data-i="${i}">${lead}
+          <span class="ix-meta"><span class="ix-label">Confirm replay</span><span class="ix-warn">${what}</span></span></button></li>`;
       }
-      return `<li><button type="button" class="ix-row is-done" data-act="scene" data-i="${i}" aria-label="${sc.title}, played, ${g.name}. Replay.">${lead}
-        <span class="ix-state"><span class="ix-act">Replay</span><span class="ix-grade ix-q${m.opt.q}" title="${g.name}">${g.glyph}</span></span></button></li>`;
+      return `<li class="ix-step is-done"><button type="button" class="ix-row" data-act="scene" data-i="${i}" aria-label="${sc.title}. Completed, ${g.name}. Replay.">${lead}
+        <span class="ix-meta"><span class="ix-label ix-rest">Completed · ${g.name}</span><span class="ix-label ix-hover">Replay this scenario</span></span><span class="ix-end ix-grade ix-q${m.opt.q}" title="${g.name}">${g.glyph}</span></button></li>`;
     }
-    if (i === n) return `<li><button type="button" class="ix-row is-next" data-act="scene" data-i="${i}" aria-label="${sc.title}, next scene. Play.">${lead}
-      <span class="ix-state"><span class="ix-act">Play</span>${IX_ARROW}</span></button></li>`;
-    return `<li><span class="ix-row is-locked" aria-disabled="true">${lead}
-      <span class="ix-state">${IX_LOCK}<span class="ix-cond">After ${ixNo(i - 1)}</span></span></span></li>`;
+    if (i === n) return `<li class="ix-step is-next"><button type="button" class="ix-row" data-act="scene" data-i="${i}" aria-label="${sc.title}. Next scenario. Play.">${lead}
+      <span class="ix-meta"><span class="ix-label">Next scenario</span></span><span class="ix-end">${IX_ARROW}</span></button></li>`;
+    return `<li class="ix-step is-locked"><span class="ix-row" aria-disabled="true">${lead}
+      <span class="ix-meta"><span class="ix-label">Requires ${ixNo(i - 1)}</span></span></span></li>`;
   }
 
   function viewEpisodes() {
@@ -319,27 +324,32 @@
           <span class="ix-resume-main"><span class="ix-resume-t">Review your dance</span><span class="ix-resume-d">Every scene played. Replay any of them below.</span></span>
           <span class="ix-resume-go">Open profile ${IX_ARROW}</span></button>`
       : `<button type="button" class="ix-resume" data-act="play">
-          <span class="ix-resume-k">${!n ? 'Begin' : at.n === 1 ? 'Next episode' : 'Resume'}</span>
-          <span class="ix-resume-main"><span class="ix-resume-no">Scene ${ixNo(n)} · ${placeOf(LIST[n].id).name}</span><span class="ix-resume-t">${LIST[n].title}</span><span class="ix-resume-d">Episode ${at.ep.number}, ${at.ep.title}. Scene ${at.n} of ${at.of}.</span></span>
-          <span class="ix-resume-go">Enter scene ${IX_ARROW}</span></button>`;
+          <span class="ix-resume-k"><span class="ix-node" aria-hidden="true"></span>${!n ? 'Begin' : at.n === 1 ? 'Next episode' : 'Resume'}</span>
+          <span class="ix-resume-main"><span class="ix-resume-no">Scenario ${ixNo(n)} · ${placeOf(LIST[n].id).name}</span><span class="ix-resume-t">${LIST[n].title}</span><span class="ix-resume-d">Episode ${at.ep.number}, ${at.ep.title}. Scene ${at.n} of ${at.of}.</span></span>
+          <span class="ix-resume-go">Enter scenario ${IX_ARROW}</span></button>`;
 
-    const chapters = EPS.map(ep => {
+    const chapters = EPS.map((ep, e) => {
       const idx = LIST.map((sc, i) => i).filter(i => LIST[i].ep === ep);
       const played = idx.filter(i => i < n).length, total = idx.length;
-      const current = !done && LIST[n].ep === ep;
-      const status = played === total ? 'Complete' : current ? (played ? `In progress · ${played} of ${total}` : 'Open') : `Opens after Episode ${ep.number - 1}`;
-      const ticks = idx.map(i => `<span class="ix-tick ${i < n ? 'is-done' : i === n ? 'is-next' : ''}"></span>`).join('');
-      return `<article class="ix-ch ${current ? 'is-current' : ''} ${played === total ? 'is-complete' : ''}" aria-labelledby="ix-ch-${ep.number}">
+      const current = !done && LIST[n].ep === ep, complete = played === total;
+      const status = complete ? 'Completed' : current ? `In progress · ${played} of ${total}` : `Requires Episode ${EPS[e - 1].number}`;
+      const forces = ep.forces || [];
+      return `<article class="ix-ch ${current ? 'ix-ch-now' : ''} ${complete ? 'ix-ch-done' : ''} ${!current && !complete ? 'ix-ch-later' : ''}" aria-labelledby="ix-ch-${ep.number}">
         <header class="ix-ch-head">
-          <p class="ix-ch-id">Episode ${String(ep.number).padStart(2, '0')}</p>
-          <h2 class="ix-ch-title" id="ix-ch-${ep.number}">${ep.title}</h2>
-          <p class="ix-ch-deck">${ep.blurb}</p>
-          <div class="ix-ch-status"><span class="ix-ticks" aria-hidden="true">${ticks}</span><span>${status}</span></div>
+          <div class="ix-ch-id"><span class="ix-ch-num">${String(ep.number).padStart(2, '0')}</span><span class="ix-label">Episode${current ? ' · Current' : ''}</span></div>
+          <div class="ix-ch-main">
+            <h2 class="ix-ch-title" id="ix-ch-${ep.number}">${ep.title}</h2>
+            <p class="ix-ch-deck">${ep.blurb}</p>
+          </div>
+          <div class="ix-ch-side">
+            <div class="ix-ch-forces">${forceMatrix(forces)}<span><span class="ix-label">In play</span><span class="ix-forces-list">${forces.map(f => FORCE_NAME[f]).join(' · ')}</span></span></div>
+            <div class="ix-ch-status"><span class="ix-bar" aria-hidden="true"><span style="width:${Math.round(played / total * 100)}%"></span></span><span class="ix-label">${status}</span></div>
+          </div>
         </header>
         <div class="ix-places">${ep.places.map(p => `<section class="ix-place">
           <h3 class="ix-place-h">${p.name}</h3>
           <p class="ix-place-d">${p.theme}</p>
-          <ol class="ix-rows">${p.scenes.map(id => ixRow(LIST.findIndex(s => s.id === id), d)).join('')}</ol>
+          <ol class="ix-path">${p.scenes.map(id => ixRow(LIST.findIndex(s => s.id === id), d)).join('')}</ol>
         </section>`).join('')}</div>
       </article>`;
     }).join('');
@@ -348,25 +358,35 @@
       <div class="wrap ix-in">
         <header class="ix-mast">
           <div class="ix-mast-main">
-            <p class="ix-kicker">The campaign</p>
+            <p class="ix-kicker ix-label">The campaign</p>
             <h1 class="ix-title">Where to next.</h1>
-            <p class="ix-lede">${NUM[LIST.length] ? NUM[LIST.length][0].toUpperCase() + NUM[LIST.length].slice(1) : LIST.length} situations in ${NUM[EPS.length] || EPS.length} episodes. Each scene remembers the ones before it, so they open in order.</p>
+            <p class="ix-lede">How people behave when incentives, information, power and relationships collide. ${LIST.length} situations in ${NUM[EPS.length] || EPS.length} episodes; each remembers the ones before it.</p>
           </div>
-          <dl class="ix-ledger">
-            <div><dt>Scenes played</dt><dd>${n}<span>/${LIST.length}</span></dd></div>
-            <div><dt>Episodes complete</dt><dd>${epsDone}<span>/${EPS.length}</span></dd></div>
-            <div><dt>Strong decisions</dt><dd>${sharp}<span>/${n || 0}</span></dd></div>
-            <div><dt>Strategic rating</dt><dd>${d.rating}</dd></div>
-          </dl>
+          <figure class="ix-forces" aria-label="The four forces: incentives, information, power, relationships">
+            <span class="ix-f ix-f-tl">Incentives</span><span class="ix-f ix-f-tr">Information</span>
+            ${forceMatrix(FORCES, true)}
+            <span class="ix-f ix-f-bl">Power</span><span class="ix-f ix-f-br">Relationships</span>
+          </figure>
         </header>
+        <dl class="ix-ledger">
+          <div><dt class="ix-label">Scenes completed</dt><dd>${n}<span>/${LIST.length}</span></dd></div>
+          <div><dt class="ix-label">Episodes completed</dt><dd>${epsDone}<span>/${EPS.length}</span></dd></div>
+          <div><dt class="ix-label">Strong decisions</dt><dd>${sharp}<span>/${n || 0}</span></dd></div>
+          <div><dt class="ix-label">Strategic rating</dt><dd>${d.rating}</dd></div>
+        </dl>
         ${resume}
-        <div class="ix-key" aria-hidden="true"><span><i class="ix-tick is-done"></i>Played</span><span><i class="ix-tick is-next"></i>Next</span><span><i class="ix-tick"></i>Not yet open</span><span class="ix-key-g">!! ! !? ?! ? &nbsp;Decision grade</span></div>
+        <div class="ix-key" aria-hidden="true">
+          <span><span class="ix-step is-done"><span class="ix-node"></span></span>Completed</span>
+          <span><span class="ix-step is-next"><span class="ix-node"></span></span>Next scenario</span>
+          <span><span class="ix-step is-locked"><span class="ix-node"></span></span>Requires the one before</span>
+          <span class="ix-key-g">!! ! !? ?! ?&nbsp; Decision grade</span>
+        </div>
         ${chapters}
         <button type="button" class="ix-aside" data-act="market">
-          <span class="ix-aside-k">Separate track</span>
+          <span class="ix-label">Separate track</span>
           <span class="ix-aside-t">The Trader's Mind</span>
           <span class="ix-aside-d">Five challenges at one desk, with one account.</span>
-          <span class="ix-aside-go">Open ${IX_ARROW}</span>
+          <span class="ix-aside-go ix-label">Open ${IX_ARROW}</span>
         </button>
       </div>
     </section>`;

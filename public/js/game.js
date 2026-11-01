@@ -176,6 +176,13 @@
       totals.inf += Math.min(h.clues.length, 2) * 0.5;
       Object.entries(opt.rel || {}).forEach(([k, v]) => { rel[k] = (rel[k] || 0) + v; });
       Object.assign(flags, opt.flags || {});
+      // Some clues cost something to read: asking around gets back to people.
+      h.clues.forEach(i => {
+        const cost = ((sc.clues || [])[i] || {}).cost;
+        if (!cost) return;
+        Object.entries(cost.rel || {}).forEach(([k, v]) => { rel[k] = (rel[k] || 0) + v; });
+        Object.assign(flags, cost.flags || {});
+      });
       const before = rating;
       rating += (opt.q - 2) * 40;
       return { sc, opt, opts, ctx, type: ctx.type, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating };
@@ -195,7 +202,7 @@
       // A vague version can keep the same results at different odds (pv), or bring its own.
       const outs = vague && o.vague.pv ? b.outcomes.map((x, i) => ({ ...x, p: o.vague.pv[i] })) : b.outcomes;
       const relv = b.rel && Object.fromEntries(Object.entries(b.rel).map(([k, v]) => [k, val(v, c)]));
-      return { ...b, _c: c, needs, text: val(b.text, c), rel: relv, q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
+      return { ...b, _c: c, needs, text: val(b.text, c), rel: relv, flags: val(b.flags, c), q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
     });
   }
   const optsNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return resolve(sc, { rel: d.rel, flags: d.flags, type: draft.type }, draft.clues); };
@@ -579,7 +586,7 @@
     }).join('');
     const clues = sc.clues.map((c, i) => {
       const open = draft.clues.includes(i);
-      return `<li class="clue ${open ? 'is-open' : ''}"><button type="button" class="clue-btn" data-clue="${i}" ${open ? 'disabled' : ''} aria-expanded="${open}"><span class="clue-label">${c.label}</span><span class="clue-state">${open ? 'Noted' : 'Look'}</span></button>${open ? `<p class="clue-text">${clueText(c, draft.type)}</p>` : ''}</li>`;
+      return `<li class="clue ${open ? 'is-open' : ''}"><button type="button" class="clue-btn" data-clue="${i}" ${open ? 'disabled' : ''} aria-expanded="${open}"><span class="clue-label">${c.label}${c.cost ? `<span class="clue-cost">Costs something: ${c.cost.note}</span>` : ''}</span><span class="clue-state">${open ? 'Noted' : 'Look'}</span></button>${open ? `<p class="clue-text">${clueText(c, draft.type)}</p>` : ''}</li>`;
     }).join('');
     const opts = optsNow(sc).map(o => `<li><span class="option-key">${o.key}</span><div><p class="fo-text">${fill(o.text)}</p><p class="fo-prev">${staged(sc, o).preview}</p></div></li>`).join('');
     const canDecide = ui.phase === 'decide' || ui.phase === 'intro';

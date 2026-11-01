@@ -10,16 +10,18 @@ The aim is to see the game without becoming the game. Manipulation is never rewa
 
 ## Episode 1: Ordinary Life
 
-Three places, six scenes. Characters remember you across scenes.
+Three places, six scenes. Characters remember you across scenes, and no single style of move wins every one: the best answer depends on who you're dealing with.
 
-| # | Scene | Place | Main lens |
-|---|---|---|---|
-| 1 | The Wrong Price | The Grocery Store | Annie Duke |
-| 2 | Just This Once | The Office | Robert Axelrod |
-| 3 | The Spot | The Neighborhood | Thomas Schelling |
-| 4 | The Credit Taker | The Office | John Nash |
-| 5 | Pick a Side | The Office | Barry Nalebuff |
-| 6 | The Fence | The Neighborhood | Robert Aumann |
+| # | Scene | Place | Main lens | Hidden type |
+|---|---|---|---|---|
+| 1 | The Wrong Price | The Grocery Store | Annie Duke | Maya rookie or veteran, and the tag right or wrong |
+| 2 | Just This Once | The Office | Robert Axelrod | Dana: overloaded, offloading, or hiding a crisis |
+| 3 | The Spot | The Neighborhood | Thomas Schelling | Gary: unaware, needs the spot, or leaving |
+| 4 | The Credit Taker | The Office | John Nash | Jordan: scared, scheming, or presenting at Ellen's request |
+| 5 | Pick a Side | The Office | Barry Nalebuff | The tool: phased fix works, needs a rebuild, or a patch is enough |
+| 6 | The Fence | The Neighborhood | Robert Aumann | Gary (same draw as The Spot) |
+
+Some clues cost something to read: asking Ruth, Priya or Tom gets back to the person you asked about, and checking the shelf holds up the line. The cost shows before you read the clue.
 
 ## Episode 2: The Deal
 
@@ -106,9 +108,10 @@ public/
   css/styles.css        all styles, light + dark, stage and character animation
   img/env/*.webp        rendered sets: <env>-bg / -mid / -fg layers
   js/thinkers.js        the bench, skills, grades
-  js/scenarios.js       scenario substance: options, grading, analysis
-  js/scenes.js          staging: people, places, beats, reactions, matrices, leverage
+  js/scenarios.js       substance for The Change Order and The Offer
+  js/scenes.js          people, episodes, and staging for those two scenes
   js/insight.js         what each move pursues, what people say about you, closing questions
+  js/episode1-3.js      each episode's other scenes: substance, staging and verdicts together
   js/market.js          The Trader's Mind: challenges, staging, capital, rules and principles
   js/env-data.js        generated: where people stand in each render, camera targets
   js/art.js             character renderer (moods, poses) and environment layering
@@ -139,9 +142,9 @@ For the game sets, add env names (`checkout desks kitchen conference street yard
 
 ### Adding a scene
 
-1. Add the substance to `PP.scenarios` in `scenarios.js` (options, grades, outcomes, analysis).
-2. Add the staging to `PP.scenes` in `scenes.js` (environment, cast spots, intro beats, reaction beats per outcome, matrix, leverage). The comment at the top of that file documents beat fields.
-3. Add the id to an episode in `PP.episodes`.
+1. In the episode's file (for example `episode3.js`), add the substance (options, grades, outcomes, analysis), the staging (environment, cast spots, intro beats, reaction beats per outcome, matrix, leverage) and the verdicts. The comment at the top of `scenes.js` documents beat fields.
+2. Give every option at least as many staged outcomes as scripted ones.
+3. Add the id to an episode in `PP.episodes` in `scenes.js`.
 
 ## Run locally
 

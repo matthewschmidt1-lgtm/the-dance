@@ -498,6 +498,7 @@ button.ps-btn:hover { background: var(--accent-soft); }
 .clue-btn:hover:not(:disabled) { background: var(--accent-soft); }
 .clue-btn:disabled { cursor: default; }
 .clue-label { font-weight: 620; font-size: var(--t-sm); }
+.clue-cost { display: block; margin-top: 3px; font-weight: 450; font-size: var(--t-xs); color: var(--muted); font-style: italic; }
 .clue-state { font-family: var(--f-mono); font-size: var(--t-xs); color: var(--accent); flex-shrink: 0; }
 .clue.is-open .clue-state { color: var(--muted); }
 .clue-text { padding: 0 14px 14px; font-family: var(--f-read); line-height: 1.55; }

@@ -16,60 +16,6 @@ PP.insight = {
   },
 
   scenes: {
-    'wrong-price': {
-      options: {
-        A: { buys: ['right', 'win'], verdict: { who: 'maya', line: `Fair enough, I guess. Everyone in line was staring at me.` } },
-        B: { buys: ['calm', 'time'], verdict: { who: 'maya', line: `Nice customer. Didn't seem to care about the price.` } },
-        C: { buys: ['info', 'fair', 'future'], verdict: { who: 'maya', line: `Made my job easy. I'd help them again in a heartbeat.` } },
-        D: { buys: ['win', 'right'], verdict: { who: 'maya', line: `Went straight over my head. I could have fixed it.` } },
-        E: { buys: ['info', 'calm'], verdict: { who: 'maya', line: `Patient. Sorted it out without making it my problem.` } }
-      }
-    },
-    'just-this-once': {
-      options: {
-        A: { buys: ['liked', 'calm'], verdict: { who: 'dana', line: `Always says yes. I probably lean on that too much.` } },
-        B: { buys: ['time'], verdict: { who: 'dana', line: `Guarded. Fair, I suppose. I didn't expect a flat no.` } },
-        C: { buys: ['info', 'fair', 'future'], verdict: { who: 'dana', line: `Asked the right question. We worked it out like adults.` } },
-        D: { buys: ['fair', 'time'], verdict: { who: 'dana', line: `Wanted something back, which is fair. Then it got stuck with Ellen.` } },
-        E: { buys: ['liked', 'future'], verdict: { who: 'dana', line: `Meant well. Put me on the spot in front of Ellen, though.` } }
-      }
-    },
-    'the-spot': {
-      options: {
-        A: { buys: ['right', 'win'], verdict: { who: 'gary', line: `Left me a note in my third week. Noted.` } },
-        B: { buys: ['info', 'future', 'fair'], verdict: { who: 'gary', line: `Good neighbor. Asked before assuming.` } },
-        C: { buys: ['win', 'right'], verdict: { who: 'gary', line: `Parked in front of my house one day. Still not sure why.` } },
-        D: { buys: ['calm'], verdict: { who: 'gary', line: `Never said a word. Seemed nice enough.` } },
-        E: { buys: ['win', 'right'], verdict: { who: 'gary', line: `Posted about me before we'd even said hello. Hard to forget.` } }
-      }
-    },
-    'credit-taker': {
-      options: {
-        A: { buys: ['right', 'win'], verdict: { who: 'jordan', line: `Called me out in front of everyone. I deserved some of it.` } },
-        B: { buys: ['fair', 'future'], verdict: { who: 'jordan', line: `Gave me a chance to fix it quietly. I owe them one.` } },
-        C: { buys: ['info', 'fair', 'future'], verdict: { who: 'ellen', line: `Knows that analysis better than anyone in the room.` } },
-        D: { buys: ['fair', 'future'], verdict: { who: 'ellen', line: `Brought me the file history, calmly. I noticed.` } },
-        E: { buys: ['calm'], verdict: { who: 'jordan', line: `Didn't say anything. I figured it didn't matter to them.` } }
-      }
-    },
-    'pick-a-side': {
-      options: {
-        A: { buys: ['liked', 'win'], verdict: { who: 'marcus', line: `Picked a side. Not mine.` } },
-        B: { buys: ['calm', 'liked'], verdict: { who: 'priya', line: `Went with rank over evidence. I stopped asking for their view.` } },
-        C: { buys: ['calm'], verdict: { who: 'ellen', line: `I'm sure they had a view. They didn't share it.` } },
-        D: { buys: ['fair', 'future', 'info'], verdict: { who: 'ellen', line: `Turned a fight into a decision I could actually make.` } },
-        E: { buys: ['win', 'info'], verdict: { who: 'marcus', line: `Repeats things. Good to know.` } }
-      }
-    },
-    'the-fence': {
-      options: {
-        A: { buys: ['liked', 'calm'], verdict: { who: 'gary', line: `Generous. Maybe too generous.` } },
-        B: { buys: ['win', 'time'], verdict: { who: 'gary', line: `Wouldn't chip in. I remember that every time I look at the oak.` } },
-        C: { buys: ['fair', 'future'], verdict: { who: 'gary', line: `Fair to a fault. Best neighbor on the street.` } },
-        D: { buys: ['calm'], verdict: { who: 'gary', line: `Still waiting on an answer. I stopped asking.` } },
-        E: { buys: ['fair'], verdict: { who: 'gary', line: `Brought Ruth into it. Worked out, mostly.` } }
-      }
-    },
     'change-order': {
       options: {
         A: { buys: ['calm', 'time'], verdict: { who: 'luis', line: `Approved it fast. Easy client.` } },

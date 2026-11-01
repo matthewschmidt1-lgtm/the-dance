@@ -385,9 +385,6 @@
     const d = derive(history);
     const n = history.length, done = n >= LIST.length;
     const at = done ? null : pos(n);
-    const cont = !at ? '' : !n ? 'Begin Episode 1' : at.n === 1 ? `Begin Episode ${at.ep.number}` : `Resume · Scenario ${ixNo(n)}`;
-    const primary = done ? `<button class="hm-btn hm-btn-light" data-act="profile">See your dance</button>`
-      : `<button class="hm-btn hm-btn-light" data-act="play">${cont}</button>`;
 
     // The episodes, as chapters of one campaign: the same rows and nodes as the Play index.
     const chapter = (ep, e) => {
@@ -440,11 +437,6 @@
         <div class="wrap hm-hero-in">
           <h1 class="hm-hero-title">You don't have to be the most powerful person in the room.</h1>
           <p class="hm-hero-sub">You have to understand the room.</p>
-          <div class="hm-hero-actions">${primary}<button class="hm-btn hm-btn-line" data-act="bench">Meet the thinkers</button></div>
-        </div>
-        <div class="wrap hm-hero-foot">
-          <span><b>${LIST.length}</b> situations</span><span><b>${EPS.length}</b> episodes</span><span><b>${thinkerOrder.length}</b> thinkers</span><span><b>1</b> trading desk</span>
-          ${at ? `<span class="hm-hero-at">${n ? 'You are at' : 'Begins at'} · Scenario ${ixNo(n)}, ${LIST[n].title}</span>` : `<span class="hm-hero-at">Every scene played</span>`}
         </div>
       </section>
 

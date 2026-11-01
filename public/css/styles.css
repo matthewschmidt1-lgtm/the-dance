@@ -1134,13 +1134,11 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .hm-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--ix-s3); min-height: 52px; padding: 0 28px; border-radius: var(--ix-r); border: 1px solid transparent; cursor: pointer; font-family: var(--f-mono); font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; transition: background var(--ix-ease), border-color var(--ix-ease), color var(--ix-ease); }
 .hm-btn-light { background: var(--ix-night-ink); color: var(--ix-night); }
 .hm-btn-light:hover { background: #fff; }
-.hm-btn-line { background: transparent; border-color: rgba(236, 230, 218, .45); color: var(--ix-night-ink); }
-.hm-btn-line:hover { border-color: var(--ix-night-ink); background: rgba(236, 230, 218, .06); }
 .hm-link { display: inline-flex; align-items: center; gap: var(--ix-s3); margin-top: var(--ix-s4); padding: var(--ix-s2) 0; border: 0; background: none; cursor: pointer; color: var(--ix-accent); font-family: var(--f-mono); font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
 .hm-link:hover .ix-arrow { transform: translateX(5px); }
 
 /* ── Hero ── */
-.hm-hero { --ix-paper: var(--ix-night); position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-rows: 1fr auto; min-height: min(92vh, 1000px); background: var(--ix-night); color: var(--ix-night-ink); }
+.hm-hero { --ix-paper: var(--ix-night); position: relative; isolation: isolate; overflow: hidden; display: grid; min-height: min(92vh, 1000px); background: var(--ix-night); color: var(--ix-night-ink); }
 .hm-hero-art { position: absolute; inset: 0; z-index: -2; }
 .hm-hero-art img { width: 100%; height: 100%; object-fit: cover; object-position: 46% 58%; display: block; filter: saturate(.82) contrast(1.06); }
 @media (prefers-reduced-motion: no-preference) { .hm-hero-art img { animation: drift 38s ease-in-out infinite alternate; } }
@@ -1150,16 +1148,10 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
     linear-gradient(0deg, rgba(8, 9, 11, .88) 0%, rgba(8, 9, 11, .12) 26%, transparent 42%),
     linear-gradient(180deg, rgba(8, 9, 11, .55) 0%, transparent 22%),
     radial-gradient(ellipse 85% 75% at 60% 50%, transparent 50%, rgba(0, 0, 0, .4) 100%); }
-.hm-hero-in { align-self: end; padding-block: 140px var(--ix-s6); }
+.hm-hero-in { align-self: end; padding-block: 140px 88px; }
 .hm-hero-in > * { max-width: 48rem; }
-.hm-kicker { display: inline-flex; align-items: center; gap: var(--ix-s3); margin-bottom: var(--ix-s4); color: var(--ix-brass); font-family: var(--f-mono); font-size: .75rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
-.hm-kicker .ix-node { background: var(--ix-brass); border-color: var(--ix-brass); }
 .hm-hero-title { font-size: clamp(2rem, 3.9vw, 3.5rem); font-weight: 600; font-stretch: 90%; letter-spacing: -.03em; line-height: 1.02; max-width: 15ch; color: var(--ix-night-ink); text-shadow: 0 2px 30px rgba(0, 0, 0, .35); }
 .hm-hero-sub { margin-top: var(--ix-s3); font-family: var(--f-read); font-style: italic; font-size: clamp(1.0625rem, 1.6vw, 1.375rem); line-height: 1.35; color: rgba(236, 230, 218, .88); }
-.hm-hero-actions { display: flex; flex-wrap: wrap; gap: var(--ix-s3); margin-top: var(--ix-s4); }
-.hm-hero-foot { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ix-s2) var(--ix-s5); padding-block: var(--ix-s4) var(--ix-s5); border-top: 1px solid var(--ix-night-rule); font-family: var(--f-mono); font-size: .6875rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ix-night-mute); }
-.hm-hero-foot b { color: var(--ix-night-ink); font-size: .875rem; font-weight: 500; margin-right: 6px; letter-spacing: 0; }
-.hm-hero-at { margin-left: auto; color: var(--ix-brass); }
 
 /* ── The premise: a statement, and the five principles of the board ── */
 .hm-intro { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: var(--ix-s6); padding-block: 72px 64px; align-items: start; }
@@ -1268,10 +1260,7 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
   .hm-hero-art { position: relative; inset: auto; z-index: 0; height: clamp(280px, 42svh, 380px); }
   .hm-hero-art img { object-position: 76% 62%; }
   .hm-hero-shade { inset: 0 0 auto; height: clamp(280px, 42svh, 380px); z-index: 1; background: linear-gradient(0deg, var(--ix-night) 0%, rgba(8, 9, 11, .4) 22%, transparent 45%), linear-gradient(180deg, rgba(8, 9, 11, .45) 0%, transparent 25%); }
-  .hm-hero-in { position: relative; z-index: 2; margin-top: -28px; padding-block: 0 var(--ix-s5); }
-  .hm-hero-actions { flex-direction: column; align-items: stretch; }
-  .hm-hero-foot { gap: var(--ix-s2) var(--ix-s4); }
-  .hm-hero-at { margin-left: 0; flex-basis: 100%; }
+  .hm-hero-in { position: relative; z-index: 2; margin-top: -28px; padding-block: 0 var(--ix-s6); }
   .hm-intro { padding-block: 48px; gap: var(--ix-s4); }
   .hm-eps { padding-block: var(--ix-s5) 88px; }
   .hm-sec-head { margin-bottom: var(--ix-s5); }

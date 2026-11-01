@@ -15,6 +15,7 @@
   let LIST = TRACKS.main.list;
   const isMarket = () => track === 'market';
   const trackFor = view => (view === 'market' || view === 'trade') ? 'market' : view === 'bench' ? track : 'main';
+  const NAV_OF = { trade: 'market', episodes: 'play' };
   const placeOf = id => [...EPS, MK.ep].flatMap(e => e.places).find(p => p.scenes.includes(id));
   // Scene numbers restart in each episode.
   const pos = i => { const sc = LIST[i], eps = LIST.filter(s => s.ep === sc.ep); return { n: eps.indexOf(sc) + 1, of: eps.length, ep: sc.ep }; };
@@ -253,8 +254,56 @@
       const m = d.moves[i];
       const cls = ['sq', j % 2 ? 'sq-l' : 'sq-d', i === current ? 'is-current' : '', m ? 'is-done' : ''].join(' ');
       const inner = i === current ? pawnSvg : m ? `<span class="sq-glyph">${grades[m.opt.q].glyph}</span>` : `<span class="sq-rank">${j + 1}</span>`;
-      return `<li class="${cls}" title="Scene ${j + 1}: ${sc.title}"><span class="sr">Scene ${j + 1}, ${sc.title}${m ? ', played' : ''}</span>${inner}</li>`;
+      const label = `<span class="sr">Scene ${j + 1}, ${sc.title}${m ? ', played' : ''}</span>`;
+      // Played scenes open the chooser with that scene ready to replay.
+      if (m && i !== current && !isMarket()) return `<li class="${cls}"><button type="button" class="sq-btn" data-act="pick" data-i="${i}" title="Replay scene ${j + 1}: ${sc.title}">${label}${inner}</button></li>`;
+      return `<li class="${cls}" title="Scene ${j + 1}: ${sc.title}">${label}${inner}</li>`;
     }).join('')}</ol>`;
+  }
+
+  // One scene in a list: replay what you've played, start what's next, the rest unlock in order.
+  // Scenes build on earlier choices, so replaying one resets every scene after it.
+  function sceneBtn(i, d) {
+    const n = history.length, m = d.moves[i];
+    if (i < n) {
+      const asking = confirmScene === i, later = n - 1 - i;
+      const lastEp = LIST[n - 1].ep, warn = !later ? 'Tap again to replay.'
+        : `Tap again. This resets the ${later === 1 ? 'next scene' : `${NUM[later] || later} scenes after it`}${lastEp !== LIST[i].ep ? `, through Episode ${lastEp.number}` : ''}.`;
+      return `<li><button type="button" class="ps-btn ${asking ? 'is-asking' : ''}" data-act="scene" data-i="${i}">
+        <span class="ps-n">${pos(i).n}</span><span class="ps-title">${asking ? `Replay ${LIST[i].title}?` : LIST[i].title}</span>
+        ${asking ? `<span class="ps-note">${warn}</span>` : `<span class="ps-g g${m.opt.q}" title="${grades[m.opt.q].name}">${grades[m.opt.q].glyph}</span><span class="ps-tag">Replay</span>`}
+      </button></li>`;
+    }
+    if (i === n) return `<li><button type="button" class="ps-btn is-next" data-act="scene" data-i="${i}"><span class="ps-n">${pos(i).n}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-tag ps-tag-next">Up next</span></button></li>`;
+    return `<li><span class="ps-btn is-locked" aria-disabled="true"><span class="ps-n">${pos(i).n}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-lock"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Unlocks after ${LIST[i - 1].title}</span></span></li>`;
+  }
+
+  // ───────────────────────── Where to? (the Play link)
+
+  function viewEpisodes() {
+    const d = derive(history), n = history.length, done = n >= LIST.length;
+    const at = done ? null : pos(n);
+    const cont = done
+      ? `<button class="where-go" data-act="profile"><span class="where-k">Every scene played</span><span class="where-t">See your dance</span><span class="where-d">Replay any scene below, or start again from your profile.</span><span class="nm-go" aria-hidden="true">→</span></button>`
+      : `<button class="where-go" data-act="play"><span class="where-k">${n ? (at.n === 1 ? 'Start the next episode' : 'Continue where you left off') : 'Start here'} · Episode ${at.ep.number}, Scene ${at.n} of ${at.of}</span><span class="where-t">${LIST[n].title}</span><span class="where-d">${placeOf(LIST[n].id).name}. ${at.ep.title}.</span><span class="nm-go" aria-hidden="true">→</span></button>`;
+    const eps = EPS.map(ep => {
+      const total = ep.scenes.length, played = LIST.filter((sc, i) => sc.ep === ep && i < n).length;
+      return `<section class="where-ep ep-panel ep-${ep.number}">
+        <header class="ep-head">
+          <span class="ep-num" aria-hidden="true">${ep.number}</span>
+          <div class="ep-titles"><p class="eyebrow">Episode ${ep.number}</p><h2>${ep.title}</h2></div>
+          <span class="ep-progress">${played === total ? 'Complete' : played ? `${played} of ${total} played` : `${total} scenes`}</span>
+        </header>
+        <div class="where-places">${ep.places.map(p => `<div class="where-place"><h3>${p.name}</h3><ul class="place-scenes">${p.scenes.map(id => sceneBtn(LIST.findIndex(s => s.id === id), d)).join('')}</ul></div>`).join('')}</div>
+      </section>`;
+    }).join('');
+    return `<section class="wrap page where">
+      <div class="section-head"><p class="eyebrow">Play</p><h1>Where to?</h1>
+        <p class="lede">Pick up where you left off, or replay any scene you've played. Scenes unlock in order, because later ones remember what you did.</p></div>
+      ${cont}
+      ${eps}
+      <button class="btn btn-link where-mk" data-act="market">Or play The Trader's Mind →</button>
+    </section>`;
   }
 
   function staticScene(sc, moods) {
@@ -280,21 +329,7 @@
         <div class="place-copy">
           <h3>${p.name}</h3>
           <p>${p.theme}</p>
-          <ul class="place-scenes">${p.scenes.map(id => {
-            const i = LIST.findIndex(s => s.id === id), m = d.moves[i];
-            // Scenes build on earlier choices, so: replay what you've played, start what's next, the rest unlock in order.
-            if (i < n) {
-              const asking = confirmScene === i;
-              return `<li><button type="button" class="ps-btn ${asking ? 'is-asking' : ''}" data-act="scene" data-i="${i}">
-                <span class="ps-n">${pos(i).n}</span><span class="ps-title">${asking ? `Replay ${LIST[i].title}?` : LIST[i].title}</span>
-                ${asking ? `<span class="ps-note">${i < n - 1 ? 'Tap again. Later scenes reset.' : 'Tap again to replay.'}</span>` : `<span class="ps-g g${m.opt.q}" title="${grades[m.opt.q].name}">${grades[m.opt.q].glyph}</span><span class="ps-tag">Replay</span>`}
-              </button></li>`;
-            }
-            if (i === n) {
-              return `<li><button type="button" class="ps-btn is-next" data-act="scene" data-i="${i}"><span class="ps-n">${pos(i).n}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-tag ps-tag-next">Up next</span></button></li>`;
-            }
-            return `<li><span class="ps-btn is-locked" aria-disabled="true"><span class="ps-n">${pos(i).n}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-lock"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Unlocks after ${LIST[i - 1].title}</span></span></li>`;
-          }).join('')}</ul>
+          <ul class="place-scenes">${p.scenes.map(id => sceneBtn(LIST.findIndex(s => s.id === id), d)).join('')}</ul>
         </div>
       </article>`;
     }).join('');
@@ -404,7 +439,7 @@
             <img class="nm-art" src="/img/next/play.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
             <span class="nm-k">${done ? 'Every scene played' : n ? `Episode ${at.ep.number} · Scene ${at.n} of ${at.of}` : 'Start here'}</span>
             <span class="nm-t">${done ? 'See your dance' : !n ? 'Play Episode 1' : at.n === 1 ? `Start Episode ${at.ep.number}` : 'Continue playing'}</span>
-            <span class="nm-d">${done ? 'What the room saw, what your choices were buying, and one question to take with you.' : n ? `Pick up at ${LIST[n].title}.` : `${LIST.length} scenes across two episodes, starting at a grocery store checkout.`}</span>
+            <span class="nm-d">${done ? 'What the room saw, what your choices were buying, and one question to take with you.' : n ? `Pick up at ${LIST[n].title}.` : `${LIST.length} scenes across ${NUM[EPS.length] || EPS.length} episodes, starting at a grocery store checkout.`}</span>
             <span class="nm-go" aria-hidden="true">→</span>
           </button>
           <button class="nm nm-bench" data-act="bench">
@@ -468,6 +503,7 @@
         ${strip(idx, derive(history))}
         <div class="play-meta">
           <p class="meta">${isMarket() ? `The Trader's Mind · Challenge ${at.n} of ${at.of}` : `Episode ${at.ep.number} · Scene ${at.n} of ${at.of}`} · ${place.name}</p>
+          ${isMarket() ? `<button type="button" class="btn btn-link play-out" data-act="market">All challenges</button>` : `<button type="button" class="btn btn-link play-out" data-act="episodes">All episodes</button>`}
           <div class="chips"><span class="chip">${sc.level}</span>${sc.lens.map((k, i) => `<span class="chip ${i ? '' : 'chip-lens'}">${i ? 'Also' : 'Lens'} · ${thinkers[k].short}</span>`).join('')}</div>
         </div>
         ${isMarket() ? `<div class="hud" id="hud" aria-label="Your capital">${hud(capitals(history.slice(0, idx)).cap)}</div>` : ''}
@@ -784,7 +820,8 @@
       <div class="tabpanel" role="tabpanel" id="tp-${ui.tab}" aria-labelledby="tab-${ui.tab}">${body}</div>
       <div class="result-bar">
         <button class="btn btn-ghost" data-act="takeback">Replay with another strategy</button>
-        <button class="btn btn-primary" data-act="${last ? 'profile' : 'next'}">${last ? 'See your dance' : `Next scene`}</button>
+        ${last && LIST[idx + 1] ? `<button class="btn btn-ghost" data-act="profile">See your dance</button><button class="btn btn-primary" data-act="next">Start Episode ${LIST[idx + 1].ep.number}</button>`
+          : `<button class="btn btn-primary" data-act="${last ? 'profile' : 'next'}">${last ? 'See your dance' : `Next scene`}</button>`}
       </div>
     </div>`;
   }
@@ -898,7 +935,8 @@
           <h1>${done ? 'You read the room.' : finished ? `${finished.title}, played.` : 'Your profile so far'}</h1>
           <p class="lede">${done ? `You walked into ${NUM[LIST.length] || LIST.length} ordinary situations with no title and no special power. Here's how you played them.`
             : finished ? `Here's what the room saw. Episode ${at.ep.number}, ${at.ep.title}, is waiting when you are.`
-              : `Built from your actual choices. It sharpens as you play the remaining ${LIST.length - n} scene${LIST.length - n === 1 ? '' : 's'}.`}</p></div>
+              : `Built from your actual choices. It sharpens as you play the remaining ${LIST.length - n} scene${LIST.length - n === 1 ? '' : 's'}.`}</p>
+          ${finished && !done ? `<button class="btn btn-primary profile-next" data-act="play">Start Episode ${at.ep.number} · ${at.ep.title}</button>` : ''}</div>
         <div class="rating-card"><span class="rating-label">Strategic rating</span><span class="rating-num">${d.rating}</span><span class="rating-sub">Started at ${START_RATING}</span></div>
       </header>
       ${n >= DANCE_AT ? yourDance(d, ranked) + `<h2 class="profile-sub">The numbers behind it</h2>` : ''}
@@ -1055,9 +1093,9 @@
     const settled = ui.phase !== 'result' && ui.phase !== 'react';
     if (ui.view === 'play' && history.length >= LIST.length && settled) ui.view = 'profile';
     if (ui.view === 'trade' && settled && (!rules || marketOver())) ui.view = 'market';
-    const views = { home: viewHome, bench: viewBench, play: viewPlay, trade: viewPlay, profile: viewProfile, market: viewMarket };
+    const views = { home: viewHome, bench: viewBench, episodes: viewEpisodes, play: viewPlay, trade: viewPlay, profile: viewProfile, market: viewMarket };
     app.innerHTML = views[ui.view]();
-    document.querySelectorAll('[data-nav]').forEach(a => a.setAttribute('aria-current', a.dataset.nav === ui.view || (ui.view === 'trade' && a.dataset.nav === 'market') ? 'page' : 'false'));
+    document.querySelectorAll('[data-nav]').forEach(a => a.setAttribute('aria-current', a.dataset.nav === (NAV_OF[ui.view] || ui.view) ? 'page' : 'false'));
     // The home page opens on a dark image, so its nav bar and the phone's browser bar go dark to match.
     document.body.classList.toggle('on-home', ui.view === 'home');
     const light = document.querySelector('meta[name="theme-color"][media*="light"]');
@@ -1079,7 +1117,7 @@
 
   document.addEventListener('click', e => {
     const nav = e.target.closest('[data-nav]');
-    if (nav) { e.preventDefault(); if (nav.dataset.nav === 'play') ui.phase = 'intro'; go(nav.dataset.nav); return; }
+    if (nav) { e.preventDefault(); go(nav.dataset.nav === 'play' ? 'episodes' : nav.dataset.nav); return; }
 
     const clue = e.target.closest('[data-clue]');
     if (clue) { const i = Number(clue.dataset.clue); if (!draft.clues.includes(i)) draft.clues.push(i); renderPanel(); return; }
@@ -1112,7 +1150,7 @@
     if (!act) return;
     const a = act.dataset.act;
     if (a !== 'reset' && a !== 'market-reset') confirmReset = false;
-    if (a !== 'scene') confirmScene = -1;
+    if (a !== 'scene' && a !== 'pick') confirmScene = -1;
     switch (a) {
       case 'play': ui.phase = 'intro'; go('play'); break;
       case 'trade': ui.phase = 'intro'; go('trade'); break;
@@ -1123,6 +1161,8 @@
         confirmReset = false; history = []; save(); rules = null; saveRules(); draft = fresh(); go('market');
         break;
       case 'bench': go('bench'); break;
+      case 'episodes': go('episodes'); break;
+      case 'pick': confirmScene = Number(act.dataset.i); go('episodes'); app.querySelector(`[data-act="scene"][data-i="${confirmScene}"]`)?.scrollIntoView({ block: 'center' }); break;
       case 'profile': go('profile'); break;
       case 'freeze': stage && stage.freeze(); break;
       case 'resume': stage && stage.resume(); break;
@@ -1200,10 +1240,10 @@
   window.addEventListener('resize', () => { if (stage && stage.paused) stage.placePins(); });
   window.addEventListener('hashchange', () => {
     const h = location.hash.replace('#', '');
-    if (['bench', 'profile', 'play', 'market', 'trade'].includes(h) && h !== ui.view) { ui.phase = 'intro'; go(h); }
+    if (['bench', 'profile', 'episodes', 'play', 'market', 'trade'].includes(h) && h !== ui.view) { ui.phase = 'intro'; go(h); }
   });
 
   const initial = location.hash.replace('#', '');
-  if (['bench', 'profile', 'play', 'market', 'trade'].includes(initial)) ui.view = initial;
+  if (['bench', 'profile', 'episodes', 'play', 'market', 'trade'].includes(initial)) ui.view = initial;
   render();
 })();

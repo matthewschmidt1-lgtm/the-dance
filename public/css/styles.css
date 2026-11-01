@@ -1009,3 +1009,26 @@ button.ps-btn:hover { background: var(--accent-soft); }
   .ep-num { width: 44px; height: 44px; font-size: 1.5rem; border-radius: 12px; }
 }
 .concept-plain { font-family: var(--f-read); font-style: italic; color: var(--muted); margin: -2px 0 8px; }
+
+/* Where to? The Play link's chooser: continue, or pick any scene by episode. */
+.where .section-head { margin-bottom: 20px; }
+.where-go { position: relative; display: grid; gap: 4px; width: 100%; text-align: left; font: inherit; color: var(--ink); cursor: pointer; padding: 20px 76px 20px 22px; margin-bottom: 22px; border-radius: 20px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); background: var(--accent-soft); --k: var(--accent); --a: var(--accent-ink, #fff); }
+.where-go:hover { border-color: var(--accent); }
+.where-go:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.where-k { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.where-t { font-size: var(--t-xl); font-weight: 780; font-stretch: 106%; line-height: 1.15; }
+.where-d { color: var(--muted); font-size: var(--t-sm); }
+.where-go .nm-go { top: 50%; bottom: auto; transform: translateY(-50%); }
+.where-ep { margin-bottom: 16px; }
+.where-ep .ep-head { margin-bottom: 14px; align-items: center; }
+.where-places { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 18px; }
+.where-place h3 { font-size: var(--t-sm); font-weight: 700; color: var(--muted); }
+.where-mk { margin-top: 8px; }
+@media (max-width: 760px) { .where-places { grid-template-columns: minmax(0, 1fr); } .where-go { padding: 18px 68px 18px 18px; } }
+
+/* Inside a scene: played squares are buttons back to the chooser, plus a way out. */
+.file-strip .sq-btn { display: grid; place-items: center; width: 100%; height: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.file-strip .sq-btn:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.file-strip .sq-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.play-out { min-height: 32px; font-size: var(--t-sm); }
+.profile-next { margin-top: 14px; }

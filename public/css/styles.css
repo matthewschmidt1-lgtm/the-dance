@@ -1153,16 +1153,11 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .hm-hero-title { font-size: clamp(2rem, 3.9vw, 3.5rem); font-weight: 600; font-stretch: 90%; letter-spacing: -.03em; line-height: 1.02; max-width: 15ch; color: var(--ix-night-ink); text-shadow: 0 2px 30px rgba(0, 0, 0, .35); }
 .hm-hero-sub { margin-top: var(--ix-s3); font-family: var(--f-read); font-style: italic; font-size: clamp(1.0625rem, 1.6vw, 1.375rem); line-height: 1.35; color: rgba(236, 230, 218, .88); }
 
-/* ── The premise: a statement, and the five principles of the board ── */
-.hm-intro { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: var(--ix-s6); padding-block: 72px 64px; align-items: start; }
+/* ── The premise ── */
+.hm-intro { padding-block: 72px 64px; }
+.hm-intro-main { max-width: 44rem; }
 .hm-statement { margin-top: var(--ix-s3); font-family: var(--f-read); font-size: clamp(1.1875rem, 1.9vw, 1.5rem); line-height: 1.4; letter-spacing: -.008em; color: var(--ix-ink); }
 .hm-intro-sub { margin-top: var(--ix-s4); max-width: 58ch; font-family: var(--f-read); font-size: 1rem; line-height: 1.55; color: var(--ix-ink-2); }
-.hm-quote { margin-top: var(--ix-s4); padding-left: var(--ix-s3); border-left: 2px solid var(--ix-brass); font-family: var(--f-read); font-style: italic; font-size: .9375rem; color: var(--ix-slate); }
-.hm-axioms { list-style: none; margin: var(--ix-s2) 0 0; padding: 0; border-top: var(--ix-heavy); }
-.hm-axioms li { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); column-gap: var(--ix-s2); row-gap: 2px; padding: var(--ix-s3) 0; border-bottom: var(--ix-hair); }
-.hm-ax-n { grid-row: 1 / 3; font-family: var(--f-mono); font-size: .6875rem; font-weight: 600; color: var(--ix-accent); padding-top: 3px; }
-.hm-ax-t { font-size: 1rem; font-weight: 600; font-stretch: 94%; letter-spacing: -.012em; line-height: 1.25; }
-.hm-ax-d { font-family: var(--f-read); font-size: .875rem; line-height: 1.45; color: var(--ix-slate); }
 
 /* ── Episodes as chapters ── */
 .hm-eps { padding-block: var(--ix-s6) 128px; border-top: var(--ix-hair); }
@@ -1238,7 +1233,6 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 
 /* ── Tablet ── */
 @media (max-width: 1080px) {
-  .hm-intro { grid-template-columns: minmax(0, 1fr); gap: var(--ix-s6); }
   .hm-ch-head { grid-template-columns: 6rem minmax(0, 1fr); }
   .hm-ch-head .ix-ch-side { grid-column: 2; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--ix-s5); }
   .hm-places { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1255,7 +1249,7 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
   .hm-hero-art img { object-position: 76% 62%; }
   .hm-hero-shade { inset: 0 0 auto; height: clamp(280px, 42svh, 380px); z-index: 1; background: linear-gradient(0deg, var(--ix-night) 0%, rgba(8, 9, 11, .4) 22%, transparent 45%), linear-gradient(180deg, rgba(8, 9, 11, .45) 0%, transparent 25%); }
   .hm-hero-in { position: relative; z-index: 2; margin-top: -28px; padding-block: 0 var(--ix-s6); }
-  .hm-intro { padding-block: 48px; gap: var(--ix-s4); }
+  .hm-intro { padding-block: 48px; }
   .hm-eps { padding-block: var(--ix-s5) 88px; }
   .hm-sec-head { margin-bottom: var(--ix-s5); }
   .hm-ch-head { grid-template-columns: minmax(0, 1fr); gap: var(--ix-s3); }

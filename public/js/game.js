@@ -409,13 +409,6 @@
       </article>`;
     };
 
-    const AXIOMS = [
-      [`Every interaction has a board.`, `A checkout lane, a meeting, a fence line, a family kitchen.`],
-      [`Every person has a position.`, `Where they stand shapes what they can do, and what they'll risk.`],
-      [`Everyone has information and incentives.`, `Rarely the same as yours, and rarely said out loud.`],
-      [`Power isn't always where you think it is.`, `The cashier can have more of it than the manager.`],
-      [`The best move isn't always the obvious one.`, `The polite answer, the fair split, the middle path: sometimes right, sometimes not.`]
-    ];
 
     const cred = LIST.find(s => s.id === 'credit-taker');
     const pins = cred.stage.cast.map((c, i) => {
@@ -445,9 +438,7 @@
           <p class="ix-label hm-label-accent">The premise</p>
           <p class="hm-statement">Every room is a board. The cashier, your manager, your neighbor, your brother: each of them holds a position, a piece of the information, and incentives of their own. Most of us only ever see our own square.</p>
           <p class="hm-intro-sub">The Dance puts you in rooms you already know. You watch the scene, choose your move, and see how the people in it respond. Then the board underneath is revealed: who held the power, what they knew, and why the obvious move so rarely turns out to be the best one.</p>
-          <p class="hm-quote">"I've been in that exact situation. What should I have done?"</p>
         </div>
-        <ol class="hm-axioms" aria-label="The principles of The Dance">${AXIOMS.map(([t, d], k) => `<li><span class="hm-ax-n">${String(k + 1).padStart(2, '0')}</span><span class="hm-ax-t">${t}</span><span class="hm-ax-d">${d}</span></li>`).join('')}</ol>
       </section>
 
       <section class="hm-eps" aria-labelledby="hm-eps-h">

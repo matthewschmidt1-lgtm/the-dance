@@ -435,9 +435,9 @@
 
       <section class="wrap hm-intro">
         <div class="hm-intro-main">
-          <p class="ix-label hm-label-accent">The premise</p>
-          <p class="hm-statement">Every room is a board. The cashier, your manager, your neighbor, your brother: each of them holds a position, a piece of the information, and incentives of their own. Most of us only ever see our own square.</p>
-          <p class="hm-intro-sub">The Dance puts you in rooms you already know. You watch the scene, choose your move, and see how the people in it respond. Then the board underneath is revealed: who held the power, what they knew, and why the obvious move so rarely turns out to be the best one.</p>
+          <p class="ix-label hm-label-accent">A game about understanding people</p>
+          <p class="hm-statement">Why do people cooperate, and why do they stop? Why does a fair offer get refused, or a friend take a little more than their share?</p>
+          <p class="hm-intro-sub">There's a logic to all of it, and you've been inside it your whole life. The Dance puts you in rooms you already know, lets you choose, and then shows you what was going on: what each person wanted, what they knew, and what your move taught them about you. The ideas come from game theory. The subject is people.</p>
         </div>
       </section>
 

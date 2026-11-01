@@ -1133,7 +1133,7 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 /* Buttons: square-cornered, set in the label voice. */
 .hm-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--ix-s3); min-height: 52px; padding: 0 28px; border-radius: var(--ix-r); border: 1px solid transparent; cursor: pointer; font-family: var(--f-mono); font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; transition: background var(--ix-ease), border-color var(--ix-ease), color var(--ix-ease); }
 .hm-btn-light { background: var(--ix-night-ink); color: var(--ix-night); }
-.hm-btn-light:hover { background: #fff; }
+.hm-btn-light:hover { background: var(--cine-accent); color: #06201f; }
 .hm-link { display: inline-flex; align-items: center; gap: var(--ix-s3); margin-top: var(--ix-s4); padding: var(--ix-s2) 0; border: 0; background: none; cursor: pointer; color: var(--ix-accent); font-family: var(--f-mono); font-size: .75rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
 .hm-link:hover .ix-arrow { transform: translateX(5px); }
 

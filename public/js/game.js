@@ -261,23 +261,6 @@
     }).join('')}</ol>`;
   }
 
-  // One scene in a list: replay what you've played, start what's next, the rest unlock in order.
-  // Scenes build on earlier choices, so replaying one resets every scene after it.
-  function sceneBtn(i, d) {
-    const n = history.length, m = d.moves[i];
-    if (i < n) {
-      const asking = confirmScene === i, later = n - 1 - i;
-      const lastEp = LIST[n - 1].ep, warn = !later ? 'Tap again to replay.'
-        : `Tap again. This resets the ${later === 1 ? 'next scene' : `${NUM[later] || later} scenes after it`}${lastEp !== LIST[i].ep ? `, through Episode ${lastEp.number}` : ''}.`;
-      return `<li><button type="button" class="ps-btn ${asking ? 'is-asking' : ''}" data-act="scene" data-i="${i}">
-        <span class="ps-n">${pos(i).n}</span><span class="ps-title">${asking ? `Replay ${LIST[i].title}?` : LIST[i].title}</span>
-        ${asking ? `<span class="ps-note">${warn}</span>` : `<span class="ps-g g${m.opt.q}" title="${grades[m.opt.q].name}">${grades[m.opt.q].glyph}</span><span class="ps-tag">Replay</span>`}
-      </button></li>`;
-    }
-    if (i === n) return `<li><button type="button" class="ps-btn is-next" data-act="scene" data-i="${i}"><span class="ps-n">${pos(i).n}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-tag ps-tag-next">Up next</span></button></li>`;
-    return `<li><span class="ps-btn is-locked" aria-disabled="true"><span class="ps-n">${pos(i).n}</span><span class="ps-title">${LIST[i].title}</span><span class="ps-lock"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Unlocks after ${LIST[i - 1].title}</span></span></li>`;
-  }
-
   // ───────────────────────── The campaign index (the Play link)
   // Every scene as a position on a path: completed, next, or waiting on the one before.
   // The signature is the logo's 2×2 matrix, read as the four forces every scene turns on.
@@ -402,37 +385,40 @@
     const d = derive(history);
     const n = history.length, done = n >= LIST.length;
     const at = done ? null : pos(n);
-    const cont = !at ? '' : at.n === 1 ? `Play Episode ${at.ep.number}` : `Continue · Scene ${at.n}`;
-    const primary = done ? `<button class="btn btn-primary" data-act="profile">See your dance</button>`
-      : `<button class="btn btn-primary" data-act="play">${cont}</button>`;
-    const curEp = at ? at.ep : EPS[EPS.length - 1];
-    const words = ['', 'One', 'Two', 'Three', 'Four', 'Five'];
+    const cont = !at ? '' : !n ? 'Begin Episode 1' : at.n === 1 ? `Begin Episode ${at.ep.number}` : `Resume · Scenario ${ixNo(n)}`;
+    const primary = done ? `<button class="hm-btn hm-btn-light" data-act="profile">See your dance</button>`
+      : `<button class="hm-btn hm-btn-light" data-act="play">${cont}</button>`;
 
-    const placesOf = ep => ep.places.map(p => {
-      const sc = LIST.find(s => s.id === p.preview);
-      return `<article class="place">
-        <div class="place-art">${staticScene(sc)}</div>
-        <div class="place-copy">
-          <h3>${p.name}</h3>
-          <p>${p.theme}</p>
-          <ul class="place-scenes">${p.scenes.map(id => sceneBtn(LIST.findIndex(s => s.id === id), d)).join('')}</ul>
-        </div>
+    // The episodes, as chapters of one campaign: the same rows and nodes as the Play index.
+    const chapter = (ep, e) => {
+      const idx = LIST.map((sc, i) => i).filter(i => LIST[i].ep === ep);
+      const played = idx.filter(i => i < n).length, total = idx.length;
+      const current = !done && LIST[n].ep === ep, complete = played === total;
+      const status = complete ? 'Completed' : current ? (played ? `In progress · ${played} of ${total}` : 'Open') : `Requires Episode ${EPS[e - 1].number}`;
+      return `<article class="hm-ch ${current ? 'ix-ch-now' : ''} ${!current && !complete ? 'ix-ch-later' : ''}" aria-labelledby="hm-ch-${ep.number}">
+        <header class="hm-ch-head">
+          <div class="hm-ch-id"><span class="ix-ch-num">${String(ep.number).padStart(2, '0')}</span><span class="ix-label">Episode${current ? ' · Current' : ''}</span></div>
+          <div class="hm-ch-main"><h3 class="hm-ch-title" id="hm-ch-${ep.number}">${ep.title}</h3><p class="hm-ch-deck">${ep.blurb}</p></div>
+          <div class="ix-ch-side">
+            <div class="ix-ch-forces">${forceMatrix(ep.forces || [])}<span><span class="ix-label">In play</span><span class="ix-forces-list">${(ep.forces || []).map(f => FORCE_NAME[f]).join(' · ')}</span></span></div>
+            <div class="ix-ch-status"><span class="ix-bar" aria-hidden="true"><span style="width:${Math.round(played / total * 100)}%"></span></span><span class="ix-label">${status}</span></div>
+          </div>
+        </header>
+        <div class="hm-places">${ep.places.map(p => `<section class="hm-place">
+          <figure class="hm-shot">${staticScene(LIST.find(s => s.id === p.preview))}<figcaption class="ix-label">${p.name}</figcaption></figure>
+          <p class="hm-place-d">${p.theme}</p>
+          <ol class="ix-path">${p.scenes.map(id => ixRow(LIST.findIndex(s => s.id === id), d)).join('')}</ol>
+        </section>`).join('')}</div>
       </article>`;
-    }).join('');
-    // Each episode is its own panel: a number, a tinted edge, and how far you've got.
-    const placesSec = ep => {
-      const total = ep.scenes.length, played = LIST.filter((sc, i) => sc.ep === ep && i < n).length;
-      return `<section class="wrap places ep-block">
-        <div class="ep-panel ep-${ep.number}">
-          <header class="ep-head">
-            <span class="ep-num" aria-hidden="true">${ep.number}</span>
-            <div class="ep-titles"><p class="eyebrow">Episode ${ep.number} · ${words[ep.places.length] || ep.places.length} places</p><h2>${ep.title}</h2><p class="ep-blurb">${ep.blurb}</p></div>
-            <span class="ep-progress">${played === total ? 'Complete' : played ? `${played} of ${total} played` : `${total} scenes`}</span>
-          </header>
-          <div class="place-grid place-grid-${ep.places.length}">${placesOf(ep)}</div>
-        </div>
-      </section>`;
     };
+
+    const AXIOMS = [
+      [`Every interaction has a board.`, `A checkout lane, a meeting, a fence line, a family kitchen.`],
+      [`Every person has a position.`, `Where they stand shapes what they can do, and what they'll risk.`],
+      [`Everyone has information and incentives.`, `Rarely the same as yours, and rarely said out loud.`],
+      [`Power isn't always where you think it is.`, `The cashier can have more of it than the manager.`],
+      [`The best move isn't always the obvious one.`, `The polite answer, the fair split, the middle path: sometimes right, sometimes not.`]
+    ];
 
     const cred = LIST.find(s => s.id === 'credit-taker');
     const pins = cred.stage.cast.map((c, i) => {
@@ -447,56 +433,63 @@
     }).join('');
 
     const soon = PP.episodes.find(e => e.locked);
-    return `
-      <section class="hero-cine">
-        <div class="hero-art"><img src="/img/hero-dance-floor.webp?v=${PP.assetV}" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dice rest in the foreground, and a corridor of doorways recedes into a soft glow of haze."></div>
-        <div class="hero-over">
-          <div class="wrap hero-over-in">
-            <p class="eyebrow eyebrow-on-dark">Episode ${curEp.number} · ${curEp.title}</p>
-            <h1 class="hero-title">You don't have to be the most powerful person in the room.</h1>
-            <p class="hero-sub">You have to understand the room.</p>
-            <div class="hero-actions">${primary}<button class="btn btn-ghost btn-on-dark" data-act="bench">Meet the thinkers</button></div>
-          </div>
+    return `<div class="hm">
+      <section class="hm-hero">
+        <div class="hm-hero-art"><img src="/img/hero-dance-floor.webp?v=${PP.assetV}" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dice rest in the foreground, and a corridor of doorways recedes into a soft glow of haze."></div>
+        <div class="hm-hero-shade" aria-hidden="true"></div>
+        <div class="wrap hm-hero-in">
+          <p class="hm-kicker"><span class="ix-node" aria-hidden="true"></span>The Dance · A strategic simulation</p>
+          <h1 class="hm-hero-title">You don't have to be the most powerful person in the room.</h1>
+          <p class="hm-hero-sub">You have to understand the room.</p>
+          <div class="hm-hero-actions">${primary}<button class="hm-btn hm-btn-line" data-act="bench">Meet the thinkers</button></div>
+        </div>
+        <div class="wrap hm-hero-foot">
+          <span><b>${LIST.length}</b> situations</span><span><b>${EPS.length}</b> episodes</span><span><b>${thinkerOrder.length}</b> thinkers</span><span><b>1</b> trading desk</span>
+          ${at ? `<span class="hm-hero-at">${n ? 'You are at' : 'Begins at'} · Scenario ${ixNo(n)}, ${LIST[n].title}</span>` : `<span class="hm-hero-at">Every scene played</span>`}
         </div>
       </section>
 
-      <section class="wrap hook">
-        <p class="hook-line">"I've been in that exact situation. What should I have done?"</p>
-        <p class="hook-sub">Every scene in The Dance is the kind of thing that happens to most of us sooner or later. You watch it unfold, choose what to do, and see how the people in the room react. Then you see the game underneath.</p>
+      <section class="wrap hm-intro">
+        <div class="hm-intro-main">
+          <p class="ix-label hm-label-accent">The premise</p>
+          <p class="hm-statement">Every room is a board. The cashier, your manager, your neighbor, your brother: each of them holds a position, a piece of the information, and incentives of their own. Most of us only ever see our own square.</p>
+          <p class="hm-intro-sub">The Dance puts you in rooms you already know. You watch the scene, choose your move, and see how the people in it respond. Then the board underneath is revealed: who held the power, what they knew, and why the obvious move so rarely turns out to be the best one.</p>
+          <p class="hm-quote">"I've been in that exact situation. What should I have done?"</p>
+        </div>
+        <ol class="hm-axioms" aria-label="The principles of The Dance">${AXIOMS.map(([t, d], k) => `<li><span class="hm-ax-n">${String(k + 1).padStart(2, '0')}</span><span class="hm-ax-t">${t}</span><span class="hm-ax-d">${d}</span></li>`).join('')}</ol>
       </section>
 
-      <section class="wrap ep-intro">
-        <div class="section-head"><p class="eyebrow">The episodes</p><h2>Three episodes, one game. Each room asks more of you than the last.</h2></div>
-      </section>
-      ${EPS.map(placesSec).join('')}
-
-      ${soon ? `<section class="wrap places ep-block">
-        <div class="ep-panel ep-${soon.number} is-soon">
-          <header class="ep-head">
-            <span class="ep-num" aria-hidden="true">${soon.number}</span>
-            <div class="ep-titles"><p class="eyebrow">Episode ${soon.number} · In development</p><h2>${soon.title}</h2><p class="ep-blurb">${soon.blurb}</p></div>
-            <span class="ep-progress"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Coming soon</span>
+      <section class="hm-eps" aria-labelledby="hm-eps-h">
+        <div class="wrap">
+          <header class="hm-sec-head">
+            <p class="ix-label hm-label-accent">The episodes</p>
+            <h2 id="hm-eps-h">Three chapters. One board.</h2>
+            <p class="hm-sec-deck">Each episode moves you into rooms with more at stake: everyday life, then money, then the people you can't walk away from. Every scene remembers the ones before it.</p>
           </header>
-        </div>
-      </section>` : ''}
-
-      <section class="mk-band" aria-labelledby="mk-band-h">
-        <div class="mk-band-art" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
-        <div class="wrap mk-band-in">
-          <p class="eyebrow eyebrow-on-dark">Playing the Odds · Inspired by Market Wizards</p>
-          <h2 id="mk-band-h">The Trader's Mind</h2>
-          <p class="mk-band-sub">You don't have to predict the future. You have to survive it.</p>
-          <ul class="mk-band-tests">${TRACKS.market.list.map(sc => `<li><strong>${sc.title}</strong><span>${sc.tests}</span></li>`).join('')}</ul>
-          <button class="btn btn-primary" data-act="market">Enter The Trader's Mind</button>
+          ${EPS.map(chapter).join('')}
+          ${soon ? `<article class="hm-ch ix-ch-later"><header class="hm-ch-head"><div class="hm-ch-id"><span class="ix-ch-num">${String(soon.number).padStart(2, '0')}</span><span class="ix-label">Episode · In development</span></div><div class="hm-ch-main"><h3 class="hm-ch-title">${soon.title}</h3><p class="hm-ch-deck">${soon.blurb}</p></div></header></article>` : ''}
         </div>
       </section>
 
-      <section class="band">
+      <section class="hm-mk" aria-labelledby="hm-mk-h">
+        <div class="hm-mk-art" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
+        <div class="hm-mk-board" aria-hidden="true"></div>
+        <div class="wrap hm-mk-in">
+          <p class="hm-mk-k"><span class="ix-node" aria-hidden="true"></span>A second environment · Advanced</p>
+          <h2 id="hm-mk-h">The Trader's Mind</h2>
+          <p class="hm-mk-sub">You don't have to predict the future. You have to survive it.</p>
+          <p class="hm-mk-body">A harder board, with fewer people and more noise. Five challenges at one trading desk, with one account and no way to see what's coming. Inspired by <em>Market Wizards</em>, it tests what markets punish: how you size a risk, admit you're wrong, wait, adapt, and stay in the game.</p>
+          <ol class="hm-mk-tests">${TRACKS.market.list.map((sc, k) => `<li><span class="hm-mk-n">${String(k + 1).padStart(2, '0')}</span><strong>${sc.title}</strong><span>${sc.tests}</span></li>`).join('')}</ol>
+          <button class="hm-btn hm-btn-light" data-act="market">Enter The Trader's Mind</button>
+        </div>
+      </section>
+
+      <section class="hm-slowmo">
         <div class="wrap slowmo">
           <div class="slowmo-copy">
-            <p class="eyebrow">Signature feature</p>
+            <p class="ix-label hm-label-accent">Signature feature</p>
             <h2>Slow Motion Strategy</h2>
-            <p class="lede">Freeze any scene mid-conversation. The room goes still, and you see what each person wants, what you know, what you don't, and where each option might lead. Then resume, or replay the scene with a different approach.</p>
+            <p class="hm-sec-deck">Freeze any scene mid-conversation. The room goes still, and you see what each person wants, what you know, what you don't, and where each option might lead. Then resume, or replay the scene with a different approach.</p>
           </div>
           <div class="slowmo-still">
             <div class="stage is-frozen is-still">${staticScene(cred, { jordan: { mood: 'awkward', pose: 'clicker' }, ellen: { mood: 'happy' } })}
@@ -506,44 +499,45 @@
         </div>
       </section>
 
-      <section class="wrap bench-sec">
-        <div class="section-head"><p class="eyebrow">The bench</p><h2>Six thinkers and a trader. One question each.</h2>
-          <p class="lede">Each scene is seen through one of their lenses. Thomas Schelling sits at the head of the table: he studied people whose interests partly conflict and partly overlap, which describes almost everyone you'll meet.</p></div>
+      <section class="wrap bench-sec hm-bench">
+        <header class="hm-sec-head"><p class="ix-label hm-label-accent">The bench</p><h2>Six thinkers and a trader. One question each.</h2>
+          <p class="hm-sec-deck">Each scene is seen through one of their lenses. Thomas Schelling sits at the head of the table: he studied people whose interests partly conflict and partly overlap, which describes almost everyone you'll meet.</p></header>
         <ul class="bench-grid">${bench}</ul>
         <dialog class="thinker-dialog" id="thinker-dialog" aria-labelledby="thinker-dialog-h">
           <div class="thinker thinker-pop"></div>
           <form method="dialog" class="thinker-close-row"><button class="btn btn-ghost btn-sm" value="close">Close</button></form>
           <form method="dialog"><button class="thinker-x" value="close" aria-label="Close" autofocus>×</button></form>
         </dialog>
-        <button class="btn btn-link" data-act="bench">Read what each one teaches →</button>
+        <button class="hm-link" data-act="bench">Read what each one teaches ${IX_ARROW}</button>
       </section>
 
-      <section class="wrap next-move" aria-labelledby="next-move-h">
-        <div class="section-head"><p class="eyebrow">Your next move</p><h2 id="next-move-h">See the game without becoming part of the game.</h2></div>
-        <div class="nm-grid">
-          <button class="nm nm-play" data-act="${done ? 'profile' : 'play'}">
-            <img class="nm-art" src="/img/next/play.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
-            <span class="nm-k">${done ? 'Every scene played' : n ? `Episode ${at.ep.number} · Scene ${at.n} of ${at.of}` : 'Start here'}</span>
-            <span class="nm-t">${done ? 'See your dance' : !n ? 'Play Episode 1' : at.n === 1 ? `Start Episode ${at.ep.number}` : 'Continue playing'}</span>
-            <span class="nm-d">${done ? 'What the room saw, what your choices were buying, and one question to take with you.' : n ? `Pick up at ${LIST[n].title}.` : `${LIST.length} scenes across ${NUM[EPS.length] || EPS.length} episodes, starting at a grocery store checkout.`}</span>
-            <span class="nm-go" aria-hidden="true">→</span>
+      <section class="wrap hm-next" aria-labelledby="next-move-h">
+        <header class="hm-sec-head"><p class="ix-label hm-label-accent">Your next move</p><h2 id="next-move-h">See the game without becoming part of the game.</h2></header>
+        <div class="hm-next-grid">
+          <button class="hm-nm" data-act="${done ? 'profile' : 'play'}">
+            <img class="hm-nm-art" src="/img/next/play.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
+            <span class="ix-label">${done ? 'Every scene played' : n ? `Episode ${at.ep.number} · Scene ${at.n} of ${at.of}` : 'Start here'}</span>
+            <span class="hm-nm-t">${done ? 'See your dance' : !n ? 'Play Episode 1' : at.n === 1 ? `Start Episode ${at.ep.number}` : 'Continue playing'}</span>
+            <span class="hm-nm-d">${done ? 'What the room saw, what your choices were buying, and one question to take with you.' : n ? `Pick up at ${LIST[n].title}.` : `${LIST.length} scenes across ${NUM[EPS.length] || EPS.length} episodes, starting at a grocery store checkout.`}</span>
+            <span class="hm-nm-go">${IX_ARROW}</span>
           </button>
-          <button class="nm nm-bench" data-act="bench">
-            <img class="nm-art" src="/img/next/bench.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
-            <span class="nm-k">The bench</span>
-            <span class="nm-t">Meet the thinkers</span>
-            <span class="nm-d">Six thinkers and a trader, from Schelling and Nash to Ed Seykota, one question each.</span>
-            <span class="nm-go" aria-hidden="true">→</span>
+          <button class="hm-nm" data-act="bench">
+            <img class="hm-nm-art" src="/img/next/bench.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
+            <span class="ix-label">The bench</span>
+            <span class="hm-nm-t">Meet the thinkers</span>
+            <span class="hm-nm-d">Six thinkers and a trader, from Schelling and Nash to Ed Seykota, one question each.</span>
+            <span class="hm-nm-go">${IX_ARROW}</span>
           </button>
-          <button class="nm nm-prof" data-act="profile">
-            <img class="nm-art" src="/img/next/profile.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
-            <span class="nm-k">Your profile</span>
-            <span class="nm-t">${n ? 'See how you play' : 'What gets measured'}</span>
-            <span class="nm-d">${n ? 'Strengths, blind spots, and decisions versus luck.' : 'Ten measures of strategic judgment. Getting your way isn\'t one of them.'}</span>
-            <span class="nm-go" aria-hidden="true">→</span>
+          <button class="hm-nm" data-act="profile">
+            <img class="hm-nm-art" src="/img/next/profile.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
+            <span class="ix-label">Your profile</span>
+            <span class="hm-nm-t">${n ? 'See how you play' : 'What gets measured'}</span>
+            <span class="hm-nm-d">${n ? 'Strengths, blind spots, and decisions versus luck.' : 'Ten measures of strategic judgment. Getting your way isn\'t one of them.'}</span>
+            <span class="hm-nm-go">${IX_ARROW}</span>
           </button>
         </div>
-      </section>`;
+      </section>
+    </div>`;
   }
 
   // ───────────────────────── Bench

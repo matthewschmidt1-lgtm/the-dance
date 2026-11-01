@@ -1146,17 +1146,17 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 @media (prefers-reduced-motion: no-preference) { .hm-hero-art img { animation: drift 38s ease-in-out infinite alternate; } }
 .hm-hero-shade { position: absolute; inset: 0; z-index: -1;
   background:
-    linear-gradient(90deg, rgba(8, 9, 11, .92) 0%, rgba(8, 9, 11, .74) 32%, rgba(8, 9, 11, .18) 64%, rgba(8, 9, 11, .3) 100%),
-    linear-gradient(0deg, rgba(8, 9, 11, .95) 0%, rgba(8, 9, 11, .2) 34%, transparent 55%),
+    linear-gradient(90deg, rgba(8, 9, 11, .78) 0%, rgba(8, 9, 11, .45) 28%, transparent 50%),
+    linear-gradient(0deg, rgba(8, 9, 11, .88) 0%, rgba(8, 9, 11, .12) 26%, transparent 42%),
     linear-gradient(180deg, rgba(8, 9, 11, .55) 0%, transparent 22%),
-    radial-gradient(ellipse 80% 70% at 66% 46%, transparent 40%, rgba(0, 0, 0, .5) 100%); }
+    radial-gradient(ellipse 85% 75% at 60% 50%, transparent 50%, rgba(0, 0, 0, .4) 100%); }
 .hm-hero-in { align-self: end; padding-block: 140px var(--ix-s6); }
 .hm-hero-in > * { max-width: 48rem; }
 .hm-kicker { display: inline-flex; align-items: center; gap: var(--ix-s3); margin-bottom: var(--ix-s4); color: var(--ix-brass); font-family: var(--f-mono); font-size: .75rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
 .hm-kicker .ix-node { background: var(--ix-brass); border-color: var(--ix-brass); }
-.hm-hero-title { font-size: clamp(2.75rem, 6.6vw, 6.25rem); font-weight: 600; font-stretch: 88%; letter-spacing: -.035em; line-height: .96; max-width: 14ch; color: var(--ix-night-ink); text-shadow: 0 2px 30px rgba(0, 0, 0, .35); }
-.hm-hero-sub { margin-top: var(--ix-s4); font-family: var(--f-read); font-style: italic; font-size: clamp(1.25rem, 2.3vw, 1.875rem); line-height: 1.35; color: rgba(236, 230, 218, .88); }
-.hm-hero-actions { display: flex; flex-wrap: wrap; gap: var(--ix-s3); margin-top: var(--ix-s5); }
+.hm-hero-title { font-size: clamp(2rem, 3.9vw, 3.5rem); font-weight: 600; font-stretch: 90%; letter-spacing: -.03em; line-height: 1.02; max-width: 15ch; color: var(--ix-night-ink); text-shadow: 0 2px 30px rgba(0, 0, 0, .35); }
+.hm-hero-sub { margin-top: var(--ix-s3); font-family: var(--f-read); font-style: italic; font-size: clamp(1.0625rem, 1.6vw, 1.375rem); line-height: 1.35; color: rgba(236, 230, 218, .88); }
+.hm-hero-actions { display: flex; flex-wrap: wrap; gap: var(--ix-s3); margin-top: var(--ix-s4); }
 .hm-hero-foot { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ix-s2) var(--ix-s5); padding-block: var(--ix-s4) var(--ix-s5); border-top: 1px solid var(--ix-night-rule); font-family: var(--f-mono); font-size: .6875rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ix-night-mute); }
 .hm-hero-foot b { color: var(--ix-night-ink); font-size: .875rem; font-weight: 500; margin-right: 6px; letter-spacing: 0; }
 .hm-hero-at { margin-left: auto; color: var(--ix-brass); }
@@ -1263,10 +1263,12 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 }
 /* ── Phone ── */
 @media (max-width: 760px) {
-  .hm-hero { min-height: 88svh; }
-  .hm-hero-art img { object-position: 72% 62%; }
-  .hm-hero-shade { background: linear-gradient(0deg, rgba(8, 9, 11, .96) 0%, rgba(8, 9, 11, .82) 50%, rgba(8, 9, 11, .62) 72%, rgba(8, 9, 11, .5) 100%); }
-  .hm-hero-in { padding-block: 120px var(--ix-s5); }
+  /* On phones the board gets its own frame above the words, so the pieces and dice stay visible. */
+  .hm-hero { display: block; min-height: 0; }
+  .hm-hero-art { position: relative; inset: auto; z-index: 0; height: clamp(280px, 42svh, 380px); }
+  .hm-hero-art img { object-position: 76% 62%; }
+  .hm-hero-shade { inset: 0 0 auto; height: clamp(280px, 42svh, 380px); z-index: 1; background: linear-gradient(0deg, var(--ix-night) 0%, rgba(8, 9, 11, .4) 22%, transparent 45%), linear-gradient(180deg, rgba(8, 9, 11, .45) 0%, transparent 25%); }
+  .hm-hero-in { position: relative; z-index: 2; margin-top: -28px; padding-block: 0 var(--ix-s5); }
   .hm-hero-actions { flex-direction: column; align-items: stretch; }
   .hm-hero-foot { gap: var(--ix-s2) var(--ix-s4); }
   .hm-hero-at { margin-left: 0; flex-basis: 100%; }

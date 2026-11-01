@@ -438,7 +438,6 @@
         <div class="hm-hero-art"><img src="/img/hero-dance-floor.webp?v=${PP.assetV}" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dice rest in the foreground, and a corridor of doorways recedes into a soft glow of haze."></div>
         <div class="hm-hero-shade" aria-hidden="true"></div>
         <div class="wrap hm-hero-in">
-          <p class="hm-kicker"><span class="ix-node" aria-hidden="true"></span>The Dance · A strategic simulation</p>
           <h1 class="hm-hero-title">You don't have to be the most powerful person in the room.</h1>
           <p class="hm-hero-sub">You have to understand the room.</p>
           <div class="hm-hero-actions">${primary}<button class="hm-btn hm-btn-line" data-act="bench">Meet the thinkers</button></div>

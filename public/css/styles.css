@@ -1691,3 +1691,20 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .rl td { font-family: var(--f-mono); }
 .rl tr.is-broke th::after { content: " · broke your rule"; font-family: var(--f-mono); font-size: .6875rem; color: #a8372c; }
 .rl-sum { margin-top: 12px; font-size: .9688rem; line-height: 1.55; }
+
+/* ───────────────────────── Phone type floor ─────────────────────────
+   On a phone nothing is smaller than 12px. Uppercase mono labels sit at 12–13px (tracking makes
+   them read larger); short tags at 14px; anything that's a sentence you read at 15px or more. */
+@media (max-width: 760px) {
+  .hud-k, .mk-part-n, .hm-tm-part em, .hm-tm-a small, .bench-badge, .cl-tone, .cl-you, .cl-opt-tag,
+  .cl-size-out dt, .cl-size-band, .rl thead th, .mk-ladder span, .cl-u-sig span, .cl-u-dl dt, .cl-u-lab, .ph-time { font-size: 12px; }
+  .hm-tm-ring, .hm-tm-tick, .bench-more, .hm-tm-part, .hm-tm-qk, .hm-tm-n, .hm-link, .ix-label, .ix-no, .cl-open-k,
+  .te-l-tag, .cl-left, .cl-in-k, .cl-u-k, .rec-tone, .eyebrow, .rating-label, .hm-tm-k { font-size: 13px; }
+  .mkc-tag, .block-hint, .cl-size-ticks { font-size: 14px; }
+  .mkc-life, .rating-sub, .quad-d, .lenses li, .cl-small, .te-badge, .still-legend li, .ix-forces-list, .cap-notes li,
+  .small, .te-field, .te-label, .te-steps li, .te-l-remember, .te-related, .te-quote figcaption, .bar-name, .rec-title,
+  .cl-rules-line, .rl, .rl-sum, .mk-state li, .hud-v { font-size: 15px; }
+  .hud-k { letter-spacing: .04em; }
+  .hm .bench-badge, .hm-tm-qs .hm-tm-a small { font-size: 12px; }
+  .hm .bench-more, .ix-meta .ix-label, .ix-ch-forces .ix-label { font-size: 13px; }
+}

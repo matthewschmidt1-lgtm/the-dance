@@ -1241,8 +1241,8 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
   .hm-hero { display: block; min-height: 0; }
   .hm-hero-art { position: relative; inset: auto; z-index: 0; height: clamp(280px, 42svh, 380px); }
   .hm-hero-art img { object-position: 76% 62%; }
-  .hm-hero-shade { inset: 0 0 auto; height: clamp(280px, 42svh, 380px); z-index: 1; background: linear-gradient(0deg, var(--ix-night) 0%, rgba(8, 9, 11, .4) 22%, transparent 45%), linear-gradient(180deg, rgba(8, 9, 11, .45) 0%, transparent 25%); }
-  .hm-hero-in { position: relative; z-index: 2; margin-top: -28px; padding-block: 0 var(--ix-s6); }
+  .hm-hero-shade { inset: 0 0 auto; height: clamp(280px, 42svh, 380px); z-index: 1; background: linear-gradient(0deg, var(--ix-night) 0%, transparent 12%), linear-gradient(180deg, rgba(8, 9, 11, .45) 0%, transparent 25%); }
+  .hm-hero-in { position: relative; z-index: 2; margin-top: 20px; padding-block: 0 var(--ix-s6); }
   .hm-intro { padding-block: 48px; }
   .hm-eps { padding-block: var(--ix-s5) 88px; }
   .hm-sec-head { margin-bottom: var(--ix-s5); }

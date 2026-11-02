@@ -1188,28 +1188,7 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .hm-place:hover .hm-shot svg { transform: scale(1.05); filter: saturate(.85) contrast(1.08) brightness(.98); }
 .hm-place-d { margin-top: var(--ix-s4); padding-bottom: var(--ix-s3); border-bottom: 1px solid var(--ix-ink); min-height: 4.4em; font-family: var(--f-read); font-size: 1rem; line-height: 1.45; color: var(--ix-slate); }
 
-/* ── The Trader's Mind: a darker, harder board ── */
-.hm-mk { --ix-paper: var(--ix-night); position: relative; isolation: isolate; overflow: hidden; background: var(--ix-night); color: var(--ix-night-ink); }
-.hm-mk-art { position: absolute; inset: 0; z-index: -3; }
-.hm-mk-bg { position: absolute; inset: 0; transition: opacity .6s ease; }
-.hm-mk-bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; filter: blur(7px) saturate(.6) brightness(.72); transform: scale(1.06); }
-.hm-mk-bg.is-call { opacity: 0; }
-.hm-mk-bg.is-call img { object-position: 60% 50%; filter: blur(5px) saturate(.75) brightness(.7); }
-.hm-mk[data-part="call"] .hm-mk-bg.is-call { opacity: 1; }
-.hm-mk[data-part="call"] .hm-mk-bg.is-desk { opacity: 0; }
-.hm-mk-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8, 9, 11, .97) 0%, rgba(8, 9, 11, .92) 52%, rgba(8, 9, 11, .55) 78%, rgba(8, 9, 11, .35) 100%), linear-gradient(0deg, rgba(8, 9, 11, .9), transparent 40%); }
-.hm-mk-in { display: grid; justify-items: start; padding-block: 128px; }
-.hm-mk-in > * { max-width: 46rem; }
-.hm-mk-k { display: inline-flex; align-items: center; gap: var(--ix-s3); color: var(--ix-brass); font-family: var(--f-mono); font-size: .875rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
-.hm-mk-k .ix-node { background: var(--ix-brass); border-color: var(--ix-brass); }
-.hm-mk h2 { margin-top: var(--ix-s4); font-size: clamp(2.75rem, 6.2vw, 5rem); font-weight: 600; font-stretch: 88%; letter-spacing: -.035em; line-height: .96; }
-.hm-mk-sub { margin-top: var(--ix-s4); font-family: var(--f-read); font-style: italic; font-size: clamp(1.25rem, 2.2vw, 1.625rem); color: var(--ix-night-ink); }
-.hm-mk-body { margin-top: var(--ix-s4); max-width: 56ch; font-family: var(--f-read); font-size: 1.125rem; line-height: 1.6; color: var(--ix-night-mute); }
-.hm-mk-tests { list-style: none; margin: var(--ix-s5) 0; padding: 0; width: 100%; border-top: 1px solid rgba(236, 230, 218, .5); }
-.hm-mk-tests li { display: grid; grid-template-columns: 3rem minmax(10rem, 13rem) minmax(0, 1fr); gap: var(--ix-s3); align-items: baseline; padding: var(--ix-s3) 0; border-bottom: 1px solid var(--ix-night-rule); }
-.hm-mk-n { font-family: var(--f-mono); font-size: .75rem; font-weight: 600; color: var(--ix-brass); }
-.hm-mk-tests strong { font-weight: 600; font-size: 1.0625rem; }
-.hm-mk-tests span:last-child { font-family: var(--f-read); color: var(--ix-night-mute); font-size: .9688rem; }
+/* ── The Trader's Mind: see the two doors at the end of this file ── */
 
 /* ── Slow Motion Strategy ── */
 .hm-slowmo { padding-block: 120px; border-bottom: var(--ix-hair); }
@@ -1272,9 +1251,6 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
   .hm-ch-head .ix-ch-side { grid-column: 1; grid-template-columns: minmax(0, 1fr); gap: var(--ix-s3); }
   .hm-places { grid-template-columns: minmax(0, 1fr); gap: var(--ix-s5); }
   .hm-place-d { min-height: 0; }
-  .hm-mk-in { padding-block: 88px; }
-  .hm-mk-tests li { grid-template-columns: 2.5rem minmax(0, 1fr); }
-  .hm-mk-tests span:last-child { grid-column: 2; }
   .hm-slowmo, .hm-bench { padding-block: 80px; }
   .hm-nm, .hm-nm + .hm-nm { grid-template-columns: 6.5rem minmax(0, 1fr); }
 }
@@ -1401,21 +1377,6 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .mk-part-n { font-family: var(--f-mono); font-size: .625rem; letter-spacing: .16em; text-transform: uppercase; opacity: .7; }
 .mk-part-t { font-weight: 700; font-size: 1.125rem; }
 .mk-part-d { font-size: .8125rem; opacity: .75; }
-.hm-mk-choose { margin-top: var(--ix-s5); font-family: var(--f-mono); font-size: .75rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ix-night-mute); }
-.hm-mk-parts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; margin-top: var(--ix-s3); }
-.hm-mk-part { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "ico n" "ico t" "ico d" "ico c"; column-gap: 16px; align-content: start; padding: 20px 22px 20px 18px; text-align: left; background: rgba(12, 14, 16, .72); border: 1px solid rgba(236, 230, 218, .28); border-radius: 12px; color: var(--ix-night-ink); font: inherit; cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease; }
-.hm-mk-part:hover { transform: translateY(-2px); border-color: rgba(236, 230, 218, .6); box-shadow: 0 16px 34px -18px rgba(0, 0, 0, .8); }
-.hm-mk-part:focus-visible { outline: 2px solid var(--ix-brass); outline-offset: 3px; }
-.hm-mk-part[aria-selected="true"] { background: #ece6da; border-color: #ece6da; color: #0e1014; box-shadow: 0 18px 40px -20px rgba(0, 0, 0, .9); }
-.hm-mk-part[aria-selected="true"]::after { content: ""; position: absolute; top: 16px; right: 16px; width: 12px; height: 12px; border-radius: 50%; background: var(--ix-brass); box-shadow: 0 0 0 4px rgba(196, 157, 94, .25); }
-.hm-mk-ico { grid-area: ico; width: 40px; height: 40px; margin-top: 2px; padding: 8px; border: 1px solid currentColor; border-radius: 10px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
-.hm-mk-pn { grid-area: n; font-family: var(--f-mono); font-size: .6875rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ix-brass); }
-.hm-mk-part[aria-selected="true"] .hm-mk-pn { color: #7a5a24; }
-.hm-mk-pt { grid-area: t; margin-top: 2px; font-size: 1.5rem; font-weight: 650; letter-spacing: -.01em; line-height: 1.15; }
-.hm-mk-pd { grid-area: d; margin-top: 6px; font-family: var(--f-read); font-size: .9688rem; line-height: 1.4; opacity: .85; }
-.hm-mk-pc { grid-area: c; margin-top: 10px; font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .1em; text-transform: uppercase; opacity: .65; }
-.hm-mk-panel { width: 100%; animation: clRise .45s ease both; }
-.hm-mk-panel[hidden] { display: none; }
 
 /* ───────────────────────── The Call: the phone, the paper ───────────────────────── */
 .cl { background: #0b0d10; }
@@ -1586,9 +1547,6 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .cl-reflect p { max-width: 64ch; margin: 0 0 12px; font-family: var(--f-read); font-size: 1.125rem; line-height: 1.55; }
 
 @media (max-width: 760px) {
-  .hm-mk-parts { grid-template-columns: minmax(0, 1fr); }
-  .hm-mk-part { padding: 16px 18px 16px 14px; }
-  .hm-mk-pt { font-size: 1.3rem; }
   .mk-part { flex: 1 1 0; min-width: 0; padding: 10px 12px; }
   .mk-part-d { display: none; }
   .cl-scene { display: flex; flex-direction: column; gap: 10px; height: auto; padding: 10px; }
@@ -1623,6 +1581,97 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 }
 @media (prefers-reduced-motion: reduce) {
   .cl-l .w { animation: none !important; opacity: 1; }
-  .ph-ring, .ph-yes, .cl-unsaid .wrap > *, .hm-mk-panel, .cl-open-unknowns li { animation: none !important; }
+  .ph-ring, .ph-yes, .cl-unsaid .wrap > *, .cl-open-unknowns li { animation: none !important; }
   .cl-note { transition: none; }
+}
+
+/* ───────────────────────── The Trader's Mind on the home page: two doors ─────────────────────────
+   One account, two opponents. Each door shows its game running: a price falling through a stop,
+   a call being written down. Hover a door and it opens wider. Below both, the five questions they share. */
+.hm-tm { --ix-paper: var(--ix-night); padding-top: 112px; background: var(--ix-night); color: var(--ix-night-ink); }
+.hm-tm-head { padding-bottom: 52px; }
+.hm-tm-k { display: inline-flex; align-items: center; gap: var(--ix-s3); color: var(--ix-brass); font-family: var(--f-mono); font-size: .875rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+.hm-tm-k .ix-node { background: var(--ix-brass); border-color: var(--ix-brass); }
+.hm-tm h2 { margin-top: var(--ix-s4); font-size: clamp(2.75rem, 6.2vw, 5rem); font-weight: 600; font-stretch: 88%; letter-spacing: -.035em; line-height: .96; }
+.hm-tm-sub { margin-top: var(--ix-s4); font-family: var(--f-read); font-style: italic; font-size: clamp(1.25rem, 2.2vw, 1.625rem); }
+.hm-tm-lede { max-width: 58ch; margin-top: var(--ix-s4); font-family: var(--f-read); font-size: 1.125rem; line-height: 1.6; color: var(--ix-night-mute); }
+
+.hm-tm-split { display: flex; min-height: 620px; border-block: 1px solid var(--ix-night-rule); }
+.hm-tm-door { position: relative; isolation: isolate; display: flex; align-items: flex-start; flex: 1 1 0; min-width: 0; overflow: hidden; color: inherit; text-decoration: none; transition: flex-grow .6s cubic-bezier(.2, .7, .2, 1); }
+.hm-tm-door + .hm-tm-door { border-left: 1px solid var(--ix-night-rule); }
+.hm-tm-door:focus-visible { outline: 2px solid var(--ix-brass); outline-offset: -4px; }
+@media (hover: hover) and (min-width: 761px) {
+  .hm-tm-split:hover .hm-tm-door { flex-grow: .8; }
+  .hm-tm-split .hm-tm-door:hover, .hm-tm-split .hm-tm-door:focus-visible { flex-grow: 1.25; }
+}
+.hm-tm-bg { position: absolute; inset: 0; z-index: -1; }
+.hm-tm-bg img { width: 100%; height: 100%; object-fit: cover; filter: blur(5px) saturate(.6) brightness(.55); transform: scale(1.08); transition: filter .6s ease, transform .9s ease; }
+.is-desk .hm-tm-bg img { object-position: 50% 55%; }
+.is-call .hm-tm-bg img { object-position: 62% 50%; }
+.hm-tm-door:hover .hm-tm-bg img, .hm-tm-door:focus-visible .hm-tm-bg img { filter: blur(1.5px) saturate(.85) brightness(.72); transform: scale(1.03); }
+.hm-tm-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(8, 9, 11, .96) 0%, rgba(8, 9, 11, .72) 48%, rgba(8, 9, 11, .3) 100%); }
+.hm-tm-in { display: grid; justify-items: start; width: 100%; max-width: 34rem; padding: 64px clamp(24px, 4vw, 56px) 52px; }
+.is-desk .hm-tm-in { margin-left: auto; }
+.hm-tm-part { font-family: var(--f-mono); font-size: .75rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ix-brass); }
+.hm-tm-part em { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #c49d5e; color: #0e1014; font-style: normal; font-size: .625rem; letter-spacing: .12em; }
+.hm-tm-t { margin-top: 10px; font-size: clamp(2.25rem, 4.4vw, 3.5rem); font-weight: 650; font-stretch: 90%; letter-spacing: -.03em; line-height: 1; }
+.hm-tm-vs { margin-top: 12px; font-family: var(--f-read); font-style: italic; font-size: 1.25rem; }
+.hm-tm-d { max-width: 40ch; margin-top: 12px; font-family: var(--f-read); font-size: 1rem; line-height: 1.55; color: var(--ix-night-mute); }
+.hm-tm-live { display: block; width: 100%; max-width: 26rem; margin-top: 28px; }
+.hm-tm-go { display: inline-flex; align-items: center; gap: 10px; margin-top: 28px; padding: 12px 22px; border-radius: 999px; background: #ece6da; color: #0e1014; font-size: 1rem; font-weight: 600; transition: gap .3s ease; }
+.is-call .hm-tm-go { background: #2f8f5b; color: #fff; }
+.hm-tm-door:hover .hm-tm-go { gap: 16px; }
+
+/* The Desk, live: a price drawing itself down through the stop. */
+.hm-tm-chart { padding: 14px 16px 10px; background: rgba(6, 8, 10, .66); border: 1px solid rgba(236, 230, 218, .14); border-radius: 10px; }
+.hm-tm-tick { display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .12em; color: var(--ix-night-mute); }
+.hm-tm-tick b { color: #cf7a6f; font-weight: 600; animation: tmEnd 7s ease infinite; }
+.hm-tm-chart svg { display: block; width: 100%; height: 96px; margin-top: 6px; overflow: visible; }
+.hm-tm-chart .stop { stroke: #cf7a6f; stroke-width: 1.2; stroke-dasharray: 4 5; }
+.hm-tm-chart text { fill: #cf7a6f; font-family: var(--f-mono); font-size: 9px; font-weight: 600; letter-spacing: .08em; text-anchor: end; }
+.hm-tm-chart .px { fill: none; stroke: #ece6da; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 520; animation: tmPx 7s ease-in-out infinite; }
+.hm-tm-chart circle { fill: #cf7a6f; animation: tmEnd 7s ease infinite; }
+@keyframes tmPx { 0% { stroke-dashoffset: 520; opacity: 1; } 60% { stroke-dashoffset: 0; } 90% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes tmEnd { 0%, 56% { opacity: 0; } 64%, 90% { opacity: 1; } 100% { opacity: 0; } }
+
+/* The Call, live: a line written down, a number circled, a thought in the margin. */
+.hm-tm-paper { padding: 14px 18px 12px; background: #f7f1e3 repeating-linear-gradient(180deg, transparent 0 25px, rgba(60, 90, 120, .14) 25px 26px); color: #24211c; border-radius: 3px; box-shadow: 0 22px 44px -18px rgba(0, 0, 0, .8); transform: rotate(-1deg); }
+.hm-tm-ring { display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: .625rem; letter-spacing: .12em; text-transform: uppercase; color: #6f685c; }
+.hm-tm-ring i { width: 8px; height: 8px; border-radius: 50%; background: #2f8f5b; animation: tmPulse 1.2s ease-out infinite; }
+.hm-tm-line { display: block; margin-top: 10px; font-family: var(--f-read); font-size: 1.125rem; line-height: 26px; white-space: nowrap; clip-path: inset(-12px 100% -12px 0); animation: tmLine 8s steps(28) infinite; }
+.hm-tm-key { position: relative; font-weight: 600; color: #7a2a22; }
+.hm-tm-key svg { position: absolute; left: -10px; top: -8px; width: calc(100% + 20px); height: calc(100% + 16px); overflow: visible; }
+.hm-tm-key path { fill: none; stroke: #a8372c; stroke-width: 2.2; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-dasharray: 100; stroke-dashoffset: 100; animation: tmCircle 8s ease infinite; }
+.hm-tm-note { display: block; margin: 6px 0 0 34%; font-family: 'Caveat', cursive; font-size: 1.5rem; font-weight: 600; line-height: 1.1; color: #a8372c; transform: rotate(-3deg); clip-path: inset(-10px 100% -10px -10px); animation: tmNote 8s ease infinite; }
+@keyframes tmLine { 0% { clip-path: inset(-12px 100% -12px 0); opacity: 1; } 32%, 92% { clip-path: inset(-12px -12px -12px 0); opacity: 1; } 100% { clip-path: inset(-12px -12px -12px 0); opacity: 0; } }
+@keyframes tmCircle { 0%, 38% { stroke-dashoffset: 100; opacity: 1; } 50%, 92% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes tmNote { 0%, 54% { clip-path: inset(-10px 100% -10px -10px); opacity: 1; } 68%, 92% { clip-path: inset(-10px -10px -10px -10px); opacity: 1; } 100% { clip-path: inset(-10px -10px -10px -10px); opacity: 0; } }
+@keyframes tmPulse { 0% { box-shadow: 0 0 0 0 rgba(47, 143, 91, .6); } 100% { box-shadow: 0 0 0 8px rgba(47, 143, 91, 0); } }
+
+/* The five questions both parts ask. */
+.hm-tm-qs { padding-block: 56px 112px; }
+.hm-tm-qk { margin-bottom: 16px; font-family: var(--f-mono); font-size: .75rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ix-brass); }
+.hm-tm-qs ol { margin: 0; padding: 0; list-style: none; border-top: 1px solid rgba(236, 230, 218, .5); }
+.hm-tm-qs li { display: grid; grid-template-columns: 3rem minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--ix-night-rule); }
+.hm-tm-n { font-family: var(--f-mono); font-size: .75rem; font-weight: 600; color: var(--ix-brass); }
+.hm-tm-q { font-family: var(--f-read); font-size: 1.125rem; line-height: 1.4; }
+.hm-tm-a { font-size: 1rem; font-weight: 600; }
+.hm-tm-a small { display: block; margin-bottom: 2px; font-family: var(--f-mono); font-size: .625rem; font-weight: 400; letter-spacing: .14em; text-transform: uppercase; color: var(--ix-night-mute); }
+
+@media (max-width: 760px) {
+  .hm-tm { padding-top: 80px; }
+  .hm-tm-head { padding-bottom: 36px; }
+  .hm-tm-split { flex-direction: column; min-height: 0; }
+  .hm-tm-door { flex: none; }
+  .hm-tm-door + .hm-tm-door { border-left: 0; border-top: 1px solid var(--ix-night-rule); }
+  .hm-tm-in { max-width: none; padding: 52px 20px 40px; }
+  .is-desk .hm-tm-in { margin-left: 0; }
+  .hm-tm-qs { padding-block: 40px 80px; }
+  .hm-tm-qs li { grid-template-columns: 2.25rem minmax(0, 1fr) minmax(0, 1fr); row-gap: 8px; }
+  .hm-tm-q { grid-column: 2 / -1; }
+  .hm-tm-a:nth-child(3) { grid-column: 2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hm-tm-chart .px, .hm-tm-chart circle, .hm-tm-tick b, .hm-tm-line, .hm-tm-key path, .hm-tm-note, .hm-tm-ring i { animation: none !important; opacity: 1; stroke-dashoffset: 0; clip-path: none; }
+  .hm-tm-door, .hm-tm-bg img { transition: none; }
 }

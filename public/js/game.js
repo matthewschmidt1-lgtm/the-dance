@@ -459,36 +459,47 @@
         </div>
       </section>
 
-      <section class="hm-mk" aria-labelledby="hm-mk-h" data-part="desk">
-        <div class="hm-mk-art" aria-hidden="true">
-          <div class="hm-mk-bg is-desk"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
-          <div class="hm-mk-bg is-call"><img src="/img/env/desk-dusk-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/desk-dusk-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
+      <section class="hm-tm" aria-labelledby="hm-tm-h">
+        <header class="wrap hm-tm-head">
+          <p class="hm-tm-k"><span class="ix-node" aria-hidden="true"></span>Playing the Odds · Inspired by Market Wizards</p>
+          <h2 id="hm-tm-h">The Trader's Mind</h2>
+          <p class="hm-tm-sub">You don't have to predict the future. You have to survive it.</p>
+          <p class="hm-tm-lede">One $100,000 account and five kinds of capital, played two ways. First against the market, then against the people who call you about it.</p>
+        </header>
+        <div class="hm-tm-split">
+          <a class="hm-tm-door is-desk" href="#market" data-nav="market" aria-label="Part I, The Desk: you against the market. Five challenges.">
+            <span class="hm-tm-bg" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></span>
+            <span class="hm-tm-in">
+              <span class="hm-tm-part">Part I</span>
+              <span class="hm-tm-t">The Desk</span>
+              <span class="hm-tm-vs">You against the market.</span>
+              <span class="hm-tm-d">Five challenges at one trading desk. The price moves, the news arrives, and nobody tells you what it means.</span>
+              <span class="hm-tm-live hm-tm-chart" aria-hidden="true">
+                <span class="hm-tm-tick">CORVANE CLOUD<b>−$9,150</b></span>
+                <svg viewBox="0 0 320 110" preserveAspectRatio="none"><line class="stop" x1="0" y1="62" x2="320" y2="62"/><text x="316" y="56">STOP 47.80</text><polyline class="px" points="0,24 22,30 40,22 62,34 84,30 104,42 126,38 146,50 168,46 188,58 206,55 226,70 246,66 268,82 290,78 312,96"/><circle cx="312" cy="96" r="4"/></svg>
+              </span>
+              <span class="hm-tm-go">Sit down at the desk <i aria-hidden="true">→</i></span>
+            </span>
+          </a>
+          <a class="hm-tm-door is-call" href="#call" data-nav="call" aria-label="Part II, The Call: you against the person on the line. Five phone calls.">
+            <span class="hm-tm-bg" aria-hidden="true"><img src="/img/env/desk-dusk-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></span>
+            <span class="hm-tm-in">
+              <span class="hm-tm-part">Part II <em>New</em></span>
+              <span class="hm-tm-t">The Call</span>
+              <span class="hm-tm-vs">You against the person on the line.</span>
+              <span class="hm-tm-d">Five phone calls. Every caller has a reason for calling that isn't quite the one they give.</span>
+              <span class="hm-tm-live hm-tm-paper" aria-hidden="true">
+                <span class="hm-tm-ring"><i></i>Incoming · Michael Reeves</span>
+                <span class="hm-tm-line">“I've got a buyer at <span class="hm-tm-key">$34.80<svg viewBox="0 0 100 40" preserveAspectRatio="none"><path pathLength="100" d="M6,22 C6,4 94,2 96,20 C98,38 10,40 14,14"/></svg></span>.”</span>
+                <span class="hm-tm-note">He has a buyer. Who?</span>
+              </span>
+              <span class="hm-tm-go">Answer the phone <i aria-hidden="true">→</i></span>
+            </span>
+          </a>
         </div>
-        <div class="wrap hm-mk-in">
-          <p class="hm-mk-k"><span class="ix-node" aria-hidden="true"></span>Playing the Odds · Inspired by Market Wizards</p>
-          <h2 id="hm-mk-h">The Trader's Mind</h2>
-          <p class="hm-mk-sub">You don't have to predict the future. You have to survive it.</p>
-          <p class="hm-mk-choose">Two ways to play</p>
-          <div class="hm-mk-parts" role="tablist" aria-label="The Trader's Mind">
-            <button type="button" role="tab" id="hm-tab-desk" aria-controls="hm-part-desk" aria-selected="true" class="hm-mk-part" data-act="hm-part" data-v="desk">
-              <svg class="hm-mk-ico" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="6" width="24" height="15" rx="1.5"/><path d="M12 26h8M16 21v5"/></svg>
-              <span class="hm-mk-pn">Part I</span><span class="hm-mk-pt">The Desk</span><span class="hm-mk-pd">Five challenges at one trading desk.</span><span class="hm-mk-pc">5 challenges</span>
-            </button>
-            <button type="button" role="tab" id="hm-tab-call" aria-controls="hm-part-call" aria-selected="false" class="hm-mk-part" data-act="hm-part" data-v="call" tabindex="-1">
-              <svg class="hm-mk-ico" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 4l4 5-2.5 2.5c1.5 4 5 7.5 9 9L22 18l5 4-2.5 4.5C14 26 6 18 5.5 7.5z"/></svg>
-              <span class="hm-mk-pn">Part II · New</span><span class="hm-mk-pt">The Call</span><span class="hm-mk-pd">Five phone calls. Every caller has an agenda.</span><span class="hm-mk-pc">5 calls</span>
-            </button>
-          </div>
-          <div class="hm-mk-panel" id="hm-part-desk" role="tabpanel" aria-labelledby="hm-tab-desk">
-            <p class="hm-mk-body">A harder board, with fewer people and more noise. Five challenges at one trading desk, with one account and no way to see what's coming. Inspired by <em>Market Wizards</em>, it tests what markets punish: how you size a risk, admit you're wrong, wait, adapt, and stay in the game.</p>
-            <ol class="hm-mk-tests">${TRACKS.market.list.map((sc, k) => `<li><span class="hm-mk-n">${String(k + 1).padStart(2, '0')}</span><strong>${sc.title}</strong><span>${sc.tests}</span></li>`).join('')}</ol>
-            <button class="hm-btn hm-btn-light" data-act="market">Sit down at the desk</button>
-          </div>
-          <div class="hm-mk-panel" id="hm-part-call" role="tabpanel" aria-labelledby="hm-tab-call" hidden>
-            <p class="hm-mk-body">Some of the most expensive decisions begin with a phone call. Five callers, each with a reason for calling that isn't quite the one they give. Every call has two games in it: the conversation you think you're having, and the one they're playing.</p>
-            <ol class="hm-mk-tests">${PP.call.calls.map((c, k) => `<li><span class="hm-mk-n">${String(k + 1).padStart(2, '0')}</span><strong>${c.title}</strong><span>${c.tests}</span></li>`).join('')}</ol>
-            <button class="hm-btn hm-btn-light" data-act="call">Answer the phone</button>
-          </div>
+        <div class="wrap hm-tm-qs">
+          <p class="hm-tm-qk">The same five questions, asked two ways</p>
+          <ol>${TRACKS.market.list.map((sc, k) => `<li><span class="hm-tm-n">${String(k + 1).padStart(2, '0')}</span><span class="hm-tm-q">${sc.tests}</span><span class="hm-tm-a"><small>The Desk</small>${sc.title}</span><span class="hm-tm-a"><small>The Call</small>${PP.call.calls[k].title}</span></li>`).join('')}</ol>
         </div>
       </section>
 
@@ -1411,13 +1422,6 @@
       case 'call': go('call'); break;
       case 'phone': PP.callGame.unlockAudio(); go('phone'); break;
       case 'mk-part': go(act.dataset.v === 'call' ? 'call' : 'market', true); break;
-      case 'hm-part': {
-        const sec = act.closest('.hm-mk');
-        sec.querySelectorAll('[role="tab"]').forEach(t => { const on = t === act; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; });
-        sec.querySelectorAll('[role="tabpanel"]').forEach(p => { p.hidden = p.id !== `hm-part-${act.dataset.v}`; });
-        sec.dataset.part = act.dataset.v;
-        break;
-      }
       case 'rules-edit': rules = null; saveRules(); render(); break;
       case 'market-reset':
         if (!confirmReset) { confirmReset = true; render(); app.querySelector('[data-act="market-reset"]').focus(); return; }

@@ -7,7 +7,7 @@ window.PP = window.PP || {};
 PP.art = (function () {
   let uid = 0;
   // Bump when rendered images change, so browsers fetch the new files.
-  PP.assetV = '12';
+  PP.assetV = '13';
 
   const DOG = `<g class="dog-head">
     <path d="M-30,-6 C-46,0 -48,34 -36,44 C-30,30 -28,14 -24,4 Z" fill="#5a3f28"/>

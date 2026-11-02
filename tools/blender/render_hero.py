@@ -165,7 +165,7 @@ for ix in range(-N // 2, N // 2):
 floor = mesh_from('floor', bm, [ivory_tile, dark_tile])
 floor.location = (-0.5, 0, 0)
 
-# The night sea beyond the floor: dark, gently rippled, glossy enough to carry the moon.
+# The night sea beyond the floor: dark, rippled, glossy enough to carry the moon.
 sea = mat('sea', '#07101b', 0.22, coat=0.0)
 nt = sea.node_tree
 noise = nt.nodes.new('ShaderNodeTexNoise')
@@ -181,6 +181,25 @@ nt.links.new(mapping.outputs['Vector'], noise.inputs['Vector'])
 nt.links.new(noise.outputs['Fac'], bump.inputs['Height'])
 nt.links.new(bump.outputs['Normal'], nt.nodes['Principled BSDF'].inputs['Normal'])
 box('sea', (0, 260, -0.4), (1600, 520, 0.02), sea)
+# Rolling swells in the near water: crests run along the shore and catch the moonlight.
+# Rows bunch up near the floor, where each wave is big on screen, and thin out toward the horizon.
+
+
+def swell(x, y):
+    fade = max(0.25, 1 - (y - 6) / 110)
+    return fade * (0.10 * math.sin(2 * math.pi * y / 2.8 + 0.6 * math.sin(x / 3.4))
+                   + 0.045 * math.sin(2 * math.pi * (0.72 * y + 0.3 * x) / 1.6)
+                   + 0.025 * math.sin(2 * math.pi * (0.6 * y - 0.45 * x) / 1.1))
+
+
+wb = bmesh.new()
+xs = [-70 + 140 * i / 420 for i in range(421)]
+ys = [6 + 120 * (j / 260) ** 1.7 for j in range(261)]
+grid = [[wb.verts.new((x, y, -0.27 + swell(x, y))) for x in xs] for y in ys]
+for j in range(len(ys) - 1):
+    for i in range(len(xs) - 1):
+        wb.faces.new((grid[j][i], grid[j][i + 1], grid[j + 1][i + 1], grid[j + 1][i]))
+mesh_from('swells', wb, sea, smooth=True)
 edge = mat('edge', '#121a1c', 0.6)
 box('floor-edge', (-0.5, 5.98, -0.2), (40, 0.04, 0.42), edge)
 for x in (-1.5, 2.5):

@@ -193,6 +193,30 @@ window.PP = window.PP || {};
   const hiding = c => c.type === 'hiding';
   add({
     id: 'just-this-once',
+    // A beat scene: you say what you're protecting, spend two reads, hear Dana's pitch,
+    // answer, and sometimes have to hold your answer under pressure.
+    play: true,
+    reads: 2,
+    readAsk: `Dana is waiting. What do you check before you answer?`,
+    stakes: {
+      ask: `Henley is due tomorrow at noon. What are you protecting this week?`,
+      choices: [
+        { id: 'standing', label: `Your standing`, note: `Henley on time, and Ellen seeing you as someone who delivers.` },
+        { id: 'allies', label: `Your allies`, note: `People who'll back you when it counts.` },
+        { id: 'time', label: `Your time`, note: `Your evenings, and the work that's actually yours.` }
+      ]
+    },
+    // What she says once you stop looking: it depends on who she is, and on what she knows you checked.
+    press: c => {
+      const knows = has(c, 2);
+      if (offloader(c)) return knows ? { who: 'dana', mood: 'frustrated', say: `Priya says you've been asking about me. If it's a problem, I'll find someone else.` }
+        : { who: 'dana', mood: 'smile', say: `I'm drowning. It's two hours, tops, for you. You're so fast at the vendor stuff.` };
+      if (hiding(c)) return knows ? { who: 'dana', mood: 'sad', say: `She told you, didn't she. Look, if you can't, that's okay.` }
+        : { who: 'dana', mood: 'sad', say: `If you can't, that's okay. Really.` };
+      return knows ? { who: 'dana', mood: 'awkward', say: `Priya said you asked. It's fine, I would too. I'm drowning, honestly.` }
+        : { who: 'dana', mood: 'nervous', say: `I'm drowning. Ellen keeps piling things on.` };
+    },
+    pushFx: { hold: { rep: { firm: 1 } } },
     level: `Conflicting interests`,
     arena: `The workplace`,
     title: `Just This Once`,
@@ -213,20 +237,32 @@ window.PP = window.PP || {};
     clues: [
       { label: `Check the project tracker`, text: c => c.type === 'overloaded' ? `Five open items, three overdue. One is the Arden onboarding, assigned by Ellen yesterday with no deadline relief.` : `Three open items, two overdue. Nothing new assigned this week.${hiding(c) ? ` Her status has shown "away" by 3 pm every day this week.` : ''}` },
       { label: `Scroll back through the team channel`, text: c => offloader(c) ? `She's asked three different people for "quick" help this month. She thanked one of them.` : `After you helped the first time: "Huge thanks, you saved me." She's asked one other person this month, and thanked them publicly.` },
-      { label: `Ask Priya if Dana has asked her too`, cost: { note: `Priya will probably mention to Dana that you asked.`, rel: { dana: -1 }, flags: { danaKnows: true } }, text: c => offloader(c) ? `"Twice. I said no the second time. She just asked someone else."` : hiding(c) ? `Priya lowers her voice. "Don't push her on this. Her mom's in the hospital. She hasn't told Ellen."` : `"No. But Ellen dumped the Arden onboarding on her yesterday. She's underwater."` }
+      { label: `Ask Priya if Dana has asked her too`, cost: { note: `Priya will probably mention to Dana that you asked.`, rel: { dana: -1 }, flags: { danaKnows: true } }, text: c => offloader(c) ? `"Twice. I said no the second time. She just asked someone else."` : hiding(c) ? `Priya lowers her voice. "Don't push her on this. Her mom's in the hospital. She hasn't told Ellen."` : `"No. But Ellen dumped the Arden onboarding on her yesterday. She's underwater."` },
+      { label: `Ask Dana what's going on this week`, cost: { note: `Dana will notice you're checking.`, rep: { careful: 1 } }, text: c => offloader(c) ? `"Oh, you know, slammed!" She doesn't name a single thing.` : hiding(c) ? `She hesitates. "It's… a lot right now. Personal stuff." Then she changes the subject.` : `"Ellen gave me the Arden onboarding yesterday, on top of everything." She sounds tired, not slick.` }
     ],
     question: `How do you reply?`,
     options: [
       {
         key: 'A', text: `"Sure, send it over. I'll make it work tonight."`,
+        fx: c => ({ time: -4, standing: -1, allies: offloader(c) ? 0 : 1 }),
+        rep: c => offloader(c) ? { easy: 1 } : { easy: 1, kind: 1 },
         their: c => hiding(c) ? `Dana was holding a crisis together with tape. A yes with no questions was exactly the help she couldn't ask for out loud.` : offloader(c) ? `Asking you was Dana's cheapest move, and it worked again. Help with no conditions teaches people where to bring their work.` : `Dana's problem was Ellen's assignment, not the vendor section. You absorbed it, so Ellen will never know it was a problem.`,
-        q: c => hiding(c) ? (has(c, 2) ? 4 : 3) : offloader(c) ? (any(c, 1, 2) ? 1 : 2) : 2,
+        q: c => hiding(c) ? (has(c, 2) ? 4 : 3) : offloader(c) ? (any(c, 1, 2, 3) ? 1 : 2) : 2,
         s: { coo: 2, bnd: -2, lng: -1 }, rel: { dana: 1 }, flags: c => ({ danaType: c.type, danaPattern: 'always-yes' }),
         outcomes: [{ p: 1, tone: c => hiding(c) ? 'good' : 'mixed', text: c => hiding(c) ? `You work until nine. On Monday Dana leaves a coffee on your desk, and a note: "You have no idea."` : `You work until nine on Thursday, and Henley goes in at 11:58 Friday. Dana sends three hearts.` }],
         later: c => offloader(c) ? `Two weeks later Dana asks again. The message is shorter, and there's no "any chance."` : `Kind, and expensive. Whether it was the right kind of kind depended on why she was asking.`
       },
       {
         key: 'B', text: `"I can't this time. I've got Henley due Friday, and I'm already behind."`,
+        fx: c => offloader(c) && has(c, 2) ? { allies: -2, standing: -1 } : { allies: -1 },
+        rep: c => offloader(c) && has(c, 2) ? { sharp: 1 } : { firm: 1 },
+        push: c => hiding(c) || (offloader(c) && has(c, 2)) ? null : {
+          who: 'dana', mood: offloader(c) ? 'smile' : 'sad',
+          say: offloader(c) ? `Even an hour? You're so much faster at this than me.` : `Please. I'm going under here.`,
+          hold: { label: `Hold the line`, line: `I can't this week. I'm sorry.` },
+          give: { label: `Give in`, line: `Okay, fine. Send it over.`, key: 'A' },
+          walk: { label: `Soften it`, line: `Not before Friday noon. After that, two hours.`, key: 'D' }
+        },
         needs: c => offloader(c) ? [2] : [-1], vague: { text: `"I can't this time. I've got Henley due Friday, and I'm already behind."`, their: c => offloader(c) ? `A plain no ended the free ride. Dana found someone else.` : `A plain no protected your Friday. Dana still has to solve the problem, without you, and without knowing why you said no.` },
         text: `"Priya says you've asked her twice too. I'm passing, and Ellen should know where this work keeps landing."`,
         their: `True, and you said it with Ellen in earshot. Dana stops asking you, and starts telling people you're difficult.`,
@@ -240,17 +276,33 @@ window.PP = window.PP || {};
       },
       {
         key: 'C', text: `"What's involved, and when do you need it? I'm on Henley until Friday noon."`,
+        fx: c => ({ time: -2, allies: offloader(c) ? 0 : 1 }),
+        rep: { careful: 1 },
+        push: c => offloader(c) ? {
+          who: 'dana', mood: 'smile', say: `It's honestly just formatting. Could you start tonight?`,
+          hold: { label: `Set your terms`, line: `Friday afternoon, two hours. And you take my Monday notes.`, key: 'D' },
+          give: { label: `Give in`, line: `Fine. Tonight.`, key: 'A' },
+          walk: { label: `Back out`, line: `Actually, I can't take this on right now.`, key: 'B' }
+        } : null,
         their: c => offloader(c) ? `Asking how big it is sounds like a maybe. Dana shrank it to "two hours," and once you'd asked, saying no felt worse than saying yes.` : `A question costs Dana nothing to answer, and she could shrink the ask to fit your schedule.`,
-        q: c => offloader(c) ? (any(c, 1, 2) ? 1 : 2) : 3,
+        q: c => offloader(c) ? (any(c, 1, 2, 3) ? 1 : 2) : 3,
         s: { inf: 2, neg: 1, com: 2, coo: 1 }, rel: { dana: 1 }, flags: c => ({ danaType: c.type, danaPattern: 'trade' }),
         outcomes: [
           { p: c => offloader(c) ? 0.3 : 0.75, tone: 'good', text: `"The numbers exist, they just need formatting. Two hours, tops." You do it Friday afternoon. She takes your Monday standup notes.` },
-          { p: c => offloader(c) ? 0.7 : 0.25, tone: 'mixed', text: c => offloader(c) ? `"Two hours, tops." It's eleven. By the time you realize, you're too far in to stop.` : `"It's kind of most of the report." She'll figure it out. Asking saved your weekend.` }
+          { p: c => offloader(c) ? 0.7 : 0.25, tone: 'mixed', fx: c => offloader(c) ? { time: -5, standing: -1 } : {}, text: c => offloader(c) ? `"Two hours, tops." It's eleven. By the time you realize, you're too far in to stop.` : `"It's kind of most of the report." She'll figure it out. Asking saved your weekend.` }
         ],
         later: c => offloader(c) ? `Asking is usually wise. With someone who takes, it's also the first step of saying yes.` : `You found out what it was before you agreed to it.`
       },
       {
         key: 'D', text: `"Not before Friday noon. After that I'll give you two hours, and you take my Monday notes."`,
+        fx: c => ({ time: -2, allies: offloader(c) ? 0 : 1 }),
+        rep: { firm: 1, fair: 1 },
+        push: c => offloader(c) ? {
+          who: 'dana', mood: 'awkward', say: `Could you do tonight instead? Friday's too late for me.`,
+          hold: { label: `Hold your terms`, line: `Friday afternoon, two hours. That's the offer.` },
+          give: { label: `Give in`, line: `Okay. Tonight.`, key: 'A' },
+          walk: { label: `Withdraw the offer`, line: `Then I'm out. Sorry.`, key: 'B' }
+        } : null,
         their: c => offloader(c) ? `Help with a limit and a price makes you an expensive person to offload onto. Dana took the deal, or went elsewhere, and either was fine.` : c.type === 'overloaded' ? `A fair trade, but it treats the symptom. Ellen's new assignment is still on Dana's desk next week.` : `Two hours, on your terms. It helped, without anyone having to explain anything.`,
         q: c => offloader(c) ? 4 : hiding(c) ? 3 : 2,
         s: { bnd: 2, neg: 2, coo: 1, lng: 1 }, rel: { dana: c => offloader(c) ? 0 : 1 }, flags: c => ({ danaType: c.type, danaPattern: 'trade' }),
@@ -262,7 +314,10 @@ window.PP = window.PP || {};
       },
       {
         key: 'E', text: `"Ellen gave you Arden yesterday with no relief, didn't she? Let's take it to her together."`,
-        needs: c => c.type === 'overloaded' ? [0] : [-1], vague: { text: `"Sounds like you're swamped. Want to raise it with Ellen together?"`, q: c => hiding(c) ? (has(c, 2) ? 0 : 1) : 2 },
+        fx: c => c.type === 'overloaded' ? { standing: 1, allies: 1, time: -1 } : hiding(c) ? { allies: -1, time: -1 } : { standing: -1, time: -1 },
+        rep: { direct: 1 },
+        // The tracker, Priya, or Dana herself can tell you about Arden.
+        needs: c => c.type === 'overloaded' ? [[0, 2, 3].find(i => c.clues.includes(i)) ?? 0] : [-1], vague: { text: `"Sounds like you're swamped. Want to raise it with Ellen together?"`, q: c => hiding(c) ? (has(c, 2) ? 0 : 1) : 2 },
         their: c => c.type === 'overloaded' ? `The problem was Ellen's assignment. Going together gave Dana cover to say so, and gave Ellen a reason to act.` : hiding(c) ? `Dana was hiding something from Ellen on purpose. Offering to go to Ellen together was the one kind of help she couldn't accept.` : `Dana wasn't overloaded. Taking a habit to the manager as a workload problem embarrassed everyone.`,
         q: 4, s: { inc: 2, coo: 2, com: 1, inf: 1 }, rel: { dana: c => hiding(c) ? -1 : 1 }, flags: c => ({ danaType: c.type, danaPattern: 'trade' }),
         outcomes: [
@@ -771,6 +826,10 @@ window.PP = window.PP || {};
       { who: 'jordan', mood: 'confident', say: `It really came together over the weekend.`, if: c => c.type === 'schemer' },
       { who: 'jordan', mood: 'nervous', act: 'glance', caption: `Jordan glances at Ellen before every slide.`, if: c => c.type === 'sanctioned' },
       { who: 'ellen', mood: 'happy', act: 'nod', say: `Really sharp thinking, Jordan.` },
+      // Word gets around: what you did with Dana reached the rest of the office.
+      { if: c => (((c.flags || {}).rep) || {}).easy > 0, who: 'jordan', mood: 'confident', act: 'glance', caption: `Word gets around. Jordan has heard you're the one who says yes, and he looks at you like he's counting on it.` },
+      { if: c => { const r = ((c.flags || {}).rep) || {}; return r.firm > 0 && !(r.easy > 0); }, who: 'jordan', mood: 'awkward', act: 'glance', caption: `Word gets around. Jordan has heard you hold your ground. He doesn't quite meet your eye.` },
+      { if: c => (((c.flags || {}).rep) || {}).sharp > 0, who: 'dana', mood: 'skeptical', caption: `Dana hasn't forgotten what you said about her with Ellen in earshot. Neither has the room.` },
       { who: 'jordan', mood: 'awkward', pose: 'clicker', act: 'glance', caption: `Jordan looks directly at you. He says nothing.` },
       { if: c => (c.rel.dana || 0) > 0, who: 'dana', mood: 'skeptical', caption: `Dana catches your eye. She knows those slides were yours.` }
     ],

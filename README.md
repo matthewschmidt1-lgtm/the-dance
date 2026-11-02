@@ -146,6 +146,10 @@ For the game sets, add env names (`checkout desks kitchen conference street yard
 2. Give every option at least as many staged outcomes as scripted ones.
 3. Add the id to an episode in `PP.episodes` in `scenes.js`.
 
+### Beat scenes (Phase 1: Just This Once)
+
+A scene with `play: true` is played in beats instead of one decision: `stakes` (what you're protecting: standing, allies or time), a budget of `reads` (the same budget Slow-mo uses), `press` (what the other person says once you stop looking, which depends on who they are and what you checked), your answer, and an optional `push` per option (they push back; you hold, give in or change your answer, and giving in changes what your move was). Options and outcomes can carry `fx` (changes to standing, allies and hours) and `rep` (what people now think of you: easy to ask, holds their ground, and so on). Reputation is kept in `flags.rep`, so later scenes can react to it: in The Credit Taker, Jordan has heard what kind of colleague you are. The results screen for these scenes leads with consequences; the grade sits under "How you played it." 
+
 ## Run locally
 
 Requires Node 18+.

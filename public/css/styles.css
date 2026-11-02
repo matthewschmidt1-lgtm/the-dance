@@ -1264,3 +1264,43 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
   .hm-slowmo, .hm-bench { padding-block: 80px; }
   .hm-nm, .hm-nm + .hm-nm { grid-template-columns: 6.5rem minmax(0, 1fr); }
 }
+
+/* ── Beat scenes: stakes, reads, their pitch, their push, and consequences first ── */
+.meters { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 10px; font-family: var(--f-mono); font-size: .75rem; }
+.mtr { display: inline-flex; align-items: baseline; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.mtr-k { color: var(--muted); text-transform: uppercase; letter-spacing: .1em; font-size: .6875rem; }
+.mtr-v { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.mtr-v em { font-style: normal; margin-left: 6px; font-weight: 600; }
+.mtr-v em.up { color: var(--good); } .mtr-v em.down { color: var(--bad); }
+.mtr.is-stake { border-bottom-color: var(--ink); }
+.mtr.is-stake .mtr-k { color: var(--ink); }
+.beat { display: grid; gap: 14px; }
+.beat-k { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.beat-q { font-size: var(--t-xl); font-weight: 700; line-height: 1.2; }
+.beat-note { color: var(--muted); font-size: var(--t-sm); }
+.beat-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.beat-choice { display: grid; gap: 6px; align-content: start; text-align: left; padding: 16px 18px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; transition: border-color .15s, background .15s; }
+.beat-choice strong { font-size: var(--t-md); }
+.beat-choice span { color: var(--muted); font-family: var(--f-read); font-size: var(--t-sm); line-height: 1.45; }
+.beat-choice:hover { border-color: var(--ink); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.beat-choice:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.beat-say { margin: 0; padding: 4px 0 4px 16px; border-left: 2px solid var(--accent); font-family: var(--f-read); font-size: var(--t-lg); line-height: 1.45; }
+.beat-say-lead { margin-bottom: 16px; }
+.beat-say-lead span { display: block; margin-bottom: 2px; font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.clue.is-shut .clue-label { color: var(--muted); }
+.clue.is-shut .clue-state { color: var(--muted); }
+.cq { padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+.meters-result { margin-top: 8px; font-size: .875rem; }
+.cq-stake { margin-top: 10px; font-family: var(--f-read); font-size: var(--t-lg); }
+.cq-push { margin-top: 4px; color: var(--muted); font-family: var(--f-read); }
+.cq-read { margin-block: 18px; }
+.cq-traits { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 6px; }
+.cq-traits li { padding: 4px 10px; border: 1px solid var(--line); border-radius: 2px; font-size: var(--t-sm); font-weight: 600; }
+.cq-judge { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--line); }
+.cq-judge summary { cursor: pointer; font-weight: 650; list-style: none; display: flex; align-items: center; gap: 10px; }
+.cq-judge summary::-webkit-details-marker { display: none; }
+.cq-judge summary::after { content: "Show"; margin-left: auto; font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.cq-judge[open] summary::after { content: "Hide"; }
+.cq-judge summary span { font-family: var(--f-mono); }
+.cq-judge > * + * { margin-top: 12px; }
+@media (max-width: 760px) { .beat-choices { grid-template-columns: minmax(0, 1fr); } }

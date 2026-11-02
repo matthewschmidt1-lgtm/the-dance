@@ -22,7 +22,8 @@
   const epEnd = i => !!LIST[i] && (!LIST[i + 1] || LIST[i + 1].ep !== LIST[i].ep);
   const DANCE_AT = EPS[0].scenes.length; // "Your Dance" opens once the first episode is played
   const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
-  const fresh = (clues = [], type = null) => ({ selected: null, clues, type });
+  // step / stake / push are for beat scenes (sc.play): stakes first, then reads, her pitch, your answer, her push.
+  const fresh = (clues = [], type = null) => ({ selected: null, clues, type, step: null, stake: null, push: null });
   // Some people are one of several hidden types (Luis honest or padding). Each play draws one.
   // Scenes that share a key (Omar across the trip and the loan) keep whoever was drawn first.
   function drawType(sc, past = []) {
@@ -164,6 +165,10 @@
     </div>`;
   }
 
+  // What you're protecting in a beat scene: standing with your manager, allies, and free hours this week.
+  const START_METERS = { standing: 0, allies: 0, time: 10 };
+  const METER_NAME = { standing: 'Standing', allies: 'Allies', time: 'Time' };
+  const addUp = (...objs) => objs.reduce((t, o) => { Object.entries(o || {}).forEach(([k, v]) => { t[k] = (t[k] || 0) + v; }); return t; }, {});
   function derive(hist) {
     const totals = Object.fromEntries(Object.keys(skills).map(k => [k, 0]));
     const rel = {}, flags = {};
@@ -184,9 +189,21 @@
         Object.entries(cost.rel || {}).forEach(([k, v]) => { rel[k] = (rel[k] || 0) + v; });
         Object.assign(flags, cost.flags || {});
       });
+      // Beat scenes also move what you're protecting (standing, allies, hours) and what people think of you.
+      let fx = null, repDelta = null;
+      if (sc.play) {
+        const c = { ...ctx, clues: h.clues, rules };
+        const push = h.push && sc.pushFx ? sc.pushFx[h.push] || {} : {};
+        fx = addUp(val(opt.fx, c), val(opt.outcomes[h.outcome].fx, c), push.fx);
+        repDelta = addUp(val(opt.rep, c), push.rep, ...h.clues.map(i => (sc.clues[i] || {}).cost && sc.clues[i].cost.rep));
+        const m = flags.meters || { ...START_METERS };
+        flags.meters = Object.fromEntries(Object.keys(START_METERS).map(k => [k, m[k] + (fx[k] || 0)]));
+        flags.rep = addUp(flags.rep, repDelta);
+        if (h.stake) flags.stake = h.stake;
+      }
       const before = rating;
       rating += (opt.q - 2) * 40;
-      return { sc, opt, opts, ctx, type: ctx.type, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating };
+      return { sc, opt, opts, ctx, type: ctx.type, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating, fx, rep: repDelta, stake: h.stake, push: h.push, said: h.said };
     });
     return { totals, rel, flags, rating, moves };
   }
@@ -569,6 +586,7 @@
           <div class="chips"><span class="chip">${sc.level}</span>${sc.lens.map((k, i) => `<span class="chip ${i ? '' : 'chip-lens'}">${i ? 'Also' : 'Lens'} · ${thinkers[k].short}</span>`).join('')}</div>
         </div>
         ${isMarket() ? `<div class="hud" id="hud" aria-label="Your capital">${hud(capitals(history.slice(0, idx)).cap)}</div>` : ''}
+        ${sc.play ? `<div class="meters" id="meters" aria-label="What you're protecting"></div>` : ''}
       </div>
       <div class="stage-wrap wrap-stage" id="stage-mount"></div>
       <div class="wrap panel-wrap"><div class="panel" id="panel"></div></div>
@@ -619,7 +637,8 @@
     const run = ++ui.runId;
     ui.phase = 'react';
     renderPanel();
-    const beats = [opt.line ? { you: opt.line } : { caption: opt.caption, cam: 'wide' }, ...opt.outcomes[h.outcome].beats];
+    const lead = h.said ? { you: h.said } : opt.line ? { you: opt.line } : { caption: opt.caption, cam: 'wide' };
+    const beats = [lead, ...opt.outcomes[h.outcome].beats];
     await stage.run(beats);
     if (run !== ui.runId) return;
     ui.phase = 'result'; ui.tab = 'outcome';
@@ -641,6 +660,12 @@
     else html = panelResult(sc);
     p.innerHTML = html;
     p.dataset.phase = ui.frozen ? 'frozen' : ui.phase;
+    const mt = document.getElementById('meters');
+    if (mt) {
+      const after = derive(ui.phase === 'result' ? history : history.slice(0, idx));
+      const mv = ui.phase === 'result' ? after.moves[idx] : null;
+      mt.innerHTML = meterLine(after.flags.meters || START_METERS, mv && mv.fx, (mv && mv.stake) || draft.stake || after.flags.stake);
+    }
     const h = document.getElementById('hud');
     if (h) h.innerHTML = ui.phase === 'result' ? hud(capitals().cap, capitals(history.slice(0, -1)).cap) : hud(capitals(history.slice(0, idx)).cap);
   }
@@ -651,12 +676,18 @@
   }
 
   function panelDecide(sc) {
+    if (sc.play) {
+      if (!draft.step) draft.step = sc.stakes && !draft.stake && !ctxNow(sc).flags.stake ? 'stake' : 'read';
+      if (draft.step !== 'choose') return panelBeats(sc);
+    }
+    const press = sc.play && sc.press ? val(sc.press, ctxNow(sc)) : null;
     const options = optsNow(sc).map(o => `<li>
       <input type="radio" name="move" id="move-${sc.id}-${o.key}" value="${o.key}" ${draft.selected === o.key ? 'checked' : ''}>
       <label for="move-${sc.id}-${o.key}" class="option"><span class="option-key">${o.key}</span><span class="option-text">${fill(o.text)}${o.exposure ? `<span class="exp exp-${o.exposure} ${breaks(o) ? 'is-over' : ''}">${MK.exposureLabel[o.exposure]}${breaks(o) ? ' · over your limit' : ''}</span>` : ''}</span></label>
     </li>`).join('');
     return `<form id="decide-form" class="decide">
       <div class="decide-top">
+        ${press ? `<blockquote class="beat-say beat-say-lead"><span>${PP.people[press.who].name}</span>“${press.say}”</blockquote>` : ''}
         ${sc.facts ? `<section class="facts" aria-label="The situation"><p class="facts-k">The situation</p><ul>${sc.facts.map(f => `<li>${fill(f)}</li>`).join('')}</ul></section>` : ''}
         <fieldset><legend class="decide-q">${sc.question}</legend>
           ${isMarket() && rules ? `<p class="rules-mini">Your rules: <strong>${ruleOf('risk', rules.risk).label}</strong> risk per decision · edge: <strong>${ruleOf('edge', rules.edge).label}</strong></p>` : ''}
@@ -666,8 +697,46 @@
         <button type="button" class="btn btn-ghost" data-act="freeze"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>Freeze and analyze</button>
         <button type="submit" class="btn btn-primary" id="evaluate-btn" ${draft.selected ? '' : 'disabled'}>Make this move</button>
       </div>
-      <p class="decide-hint">${draft.clues.length ? `You've read ${draft.clues.length} of ${sc.clues.length} details in the room.` : `Tip: freezing the scene lets you read the room before you commit.`} <button type="button" class="btn-link-sm" data-act="replay-intro">Watch the scene again</button></p>
+      ${sc.play ? '' : `<p class="decide-hint">${draft.clues.length ? `You've read ${draft.clues.length} of ${sc.clues.length} details in the room.` : `Tip: freezing the scene lets you read the room before you commit.`} <button type="button" class="btn-link-sm" data-act="replay-intro">Watch the scene again</button></p>`}
     </form>`;
+  }
+
+  // The room's details. In a beat scene you only get so many reads, and they close once you answer.
+  const readsLeft = sc => sc.reads ? Math.max(0, sc.reads - draft.clues.length) : Infinity;
+  const readsOpen = sc => !sc.play || (draft.step !== 'choose' && draft.step !== 'push');
+  function clueList(sc) {
+    return sc.clues.map((c, i) => {
+      const open = draft.clues.includes(i), shut = !open && (!readsLeft(sc) || !readsOpen(sc));
+      return `<li class="clue ${open ? 'is-open' : ''} ${shut ? 'is-shut' : ''}"><button type="button" class="clue-btn" data-clue="${i}" ${open || shut ? 'disabled' : ''} aria-expanded="${open}"><span class="clue-label">${c.label}${c.cost ? `<span class="clue-cost">Costs something: ${c.cost.note}</span>` : ''}</span><span class="clue-state">${open ? 'Noted' : shut ? 'No reads left' : 'Look'}</span></button>${open ? `<p class="clue-text">${clueText(c, draft.type)}</p>` : ''}</li>`;
+    }).join('');
+  }
+
+  // A beat scene in play: the state the scene's own functions see right now.
+  const ctxNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return { rel: d.rel, flags: d.flags, type: draft.type, clues: draft.clues, rules, stake: draft.stake }; };
+  const meterLine = (m, delta, stake) => Object.keys(START_METERS).map(k => {
+    const d = delta ? delta[k] || 0 : 0;
+    const v = k === 'time' ? `${m[k]}h` : `${m[k] > 0 ? '+' : ''}${m[k]}`;
+    return `<span class="mtr ${stake === k ? 'is-stake' : ''}"><span class="mtr-k">${METER_NAME[k]}${stake === k ? ' · protecting' : ''}</span><span class="mtr-v">${v}${d ? `<em class="${d > 0 ? 'up' : 'down'}" title="This scene">${d > 0 ? '↑' : '↓'}${Math.abs(d)}${k === 'time' ? 'h' : ''}</em>` : ''}</span></span>`;
+  }).join('');
+
+  function panelBeats(sc) {
+    if (draft.step === 'stake') {
+      return `<div class="beat"><p class="beat-k">Before anything else</p><h2 class="beat-q">${sc.stakes.ask}</h2>
+        <div class="beat-choices">${sc.stakes.choices.map(c => `<button type="button" class="beat-choice" data-act="stake" data-v="${c.id}"><strong>${c.label}</strong><span>${c.note}</span></button>`).join('')}</div></div>`;
+    }
+    if (draft.step === 'push') {
+      const p = val(optsNow(sc).find(o => o.key === draft.selected).push, ctxNow(sc));
+      return `<div class="beat"><p class="beat-k">${PP.people[p.who].name} pushes back</p><blockquote class="beat-say">“${p.say}”</blockquote>
+        <div class="beat-choices">${['hold', 'give', 'walk'].map(k => `<button type="button" class="beat-choice" data-act="push" data-v="${k}"><strong>${p[k].label}</strong><span>“${p[k].line}”</span></button>`).join('')}</div></div>`;
+    }
+    const left = readsLeft(sc);
+    return `<div class="beat"><p class="beat-k">Read the room · ${left} of ${sc.reads} ${sc.reads === 1 ? 'read' : 'reads'} left</p><h2 class="beat-q">${sc.readAsk}</h2>
+      <p class="beat-note">Each read takes a moment, and some of them get noticed. Slow-mo uses the same reads.</p>
+      <ul class="clues">${clueList(sc)}</ul>
+      <div class="decide-bar">
+        <button type="button" class="btn btn-ghost" data-act="freeze"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>Freeze and study the room</button>
+        <button type="button" class="btn btn-primary" data-act="press">${draft.clues.length ? 'Enough. Hear her out' : 'Answer without looking'}</button>
+      </div></div>`;
   }
 
   function panelFrozen(sc) {
@@ -682,10 +751,7 @@
         <p class="who-tags"><span class="tag">${meta.archetype || ''}</span><span class="tag tag-power">Power: ${meta.power || ''}</span></p>
       </div></li>`;
     }).join('');
-    const clues = sc.clues.map((c, i) => {
-      const open = draft.clues.includes(i);
-      return `<li class="clue ${open ? 'is-open' : ''}"><button type="button" class="clue-btn" data-clue="${i}" ${open ? 'disabled' : ''} aria-expanded="${open}"><span class="clue-label">${c.label}${c.cost ? `<span class="clue-cost">Costs something: ${c.cost.note}</span>` : ''}</span><span class="clue-state">${open ? 'Noted' : 'Look'}</span></button>${open ? `<p class="clue-text">${clueText(c, draft.type)}</p>` : ''}</li>`;
-    }).join('');
+    const clues = clueList(sc);
     const opts = optsNow(sc).map(o => `<li><span class="option-key">${o.key}</span><div><p class="fo-text">${fill(o.text)}</p><p class="fo-prev">${staged(sc, o).preview}</p></div></li>`).join('');
     const canDecide = ui.phase === 'decide' || ui.phase === 'intro';
     return `<div class="frozen">
@@ -835,7 +901,9 @@
     const tabBar = `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" class="tab" data-tab="${k}" aria-selected="${ui.tab === k}" id="tab-${k}" aria-controls="tp-${k}">${l}</button>`).join('')}</div>`;
 
     let body = '';
-    if (ui.tab === 'outcome') {
+    if (ui.tab === 'outcome' && sc.play) {
+      body = consequences(sc, move, all, ctxAfter, why);
+    } else if (ui.tab === 'outcome') {
       const deltas = Object.entries(opt.s || {}).filter(([, v]) => v).sort((x, y) => y[1] - x[1])
         .map(([k, v]) => `<li class="delta ${v > 0 ? 'up' : 'down'}"><span>${v > 0 ? '+' : '−'}${Math.abs(v)}</span>${skills[k]}</li>`).join('')
         + (move.clues.length ? `<li class="delta up"><span>+${Math.min(move.clues.length, 2) * 0.5}</span>${skills.inf} (read the room)</li>` : '');
@@ -886,6 +954,47 @@
           : `<button class="btn btn-primary" data-act="${last ? 'profile' : 'next'}">${last ? 'See your dance' : `Next scene`}</button>`}
       </div>
     </div>`;
+  }
+
+  // ───────────────────────── Consequences first (beat scenes)
+  // What changed, measured against what you said you were protecting; what they now think of you;
+  // who they really were. The verdict is still there, folded under "How you played it."
+  const TRAIT = { easy: 'Easy to ask', firm: 'Holds their ground', fair: 'Trades favor for favor', sharp: 'Uses what they know', kind: 'Kind when it counts', careful: 'Checks before trusting', direct: 'Takes it to the source' };
+  function stakeVerdict(stake, d) {
+    if (!stake) return '';
+    const name = METER_NAME[stake].toLowerCase();
+    if (stake === 'time') return d < 0 ? `You were protecting your time. This cost you ${-d} ${-d === 1 ? 'hour' : 'hours'}.` : `You were protecting your time, and you kept all of it.`;
+    return d > 0 ? `You were protecting your ${name}, and it grew.` : d < 0 ? `You were protecting your ${name}, and it took a hit.` : `You were protecting your ${name}. It held steady.`;
+  }
+  function consequences(sc, move, all, ctxAfter, why) {
+    const { opt, outcome } = move;
+    const g = grades[opt.q];
+    const main = sc.stage.cast[0].id, name = PP.people[main].name;
+    const stake = move.stake || all.flags.stake;
+    const traits = Object.entries(move.rep || {}).filter(([, v]) => v > 0).map(([k]) => `<li>${TRAIT[k] || k}</li>`).join('');
+    const rels = Object.entries(opt.rel || {}).filter(([, v]) => v).map(([k, v]) => `<li class="relchip ${v > 0 ? 'up' : 'down'}">${PP.people[k].name} ${v > 0 ? 'trusts you more' : 'trusts you less'}</li>`).join('');
+    const deltas = Object.entries(opt.s || {}).filter(([, v]) => v).sort((x, y) => y[1] - x[1])
+      .map(([k, v]) => `<li class="delta ${v > 0 ? 'up' : 'down'}"><span>${v > 0 ? '+' : '−'}${Math.abs(v)}</span>${skills[k]}</li>`).join('');
+    const ratingDelta = move.ratingAfter - move.ratingBefore;
+    return `
+      <section class="cq">
+        <p class="eyebrow">What changed</p>
+        <div class="meters meters-result">${meterLine(all.flags.meters || START_METERS, move.fx, stake)}</div>
+        ${stake ? `<p class="cq-stake">${stakeVerdict(stake, (move.fx || {})[stake] || 0)}</p>` : ''}
+        ${move.push ? `<p class="cq-push">${{ hold: `${name} pushed back. You held your answer.`, give: `${name} pushed back, and you gave in.`, walk: `${name} pushed back, and you changed your answer.` }[move.push]}</p>` : ''}
+      </section>
+      <ol class="timeline">
+        <li><span class="tl-k">Right now</span><p>${outcome.text}</p></li>
+        <li><span class="tl-k">Later</span><p>${text(opt.later, ctxAfter)}</p>${rels ? `<ul class="relchips">${rels}</ul>` : ''}</li>
+      </ol>
+      ${traits ? `<section class="cq-read"><p class="their-k">What ${name} takes away about you</p><ul class="cq-traits">${traits}</ul>
+        <p class="their-note">People talk. What you did here will reach the others in the office before long.</p></section>` : ''}
+      ${theirSide(sc, opt, move.type)}
+      <details class="cq-judge"><summary><span class="g${opt.q}">${g.glyph}</span> How you played it: ${g.name}</summary>
+        <p class="verdict-note">${g.note} ${why}</p>
+        <div class="verdict-pills"><span class="pill">Decision: ${g.name}</span><span class="pill pill-${outcome.tone}">Result: ${toneLabel[outcome.tone]}</span><span class="pill pill-num">Rating ${move.ratingAfter} <small>(${ratingDelta >= 0 ? '+' : '−'}${Math.abs(ratingDelta)})</small></span></div>
+        <h3 class="block-h">How it shaped your profile</h3><ul class="deltas">${deltas}</ul>
+      </details>`;
   }
 
   // ───────────────────────── Your Dance
@@ -1182,7 +1291,11 @@
     if (nav) { e.preventDefault(); go(nav.dataset.nav === 'play' ? 'episodes' : nav.dataset.nav); return; }
 
     const clue = e.target.closest('[data-clue]');
-    if (clue) { const i = Number(clue.dataset.clue); if (!draft.clues.includes(i)) draft.clues.push(i); renderPanel(); return; }
+    if (clue) {
+      const i = Number(clue.dataset.clue), sc = LIST[history.length];
+      if (!draft.clues.includes(i) && (!sc || (readsLeft(sc) > 0 && readsOpen(sc)))) draft.clues.push(i);
+      renderPanel(); return;
+    }
 
     const who = e.target.closest('[data-thinker]');
     if (who) {
@@ -1231,9 +1344,25 @@
       case 'to-decision': toDecision(); break;
       case 'replay-intro': draft.selected = null; playIntro(); break;
       case 'next': draft = fresh(); ui.phase = 'intro'; render(); window.scrollTo({ top: 0 }); break;
+      case 'stake': draft.stake = act.dataset.v; draft.step = 'read'; renderPanel(); break;
+      case 'press': {
+        const sc = LIST[history.length];
+        draft.step = 'choose'; renderPanel();
+        const p = sc.press && val(sc.press, ctxNow(sc));
+        if (p && stage) stage.run([{ who: p.who, say: p.say, mood: p.mood }]);
+        break;
+      }
+      case 'push': {
+        const sc = LIST[history.length], c = ctxNow(sc);
+        const p = val(optsNow(sc).find(o => o.key === draft.selected).push, c);
+        const v = act.dataset.v, key = p[v].key || draft.selected;
+        commitMove(sc, key, { push: v, said: p[v].line });
+        break;
+      }
       case 'takeback': {
         const last = history.pop(); save();
         draft = fresh(last.clues.slice(), last.type || null);
+        if (LIST[history.length].play) { draft.stake = last.stake || null; draft.step = 'choose'; }
         ui.phase = 'decide';
         app.innerHTML = viewPlay();
         toDecision();
@@ -1287,13 +1416,25 @@
     if (stage && stage.paused) stage.resume();
     const sc = LIST[history.length];
     const opt = optsNow(sc).find(o => o.key === draft.selected);
-    history.push({ id: sc.id, key: opt.key, outcome: pickOutcome(opt), clues: draft.clues.slice(), type: draft.type });
+    const p = sc.play && opt.push && val(opt.push, ctxNow(sc));
+    if (p) {
+      draft.step = 'push'; renderPanel();
+      if (stage) stage.run([{ you: opt.line || staged(sc, opt).line }, { who: p.who, say: p.say, mood: p.mood }]);
+      return;
+    }
+    commitMove(sc, opt.key);
+  });
+
+  // A move becomes final: record it, then let the room react.
+  function commitMove(sc, key, extra = {}) {
+    const opt = optsNow(sc).find(o => o.key === key);
+    history.push({ id: sc.id, key, outcome: pickOutcome(opt), clues: draft.clues.slice(), type: draft.type, ...(draft.stake ? { stake: draft.stake } : {}), ...extra });
     save();
     draft = fresh();
     document.querySelector('.play-head').innerHTML = document.querySelector('.play-head').innerHTML.replace(/<ol class="file-strip"[\s\S]*?<\/ol>/, strip(history.length - 1, derive(history)));
     document.getElementById('stage-mount').scrollIntoView({ behavior: 'smooth', block: 'start' });
     playReaction();
-  });
+  }
 
   document.addEventListener('close', e => {
     if (e.target.id === 'thinker-dialog' && e.target.returnTo) e.target.returnTo.focus();

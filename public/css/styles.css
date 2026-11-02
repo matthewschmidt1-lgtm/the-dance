@@ -365,7 +365,14 @@ body.on-home .site-nav a:focus-visible { outline-color: var(--cine-accent); }
 .te-lessons li { display: grid; gap: 6px; align-content: start; padding: 18px; border-radius: 14px; background: var(--bg); border: 1px solid color-mix(in srgb, var(--tc) 22%, var(--line)); }
 .te-l-tag { font-family: var(--f-display); font-size: .75rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: color-mix(in srgb, var(--tc) 74%, var(--ink)); }
 .te-lessons h4 { font-size: var(--t-lg); font-weight: 760; line-height: 1.2; }
-.te-lessons li > p:last-child { font-family: var(--f-read); line-height: 1.65; }
+.te-lessons li > .te-l-body { font-family: var(--f-read); line-height: 1.6; }
+.te-l-ask { margin-top: 6px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--tc) 18%, var(--line)); display: grid; gap: 2px; }
+.te-l-q { font-family: var(--f-read); font-style: italic; font-size: var(--t-md); line-height: 1.45; color: var(--ink); }
+.te-l-remember { font-size: var(--t-sm); line-height: 1.5; color: color-mix(in srgb, var(--tc) 64%, var(--ink)); }
+.te-close { display: grid; gap: 10px; padding-top: 18px; border-top: 1px solid var(--line); }
+.te-close .te-takeaway { padding-top: 0; border-top: 0; }
+.te-credo { display: grid; gap: 2px; font-family: var(--f-read); font-size: var(--t-lg); line-height: 1.5; }
+.te-closing { max-width: 52ch; font-weight: 650; line-height: 1.5; }
 .te-takeaway { font-size: var(--t-xl); font-weight: 760; font-stretch: 106%; line-height: 1.3; padding-top: 18px; border-top: 1px solid var(--line); max-width: 40ch; }
 .te-related { font-size: var(--t-sm); color: var(--muted); }
 .te-ask { display: grid; gap: 10px; padding: 18px 20px; border-radius: 14px; background: var(--tc-soft); border-left: 4px solid var(--tc); }

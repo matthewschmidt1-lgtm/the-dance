@@ -552,8 +552,8 @@
         <div class="te-ask"><p class="te-label"><span class="te-mark">${I.ask}</span>The question to ask</p><p class="te-q">${t.ask}</p></div>
         ${t.quote ? `<figure class="te-quote"><blockquote>“${t.quote.text}”</blockquote><figcaption>${t.quote.source}</figcaption></figure>` : ''}
         ${t.steps ? `<div class="te-block"><p class="te-label">His game in five moves</p><ol class="te-steps">${t.steps.map(x => `<li>${x}</li>`).join('')}</ol></div>` : ''}
-        ${t.lessons ? `<div class="te-block"><p class="te-label">Seven lessons for everyday play</p><ol class="te-lessons">${t.lessons.map(l => `<li><p class="te-l-tag">${l.tag}</p><h4>${l.name}</h4><p>${l.body}</p></li>`).join('')}</ol></div>` : ''}
-        ${t.takeaway ? `<p class="te-takeaway">${t.takeaway}</p>` : ''}
+        ${t.lessons ? `<div class="te-block"><p class="te-label">${NUM[t.lessons.length] ? NUM[t.lessons.length][0].toUpperCase() + NUM[t.lessons.length].slice(1) : t.lessons.length} lessons for everyday play</p><ol class="te-lessons">${t.lessons.map(l => `<li><p class="te-l-tag">${l.tag}</p><h4>${l.name}</h4>${[].concat(l.body).map(b => `<p class="te-l-body">${b}</p>`).join('')}${l.ask ? `<div class="te-l-ask"><p class="te-label">The question to ask</p><p class="te-l-q">${l.ask}</p></div>` : ''}${l.remember ? `<p class="te-l-remember"><strong>Remember:</strong> ${l.remember}</p>` : ''}</li>`).join('')}</ol></div>` : ''}
+        ${t.takeaway ? `<div class="te-close"><p class="te-takeaway">${t.takeaway}</p>${t.credo ? `<ul class="te-credo">${t.credo.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}${t.closing ? `<p class="te-closing">${t.closing}</p>` : ''}</div>` : ''}
         ${t.related ? `<p class="te-related">${t.related}</p>` : ''}`;
   }
 

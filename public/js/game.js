@@ -104,7 +104,7 @@
     const cap = Object.fromEntries(MK.capitals.map(c => [c.k, c.start]));
     let ruinedAt = null;
     const steps = hist.map((h, i) => {
-      const sc = TRACKS.market.list[i], opt = resolve(sc, { rel: {}, flags: {}, type: typeOf(sc, h) }, h.clues).find(o => o.key === h.key), oc = opt.outcomes[h.outcome];
+      const sc = TRACKS.market.list[i], opt = resolve(sc, { rel: {}, flags: {}, type: typeOf(sc, h), cap: { ...cap } }, h.clues).find(o => o.key === h.key), oc = opt.outcomes[h.outcome];
       const before = { ...cap };
       cap.time -= 1;
       Object.entries(opt.cap || {}).forEach(([k, v]) => { cap[k] += v; });
@@ -167,7 +167,7 @@
 
   // What you're protecting in a beat scene: standing with your manager, allies, and free hours this week.
   const START_METERS = { standing: 0, allies: 0, time: 10 };
-  const METER_NAME = { standing: 'Standing', allies: 'Allies', time: 'Time' };
+  const METER_NAME = { standing: 'Reputation', allies: 'Friends', time: 'Time' };
   const addUp = (...objs) => objs.reduce((t, o) => { Object.entries(o || {}).forEach(([k, v]) => { t[k] = (t[k] || 0) + v; }); return t; }, {});
   function derive(hist) {
     const totals = Object.fromEntries(Object.keys(skills).map(k => [k, 0]));
@@ -220,10 +220,10 @@
       // A vague version can keep the same results at different odds (pv), or bring its own.
       const outs = vague && o.vague.pv ? b.outcomes.map((x, i) => ({ ...x, p: o.vague.pv[i] })) : b.outcomes;
       const relv = b.rel && Object.fromEntries(Object.entries(b.rel).map(([k, v]) => [k, val(v, c)]));
-      return { ...b, _c: c, needs, text: val(b.text, c), rel: relv, flags: val(b.flags, c), q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
+      return { ...b, _c: c, needs, text: val(b.text, c), rel: relv, flags: val(b.flags, c), cap: val(b.cap, c), concept: val(b.concept, c), q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
     });
   }
-  const optsNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return resolve(sc, { rel: d.rel, flags: d.flags, type: draft.type }, draft.clues); };
+  const optsNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return resolve(sc, { rel: d.rel, flags: d.flags, type: draft.type, cap: isMarket() ? capitals().cap : null }, draft.clues); };
   const clueText = (c, type) => val(c.text, { type });
   // Staging for the version actually played: a vague option may have its own line and reactions.
   const staged = (sc, opt) => {
@@ -638,7 +638,8 @@
     ui.phase = 'react';
     renderPanel();
     const lead = h.said ? { you: h.said } : opt.line ? { you: opt.line } : { caption: opt.caption, cam: 'wide' };
-    const beats = [lead, ...opt.outcomes[h.outcome].beats];
+    const epi = sc.epilogue && val(sc.epilogue, { type: h.type, clues: h.clues });
+    const beats = [lead, ...opt.outcomes[h.outcome].beats, ...(epi ? [{ cam: 'wide', ...epi }] : [])];
     await stage.run(beats);
     if (run !== ui.runId) return;
     ui.phase = 'result'; ui.tab = 'outcome';
@@ -798,7 +799,8 @@
     // Formal term first, so players learn the words; the plain meaning sits under it.
     const concept = c => { const t = thinkers[c.thinker]; return `<article class="concept ${t.grandfather ? 'is-grand' : ''}"><p class="concept-who">${t.name} · ${t.field}</p><h3>${c.term || c.name}</h3>${c.term ? `<p class="concept-plain">${c.name}</p>` : ''}<p>${c.body}</p></article>`; };
     const others = opts.map(o => `<li class="other ${o.key === opt.key ? 'is-mine' : ''}"><span class="other-glyph g${o.q}" title="${grades[o.q].name}">${grades[o.q].glyph}</span><span class="other-text"><strong>${o.key}.</strong> ${fill(o.text)}${o.key === opt.key ? ' <em>(your move)</em>' : ''}</span></li>`).join('');
-    return `<div class="concepts">${concept(a.concept)}${concept(a.second)}</div>
+    // A move can carry its own idea; otherwise the scene's.
+    return `<div class="concepts">${concept(opt.concept || a.concept)}${concept(opt.concept ? a.concept : a.second)}</div>
         <dl class="analysis">${[['Where the leverage was', a.leverage], ['What information was missing', a.missing], ['Assumptions you might have made', a.assumptions]].map(([k, v]) => `<div class="arow"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
         <h3 class="viz-h">Every move on the board</h3><ul class="others">${others}</ul>
         <p class="better"><strong>Strongest line:</strong> ${a.better}</p>
@@ -976,6 +978,9 @@
     const deltas = Object.entries(opt.s || {}).filter(([, v]) => v).sort((x, y) => y[1] - x[1])
       .map(([k, v]) => `<li class="delta ${v > 0 ? 'up' : 'down'}"><span>${v > 0 ? '+' : '−'}${Math.abs(v)}</span>${skills[k]}</li>`).join('');
     const ratingDelta = move.ratingAfter - move.ratingBefore;
+    const c = { ...move.ctx, clues: move.clues };
+    const epi = sc.epilogue && val(sc.epilogue, c);
+    const missed = sc.clues.map((k, i) => move.clues.includes(i) ? '' : `<li><strong>${k.label}.</strong> ${clueText(k, move.type)}</li>`).join('');
     return `
       <section class="cq">
         <p class="eyebrow">What changed</p>
@@ -984,9 +989,10 @@
         ${move.push ? `<p class="cq-push">${{ hold: `${name} pushed back. You held your answer.`, give: `${name} pushed back, and you gave in.`, walk: `${name} pushed back, and you changed your answer.` }[move.push]}</p>` : ''}
       </section>
       <ol class="timeline">
-        <li><span class="tl-k">Right now</span><p>${outcome.text}</p></li>
+        <li><span class="tl-k">Right now</span><p>${outcome.text}</p>${epi ? `<p class="cq-epi">${epi.caption}</p>` : ''}</li>
         <li><span class="tl-k">Later</span><p>${text(opt.later, ctxAfter)}</p>${rels ? `<ul class="relchips">${rels}</ul>` : ''}</li>
       </ol>
+      ${missed ? `<section class="cq-missed"><p class="their-k">What you didn't check</p><ul>${missed}</ul></section>` : ''}
       ${traits ? `<section class="cq-read"><p class="their-k">What ${name} takes away about you</p><ul class="cq-traits">${traits}</ul>
         <p class="their-note">People talk. What you did here will reach the others in the office before long.</p></section>` : ''}
       ${theirSide(sc, opt, move.type)}

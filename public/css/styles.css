@@ -1304,3 +1304,8 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .cq-judge summary span { font-family: var(--f-mono); }
 .cq-judge > * + * { margin-top: 12px; }
 @media (max-width: 760px) { .beat-choices { grid-template-columns: minmax(0, 1fr); } }
+.cq-epi { margin-top: 8px; font-family: var(--f-read); font-style: italic; color: var(--muted); }
+.cq-missed { margin-block: 18px; }
+.cq-missed ul { display: grid; gap: 8px; margin-top: 6px; }
+.cq-missed li { padding: 10px 14px; border-left: 2px solid var(--line); font-family: var(--f-read); font-size: var(--t-sm); line-height: 1.5; }
+.cq-missed strong { font-family: var(--f-display); font-weight: 650; }

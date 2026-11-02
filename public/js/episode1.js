@@ -199,11 +199,11 @@ window.PP = window.PP || {};
     reads: 2,
     readAsk: `Dana is waiting. What do you check before you answer?`,
     stakes: {
-      ask: `Henley is due tomorrow at noon. What are you protecting this week?`,
+      ask: `Your own report is due tomorrow at noon. You can't protect everything this week. What matters most?`,
       choices: [
-        { id: 'standing', label: `Your standing`, note: `Henley on time, and Ellen seeing you as someone who delivers.` },
-        { id: 'allies', label: `Your allies`, note: `People who'll back you when it counts.` },
-        { id: 'time', label: `Your time`, note: `Your evenings, and the work that's actually yours.` }
+        { id: 'standing', label: `Your reputation with your boss`, note: `Ellen sees you deliver your own work, on time.` },
+        { id: 'allies', label: `Your friends at work`, note: `People who'll have your back when it counts.` },
+        { id: 'time', label: `Your time`, note: `Your evenings, and the hours that are yours.` }
       ]
     },
     // What she says once you stop looking: it depends on who she is, and on what she knows you checked.
@@ -217,6 +217,9 @@ window.PP = window.PP || {};
         : { who: 'dana', mood: 'nervous', say: `I'm drowning. Ellen keeps piling things on.` };
     },
     pushFx: { hold: { rep: { firm: 1 } } },
+    epilogue: c => offloader(c) ? { who: 'dana', caption: `Twenty minutes later, Dana is at Priya's desk with the same mug, asking the same question.` }
+      : hiding(c) ? { who: 'dana', caption: `At five, Dana steps into the stairwell to take a call. Through the glass, she presses a hand over her eyes.` }
+        : { who: 'ellen', caption: `Through the glass, you watch Ellen hand Dana another thick folder. Dana just nods.` },
     level: `Conflicting interests`,
     arena: `The workplace`,
     title: `Just This Once`,
@@ -232,7 +235,7 @@ window.PP = window.PP || {};
       { name: `Ellen`, role: `Your manager`, archetype: `The Avoider`, power: `Formal authority`, note: `Assigns the work. Rarely checks who actually does it.` },
       { name: `Priya`, role: `Coworker`, archetype: `The Straight Shooter`, power: `She knows things`, note: `Sits next to Dana. Says what she thinks, to whoever's there.` }
     ],
-    known: [`Dana has asked you three times this quarter.`, `You have the Henley summary due Friday at noon.`, `Her vendor section is due Monday.`],
+    known: [`Dana has asked you for help three times in the last few months.`, `Your own report, the Henley summary, is due Friday at noon.`, `The part she wants help with is due Monday.`],
     unknown: [`Why Dana keeps asking.`, `How big "the vendor section" is.`, `What helping, or not, will teach her.`],
     clues: [
       { label: `Check the project tracker`, text: c => c.type === 'overloaded' ? `Five open items, three overdue. One is the Arden onboarding, assigned by Ellen yesterday with no deadline relief.` : `Three open items, two overdue. Nothing new assigned this week.${hiding(c) ? ` Her status has shown "away" by 3 pm every day this week.` : ''}` },
@@ -243,6 +246,8 @@ window.PP = window.PP || {};
     question: `How do you reply?`,
     options: [
       {
+        concept: c => hiding(c) ? { thinker: 'duke', term: `Betting under uncertainty`, name: `Sometimes the kind move is the right bet`, body: `You said yes without knowing why she was asking. With someone hiding a crisis, that was exactly right. The skill is knowing it was a bet, and noticing when the same yes would be exploited by someone else.` }
+          : { thinker: 'axelrod', term: `Unconditional cooperation`, name: `An automatic yes teaches people where to bring their work`, body: `In Axelrod's tournaments, strategies that cooperated no matter what were the ones others learned to exploit. Help is generous. Help with no terms is also information: it tells everyone what you'll do next time.` },
         key: 'A', text: `"Sure, send it over. I'll make it work tonight."`,
         fx: c => ({ time: -4, standing: -1, allies: offloader(c) ? 0 : 1 }),
         rep: c => offloader(c) ? { easy: 1 } : { easy: 1, kind: 1 },
@@ -253,6 +258,7 @@ window.PP = window.PP || {};
         later: c => offloader(c) ? `Two weeks later Dana asks again. The message is shorter, and there's no "any chance."` : `Kind, and expensive. Whether it was the right kind of kind depended on why she was asking.`
       },
       {
+        concept: { thinker: 'schelling', term: `Commitment`, name: `A no is a promise about the future`, body: `Schelling showed that a position only holds if the other side believes you'll keep it. A refusal you abandon the moment someone pushes teaches them to push. A refusal you keep, kindly, saves you the next ten requests.` },
         key: 'B', text: `"I can't this time. I've got Henley due Friday, and I'm already behind."`,
         fx: c => offloader(c) && has(c, 2) ? { allies: -2, standing: -1 } : { allies: -1 },
         rep: c => offloader(c) && has(c, 2) ? { sharp: 1 } : { firm: 1 },
@@ -275,6 +281,7 @@ window.PP = window.PP || {};
         later: `A no is often right. Who hears it, and what you use to justify it, decides what it costs.`
       },
       {
+        concept: { thinker: 'aumann', term: `Cheap talk`, name: `Asking costs nothing, and so does the answer`, body: `A question gets you words, and words are free to give. That's why a taker shrinks the job to "two hours, tops." What someone does when you name terms tells you more than anything they say.` },
         key: 'C', text: `"What's involved, and when do you need it? I'm on Henley until Friday noon."`,
         fx: c => ({ time: -2, allies: offloader(c) ? 0 : 1 }),
         rep: { careful: 1 },
@@ -303,7 +310,7 @@ window.PP = window.PP || {};
           give: { label: `Give in`, line: `Okay. Tonight.`, key: 'A' },
           walk: { label: `Withdraw the offer`, line: `Then I'm out. Sorry.`, key: 'B' }
         } : null,
-        their: c => offloader(c) ? `Help with a limit and a price makes you an expensive person to offload onto. Dana took the deal, or went elsewhere, and either was fine.` : c.type === 'overloaded' ? `A fair trade, but it treats the symptom. Ellen's new assignment is still on Dana's desk next week.` : `Two hours, on your terms. It helped, without anyone having to explain anything.`,
+        their: c => offloader(c) ? `Help with a limit and a price makes you an expensive person to offload onto. A taker either pays the price or goes to find someone cheaper, and either answer tells you who she is.` : c.type === 'overloaded' ? `A fair trade, but it treats the symptom. Ellen's new assignment is still on Dana's desk next week.` : `Two hours, on your terms. It helped, without anyone having to explain anything.`,
         q: c => offloader(c) ? 4 : hiding(c) ? 3 : 2,
         s: { bnd: 2, neg: 2, coo: 1, lng: 1 }, rel: { dana: c => offloader(c) ? 0 : 1 }, flags: c => ({ danaType: c.type, danaPattern: 'trade' }),
         outcomes: [
@@ -313,6 +320,7 @@ window.PP = window.PP || {};
         later: `You set a price on your help that a taker won't pay and a friend won't mind.`
       },
       {
+        concept: { thinker: 'nalebuff', term: `Changing the game`, name: `Fix the rule, not the request`, body: `Nalebuff's advice when a game keeps producing bad outcomes is to change the game itself. If the overload comes from Ellen, the answer to Dana's request lives in Ellen's office, not at your desk.` },
         key: 'E', text: `"Ellen gave you Arden yesterday with no relief, didn't she? Let's take it to her together."`,
         fx: c => c.type === 'overloaded' ? { standing: 1, allies: 1, time: -1 } : hiding(c) ? { allies: -1, time: -1 } : { standing: -1, time: -1 },
         rep: { direct: 1 },

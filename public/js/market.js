@@ -11,6 +11,8 @@ window.PP = window.PP || {};
 (function () {
   const M = {};
   const when = id => c => (c.type === id ? 1 : 0);
+  // Nadia signs exceptions only for traders she trusts (Trust below 5 of 10 and she won't).
+  const lowTrust = c => !!c.cap && c.cap.soc < 5;
   const saw = (c, i) => c.clues.includes(i);
   const edge = c => (c.rules && c.rules.edge) || 'research';
 
@@ -199,20 +201,20 @@ window.PP = window.PP || {};
       options: [
         {
           key: 'A', text: `Go big: buy $50,000 of Quorvia. You're seeing the market clearly right now.`, exposure: 'all',
-          q: 0, s: { reg: -2, jdg: -3, bnd: -1 }, cap: { psy: -1, soc: -1 },
+          q: 0, s: { reg: -2, jdg: -3, bnd: -1 }, cap: { psy: -1, soc: -4 },
           outcomes: [
-            { p: when('approved'), tone: 'good', fin: 20, text: `Approved. Quorvia opens up 40%. You make $20,000 in eight minutes, and you feel like you can't miss.` },
-            { p: when('rejected'), tone: 'bad', fin: -32.5, text: `Rejected. Quorvia opens down 65%. You lose $32,500 before your coffee cools. Seven wins, gone in one.` }
+            { p: when('approved'), tone: 'mixed', fin: 20, text: `Compliance calls before lunch: your order landed minutes after a message about a contact at the trial lab. Nadia sits in. Approved. Quorvia opens up 40%. You make $20,000 in eight minutes, and you feel like you can't miss.` },
+            { p: when('rejected'), tone: 'bad', fin: -32.5, text: `Compliance calls before lunch: your order landed minutes after a message about a contact at the trial lab. Nadia sits in. Rejected. Quorvia opens down 65%. You lose $32,500 before your coffee cools. Seven wins, gone in one.` }
           ],
           later: `A streak changes how you feel, not what you know. Your size followed the feeling.`,
           verdict: { who: 'nadia', line: `$50,000 on a binary event, on a tip from a trial lab. Win or lose, that's the trade I worry about.` }
         },
         {
           key: 'B', text: `Buy your current normal size, $20,000. You've been right. Trust the process.`, exposure: 'all',
-          q: 1, s: { jdg: -1, bnd: -1 }, cap: {},
+          q: 1, s: { jdg: -1, bnd: -1 }, cap: { soc: -3 },
           outcomes: [
-            { p: when('approved'), tone: 'good', fin: 8, text: `Approved. Up 40%. An $8,000 gain.` },
-            { p: when('rejected'), tone: 'bad', fin: -13, text: `Rejected. Down 65%. A $13,000 loss: 13% of your account on one announcement.` }
+            { p: when('approved'), tone: 'mixed', fin: 8, text: `Compliance calls before lunch: your order landed minutes after a message about a contact at the trial lab. Nadia sits in. Approved. Up 40%. An $8,000 gain.` },
+            { p: when('rejected'), tone: 'bad', fin: -13, text: `Compliance calls before lunch: your order landed minutes after a message about a contact at the trial lab. Nadia sits in. Rejected. Down 65%. A $13,000 loss: 13% of your account on one announcement.` }
           ],
           later: `"Normal size" had quietly doubled, and a binary event can lose most of it at once.`,
           verdict: { who: 'nadia', line: `Normal size, they said. Their normal had doubled since January.` }
@@ -273,8 +275,8 @@ window.PP = window.PP || {};
       lens: ['seykota', 'schelling'],
       setting: `The desk · A slow Thursday · Four ideas before lunch`,
       types: [
-        { id: 'closes', p: 0.84, who: `the Ledgerline deal`, label: `The Ledgerline deal closed`, tell: `Financing was committed and the EU cleared it early. The $1.40 spread paid out, as it does most of the time.` },
-        { id: 'breaks', p: 0.16, who: `the Ledgerline deal`, label: `The Ledgerline deal broke`, tell: `The EU extended its review, and Arcton walked away. Ledgerline fell back to where it was before the deal.` }
+        { id: 'closes', p: 0.84, who: `the Ledgerline deal`, label: `The one measurable edge on the screen, the Ledgerline deal, closed`, tell: `Financing was committed and the EU cleared it early. The $1.40 spread paid out, as it does most of the time.` },
+        { id: 'breaks', p: 0.16, who: `the Ledgerline deal`, label: `The one measurable edge on the screen, the Ledgerline deal, broke`, tell: `The EU extended its review, and Arcton walked away. Ledgerline fell back to where it was before the deal.` }
       ],
       facts: [
         `You own nothing right now. A normal trade is about $10,000. Your edge: <strong>{edge}</strong>.`,
@@ -386,7 +388,7 @@ window.PP = window.PP || {};
         `For two years you've bought dips in AI-chip stocks while big cloud companies kept raising their data-center spending.`,
         `The method has lost money six weeks in a row. Interest rates are at a 14-year high.`,
         `Overnight, Cirrane Cloud cut its data-center spending by 30%. Tensora, an AI-chip designer, is <strong>down 14%</strong> before the open.`,
-        `You're 11% below your account's peak. Nadia already cut your limits at 10%, and cuts them in half again at 15%.`,
+        `Your dip-buying book is 11% below its peak. Nadia already cut its limits at 10%, and cuts them in half again at 15%.`,
         `A normal trade is about $10,000. The market opens at 9:30.`
       ],
       cast: [
@@ -516,9 +518,10 @@ window.PP = window.PP || {};
           key: 'A', text: `Ask Nadia for an exception: 4× leverage, the whole account. This is the one.`, exposure: 'all',
           q: 0, s: { reg: -3, jdg: -3, lng: -3, bnd: -2 }, cap: { psy: -2, soc: -2 },
           outcomes: [
-            { p: when('works'), tone: 'good', fin: 120, text: `It works. With 4× leverage, a 30% move more than doubles your account. You're the best performer on the floor, and you'll spend years trying to feel this again.` },
-            { p: when('stopped'), tone: 'bad', fin: -48, text: `Saros slips 12%. At 4×, that's nearly half your account, and the margin call sells you out before your exit is ever reached.` },
-            { p: when('gapped'), tone: 'bad', ruin: true, fin: -999, text: `Saros opens 25% lower after earnings. At 4× leverage, your account is gone before you can do anything, and you owe the desk the difference.` }
+            { p: c => lowTrust(c) ? 0 : when('works')(c), tone: 'good', fin: 120, text: `It works. With 4× leverage, a 30% move more than doubles your account. You're the best performer on the floor, and you'll spend years trying to feel this again.` },
+            { p: c => lowTrust(c) ? 0 : when('stopped')(c), tone: 'bad', fin: -48, text: `Saros slips 12%. At 4×, that's nearly half your account, and the margin call sells you out before your exit is ever reached.` },
+            { p: c => lowTrust(c) ? 0 : when('gapped')(c), tone: 'bad', ruin: true, fin: -999, text: `Saros opens 25% lower after earnings. At 4× leverage, your account is gone before you can do anything, and you owe the desk the difference.` },
+            { p: c => lowTrust(c) ? 1 : 0, tone: 'mixed', fin: 0, text: `Nadia reads the request and slides it back. "Not with this year's record. Two times, a quarter of the account, or nothing." You end the year without Saros, and without the exception.` }
           ],
           later: `Even a 60% edge loses four times in ten. Betting everything on one throw turned a good edge into a coin flip for your career.`,
           verdict: { who: 'nadia', line: `Asked me for an exception to bet the whole account. That's how good traders leave.` }
@@ -844,7 +847,7 @@ window.PP = window.PP || {};
         { cam: 'screens', caption: `For six weeks, it has lost.` },
         { cam: 'screens', ...alert(`06:02 · Cirrane Cloud cuts data-center spending 30%`), caption: `Overnight, the biggest buyer of AI chips pulled back.` },
         { cam: 'screens', ...alert(`Tensora −14% before the open`) },
-        { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `You're eleven percent off your peak. Your limits already stepped down at ten. At fifteen, they halve again.` },
+        { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `Your dip-buying book is eleven percent off its peak. Its limits already stepped down at ten. At fifteen, they halve again.` },
         { you: `(Every dip I've bought for two years has come back.)` },
         { who: 'theo', mood: 'thinking', pose: 'thinking', caption: `Theo has been in since five. He isn't trading. He's reading.` }
       ],

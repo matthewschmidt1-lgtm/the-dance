@@ -32,6 +32,12 @@ PP.Stage = class {
         ${svg}
         <div class="lb lb-top" aria-hidden="true"></div><div class="lb lb-bot" aria-hidden="true"></div>
         <div class="stage-title" aria-hidden="true"></div>
+        ${this.ambient ? '' : `<div class="dialogue" hidden>
+          <span class="dlg-name"></span>
+          <p class="dlg-text" aria-hidden="true"></p>
+          <p class="sr dlg-live" aria-live="polite"></p>
+          <span class="dlg-more" aria-hidden="true">Tap to continue</span>
+        </div>`}
         <div class="pins" aria-hidden="true"></div>
         <div class="freeze-badge" aria-hidden="true"><span class="freeze-dot"></span>Slow Motion Strategy</div>
         ${this.ambient ? '' : `<div class="stage-ctl">
@@ -43,12 +49,7 @@ PP.Stage = class {
           <button type="button" class="sbtn sbtn-pace" data-st="pace" aria-label="Speed ${PP.voice.pace} times. Change speed">${PP.voice.pace}×</button>
         </div>`}
       </div>
-      ${this.ambient ? '' : `<div class="dialogue" hidden>
-        <span class="dlg-name"></span>
-        <p class="dlg-text" aria-hidden="true"></p>
-        <p class="sr dlg-live" aria-live="polite"></p>
-        <span class="dlg-more" aria-hidden="true">Tap to continue</span>
-      </div>`}`;
+`;
     this.stage = this.root.querySelector('.stage');
     this.world = this.root.querySelector('.world');
     this.dialogue = this.root.querySelector('.dialogue');
@@ -64,7 +65,6 @@ PP.Stage = class {
         if (e.target.closest('.stage-ctl')) return;
         if (!this.paused) this.skip();
       });
-      this.dialogue.addEventListener('click', () => { if (!this.paused) this.skip(); });
       this.root.querySelector('[data-st="freeze"]').addEventListener('click', () => this.paused ? this.resume() : this.freeze());
       this.root.querySelector('[data-st="skip"]').addEventListener('click', () => this.skipAll());
       this.root.querySelector('[data-st="voice"]')?.addEventListener('click', e => {

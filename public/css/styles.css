@@ -183,19 +183,22 @@ body.on-home .site-nav a:focus-visible { outline-color: var(--cine-accent); }
 @keyframes pinIn { from { transform: translate(-50%, -60%) scale(.3); opacity: 0; } }
 @keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(102,212,204,0); } 100% { box-shadow: 0 0 0 0 rgba(102,212,204,0); } }
 
-.dialogue { display: grid; gap: 4px; align-content: start; min-height: 6.4rem; margin-top: 10px; padding: 12px 18px 14px; border-radius: 12px; background: var(--cine); color: var(--cine-ink); border: 1px solid rgba(255,255,255,.08); cursor: pointer; }
-.stage-wrap.is-running .dialogue[hidden] { display: grid !important; visibility: hidden; }
+/* The words sit on the picture, like subtitles: centred in the lower third, just above the
+   letterbox, where the eye already rests. Short lines, the speaker's name on top. */
+.dialogue { position: absolute; z-index: 4; left: 50%; bottom: calc(7% + 12px); transform: translateX(-50%); width: max-content; max-width: min(86%, 46rem); display: grid; justify-items: center; gap: 2px; padding: 9px 22px 11px; border-radius: 6px; background: rgba(8, 9, 11, .76); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--cine-ink); text-align: center; cursor: pointer; }
+.dialogue[hidden] { display: none !important; }
+.stage.is-frozen .dialogue { opacity: .35; }
 .dlg-name { font-family: var(--f-mono); font-size: .6875rem; letter-spacing: .12em; text-transform: uppercase; color: var(--cine-accent); }
-.dialogue.is-you { box-shadow: inset 3px 0 0 var(--you); }
+.dialogue.is-you { box-shadow: inset 0 2px 0 var(--you); }
 .dialogue.is-you .dlg-name { color: var(--you); }
 /* Narration reads as stage direction; screen lines read like the terminal they came from. */
 .dlg-name:empty::before { content: '\00a0'; }
 .dialogue.is-narrate .dlg-text { font-style: italic; color: rgba(236,227,207,.9); }
-.dialogue.is-screen { box-shadow: inset 3px 0 0 #d6a856; }
+.dialogue.is-screen { box-shadow: inset 0 2px 0 #d6a856; }
 .dialogue.is-screen .dlg-name { color: #d6a856; }
 .dialogue.is-screen .dlg-text { font-family: var(--f-mono); font-size: clamp(.9rem, 1.45vw, 1.02rem); letter-spacing: .01em; color: #d8e6e3; }
-.dlg-text { font-family: var(--f-read); font-size: clamp(1rem, 1.7vw, 1.2rem); line-height: 1.45; min-height: 1.45em; }
-.dlg-more { justify-self: end; font-size: .6875rem; color: rgba(255,255,255,.5); opacity: 0; transition: opacity .3s; }
+.dlg-text { max-width: 44ch; font-family: var(--f-read); font-size: clamp(1.0625rem, 1.5vw, 1.375rem); line-height: 1.38; min-height: 1.38em; text-shadow: 0 1px 2px rgba(0, 0, 0, .55); text-wrap: balance; }
+.dlg-more { margin-top: 1px; font-size: .625rem; letter-spacing: .06em; line-height: 1; color: rgba(255,255,255,.5); opacity: 0; transition: opacity .3s; }
 .dialogue.is-done .dlg-more { opacity: 1; }
 
 /* ───────── Actors */
@@ -630,7 +633,9 @@ body.on-home .site-nav a:focus-visible { outline-color: var(--cine-accent); }
   .wordmark span { font-size: 0.85rem; }
   .wrap-stage { padding-left: 0; padding-right: 0; }
   .stage { aspect-ratio: 4 / 3; border-radius: 0; }
-  .dialogue { margin-top: 0; border-radius: 0; border-inline: 0; }
+  .dialogue { max-width: 94%; bottom: calc(5% + 8px); padding: 7px 14px 9px; }
+  .dlg-text { font-size: 1rem; }
+  .dlg-more { display: none; }
   .tabs { flex-wrap: wrap; }
   .tab { padding: 0 12px; min-height: 36px; font-size: .8125rem; }
   .stage.is-playing .lb { height: 5%; }
@@ -1309,3 +1314,25 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .cq-missed ul { display: grid; gap: 8px; margin-top: 6px; }
 .cq-missed li { padding: 10px 14px; border-left: 2px solid var(--line); font-family: var(--f-read); font-size: var(--t-sm); line-height: 1.5; }
 .cq-missed strong { font-family: var(--f-display); font-weight: 650; }
+
+/* ── The scene and your choices in one view ──
+   Stacked: the picture is capped so its subtitles and the start of the choices share the screen.
+   Wide: the scene stays put on the left while you read and choose on the right, one glance across. */
+.play .play-head.wrap { max-width: 92rem; }
+.play-body { width: 100%; max-width: 92rem; margin-inline: auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px; align-items: start; }
+.play-body .stage { width: min(100%, calc((100svh - 260px) * 16 / 9)); min-width: min(100%, 560px); margin-inline: auto; }
+.play-body .panel-wrap { width: 100%; max-width: 60rem; margin-inline: auto; padding: 0; }
+@media (min-width: 1180px) {
+  .play-body { grid-template-columns: minmax(0, 1.55fr) minmax(380px, 1fr); gap: 28px; }
+  .play-body .stage-wrap { position: sticky; top: 76px; }
+  .play-body .stage { width: 100%; min-width: 0; }
+  .play-body .panel-wrap { max-width: none; }
+  .play-body .panel { padding-top: 0; }
+  /* The panel column is narrow: its inner grids stack. */
+  .play-body .frozen-grid, .play-body .ku, .play-body .timeline, .play-body .concepts, .play-body .people-grid, .play-body .lev-cols { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .play-body { padding-inline: 0; gap: 12px; }
+  .play-body .stage { width: 100%; min-width: 0; }
+  .play-body .panel-wrap { padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+}

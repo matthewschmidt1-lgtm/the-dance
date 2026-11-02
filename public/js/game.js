@@ -588,8 +588,10 @@
         ${isMarket() ? `<div class="hud" id="hud" aria-label="Your capital">${hud(capitals(history.slice(0, idx)).cap)}</div>` : ''}
         ${sc.play ? `<div class="meters" id="meters" aria-label="What you're protecting"></div>` : ''}
       </div>
-      <div class="stage-wrap wrap-stage" id="stage-mount"></div>
-      <div class="wrap panel-wrap"><div class="panel" id="panel"></div></div>
+      <div class="play-body">
+        <div class="stage-wrap" id="stage-mount"></div>
+        <div class="panel-wrap"><div class="panel" id="panel"></div></div>
+      </div>
     </section>`;
   }
 

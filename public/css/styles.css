@@ -1239,7 +1239,7 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 @media (max-width: 760px) {
   /* On phones the board gets its own frame above the words, so the pieces and dice stay visible. */
   .hm-hero { display: block; min-height: 0; }
-  .hm-hero-art { position: relative; inset: auto; z-index: 0; height: clamp(280px, 42svh, 380px); }
+  .hm-hero-art { position: relative; inset: auto; z-index: 0; height: clamp(280px, 42svh, 380px); overflow: hidden; }
   .hm-hero-art img { object-position: 76% 62%; }
   .hm-hero-shade { inset: 0 0 auto; height: clamp(280px, 42svh, 380px); z-index: 1; background: linear-gradient(0deg, var(--ix-night) 0%, transparent 12%), linear-gradient(180deg, rgba(8, 9, 11, .45) 0%, transparent 25%); }
   .hm-hero-in { position: relative; z-index: 2; margin-top: 20px; padding-block: 0 var(--ix-s6); }

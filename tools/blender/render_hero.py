@@ -7,6 +7,7 @@ Symbols, not words:
   curve of dance steps        moves answered by moves (Axelrod)
   receding doorways           the same meeting again and again; the glow beyond is walking away (Aumann)
   dice in the foreground      you never know everything (Duke)
+  night sea and a low moon    the floor ends; the corridor walks out over open water
 
 Run:
   /Applications/Blender.app/Contents/MacOS/Blender -b -P tools/blender/render_hero.py -- "$PWD" [--samples N]
@@ -154,12 +155,48 @@ bm = bmesh.new()
 N = 40
 for ix in range(-N // 2, N // 2):
     for iy in range(-8, 36):
+        # The floor ends at the water; only the corridor carries on, as a pier.
+        if iy >= 6 and not -1 <= ix <= 2:
+            continue
         x0, y0 = ix * 1.0, iy * 1.0
         vs = [bm.verts.new((x0, y0, 0)), bm.verts.new((x0 + 1, y0, 0)), bm.verts.new((x0 + 1, y0 + 1, 0)), bm.verts.new((x0, y0 + 1, 0))]
         f = bm.faces.new(vs)
         f.material_index = (ix + iy) % 2
 floor = mesh_from('floor', bm, [ivory_tile, dark_tile])
 floor.location = (-0.5, 0, 0)
+
+# The night sea beyond the floor: dark, gently rippled, glossy enough to carry the moon.
+sea = mat('sea', '#07101b', 0.22, coat=0.0)
+nt = sea.node_tree
+noise = nt.nodes.new('ShaderNodeTexNoise')
+noise.inputs['Scale'].default_value = 3.0
+noise.inputs['Detail'].default_value = 6.0
+mapping = nt.nodes.new('ShaderNodeMapping')
+mapping.inputs['Scale'].default_value = (1.0, 6.0, 1.0)
+coord = nt.nodes.new('ShaderNodeTexCoord')
+bump = nt.nodes.new('ShaderNodeBump')
+bump.inputs['Strength'].default_value = 0.8
+nt.links.new(coord.outputs['Object'], mapping.inputs['Vector'])
+nt.links.new(mapping.outputs['Vector'], noise.inputs['Vector'])
+nt.links.new(noise.outputs['Fac'], bump.inputs['Height'])
+nt.links.new(bump.outputs['Normal'], nt.nodes['Principled BSDF'].inputs['Normal'])
+box('sea', (0, 260, -0.4), (1600, 520, 0.02), sea)
+edge = mat('edge', '#121a1c', 0.6)
+box('floor-edge', (-0.5, 5.98, -0.2), (40, 0.04, 0.42), edge)
+for x in (-1.5, 2.5):
+    box(f'pier-side{x}', (x, 20, -0.2), (0.04, 28, 0.42), edge)
+# A low cream moon over the water, off to the left, and the cool light it throws.
+moon = mat('moon', '#000000', 0.5, emit='#eac57f', strength=3.6)
+mb = bmesh.new()
+bmesh.ops.create_icosphere(mb, subdivisions=4, radius=4.6)
+mesh_from('moon', mb, moon, smooth=True).location = (-70, 300, 46)
+ld = bpy.data.lights.new('moonlight', 'SUN')
+ld.energy = 0.12
+ld.color = lin('#e8dcc0')[:3]
+ld.angle = math.radians(0.6)
+ml = link(bpy.data.objects.new('moonlight', ld))
+ml.rotation_euler = (Vector((0, 0, 0)) - Vector((-70, 300, 46))).to_track_quat('-Z', 'Y').to_euler()
+ml.visible_volume_scatter = False
 
 # The two pieces: same shape, opposite colours, facing each other.
 profile = [(0.36, 0.0), (0.36, 0.06), (0.30, 0.10), (0.28, 0.16), (0.20, 0.22), (0.15, 0.32), (0.12, 0.62), (0.11, 0.80),

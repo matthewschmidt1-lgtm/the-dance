@@ -134,7 +134,7 @@ Needs Blender 4.2+ (built and tested with 5.2):
 /Applications/Blender.app/Contents/MacOS/Blender -b -P tools/blender/render_envs.py -- "$PWD" --samples 128
 ```
 
-The home page header ("The Dance Floor") is its own scene: two pieces in overlapping spotlights with a shared teal ring (mixed motives, mutual gain), dance steps (reciprocity), receding doorways (repeated games, and the exit as walking away) and dice (uncertainty). Render it with:
+The home page header ("The Dance Floor") is its own scene: two pieces in overlapping spotlights with a shared teal ring (mixed motives, mutual gain), dance steps (reciprocity), receding doorways (repeated games, and the exit as walking away), dice (uncertainty), and beyond the floor a night sea under a low cream moon, the corridor carrying on as a pier. Render it with:
 
 ```bash
 /Applications/Blender.app/Contents/MacOS/Blender -b -P tools/blender/render_hero.py -- "$PWD" --samples 160

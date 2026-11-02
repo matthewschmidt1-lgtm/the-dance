@@ -442,7 +442,7 @@
     const soon = PP.episodes.find(e => e.locked);
     return `<div class="hm">
       <section class="hm-hero">
-        <div class="hm-hero-art"><img src="/img/hero-dance-floor.webp?v=${PP.assetV}" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dice rest in the foreground, and a corridor of doorways recedes into a soft glow of haze."></div>
+        <div class="hm-hero-art"><img src="/img/hero-dance-floor.webp?v=${PP.assetV}" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dice rest in the foreground, and a corridor of doorways recedes into a soft glow of haze. Beyond the floor, a low moon lays a path of light across a dark sea."></div>
         <div class="hm-hero-shade" aria-hidden="true"></div>
         <div class="wrap hm-hero-in">
           <h1 class="hm-hero-title">You don't have to be the most powerful person in the room.</h1>

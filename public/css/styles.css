@@ -1336,3 +1336,29 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
   .play-body .stage { width: 100%; min-width: 0; }
   .play-body .panel-wrap { padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
 }
+
+/* ── Small phones (the original iPhone SE and similar, 320–400px wide) ──
+   The scene has to start near the top, so the header above it gets compact: the scene line
+   fits on one line beside "All episodes", the topic chips step aside, and the strip slims down. */
+@media (max-width: 480px) {
+  .play .play-head { gap: 6px; padding-top: 2px; }
+  .play .play-head { grid-template-columns: minmax(0, 1fr); }
+  .play .play-head > * { min-width: 0; }
+  .play-meta { flex-wrap: nowrap; gap: 10px; min-width: 0; }
+  .play-meta .meta { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .75rem; }
+  .play-meta .chips { display: none; }
+  .play-out { flex-shrink: 0; min-height: 28px; }
+  .file-strip .sq { height: 26px; }
+  .freeze-badge { padding: 6px; font-size: 0; gap: 0; }
+  .freeze-badge .freeze-dot { margin: 0; }
+  .sbtn { height: 30px; padding: 0 9px; }
+  .sbtn-icon { width: 30px; }
+  .sbtn-pace { min-width: 40px; }
+  .meters { gap: 4px 14px; margin-top: 4px; }
+  .decide-q, .beat-q { font-size: 1.25rem; margin-bottom: 10px; }
+  .options { gap: 6px; }
+  .option { grid-template-columns: 1.75rem minmax(0, 1fr); gap: 10px; padding: 10px 12px; }
+  .option-key { width: 1.75rem; height: 1.75rem; font-size: .8125rem; }
+  .option-text { font-size: .9688rem; line-height: 1.42; padding-top: 2px; }
+  .beat-choice { padding: 12px 14px; }
+}

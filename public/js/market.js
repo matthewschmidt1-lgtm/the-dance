@@ -1,6 +1,6 @@
 // The Trader's Mind: a section inspired by Jack Schwager's Market Wizards.
 // Not a game about trading. A game about managing yourself where nobody controls the outcome.
-// Five challenges share one desk, one account and five kinds of capital. Lose half the
+// Five challenges share one desk, one account and five kinds of capital. Lose 20% of the
 // account and the desk pulls your capital: the section ends, and that is the lesson.
 //
 // Every company, person and price here is fictional. Each challenge rolls its world once
@@ -13,6 +13,7 @@ window.PP = window.PP || {};
   const when = id => c => (c.type === id ? 1 : 0);
   // Nadia signs exceptions only for traders she trusts (Trust below 5 of 10 and she won't).
   const lowTrust = c => !!c.cap && c.cap.soc < 5;
+  const refuses = c => lowTrust(c) || (!!c.cap && c.cap.fin <= 90);
   const saw = (c, i) => c.clues.includes(i);
   const edge = c => (c.rules && c.rules.edge) || 'research';
 
@@ -35,7 +36,26 @@ window.PP = window.PP || {};
     { k: 'psy', name: `Composure`, kind: `Psychological capital`, start: 5, max: 10, note: `Patience, confidence and the ability to sit still.` },
     { k: 'time', name: `Runway`, kind: `Time capital`, start: 10, max: 10, note: `Chances left to recover and compound. Every challenge spends one.` }
   ];
-  M.ruin = 50; // the desk's hard limit: lose half the account and your capital is pulled
+  M.ruin = 80; // the desk's hard limit: lose 20% of the account and your capital is pulled
+  // Nadia's limit ladder. Each step down the account takes, the options shrink with it.
+  M.ladder = [
+    { at: 95, k: 'review', label: `−5% · Review`, note: `Nadia reviews every position with you.` },
+    { at: 90, k: 'half', label: `−10% · Half size`, note: `Limits halved: nothing above a normal-size risk.` },
+    { at: 85, k: 'small', label: `−15% · Small only`, note: `Small risk only until you're back above −15%.` },
+    { at: 80, k: 'out', label: `−20% · Capital pulled`, note: `The desk takes your capital back.` }
+  ];
+  M.step = fin => [...M.ladder].reverse().find(l => fin <= l.at) || null;
+  // Why Nadia won't sign an option, if she won't: the ladder first, then trust.
+  M.lockReason = (cap, exposure, o = {}) => {
+    const x = M.exposure[exposure], st = M.step(cap.fin);
+    if (o.asks) return null; // asking her is allowed; she answers in the outcome
+    if (st && st.k === 'small' && x >= 2) return `Account down 15%: small risk only`;
+    if (st && (st.k === 'half' || st.k === 'small') && x >= 3) return `Account down 10%: limits halved`;
+    if (cap.soc < 5 && x > 2) return `Trust ${cap.soc}: Nadia won't sign it`;
+    return null;
+  };
+  // Planned risk per decision, in $k, for the R ledger: what the option's label says you could lose.
+  M.plannedRisk = { none: 0, small: 1, normal: 2.5, large: 10, all: 25 };
 
   // Risk the way traders measure it: what you lose if you're wrong, as a share of the account.
   M.rules = {
@@ -79,16 +99,18 @@ window.PP = window.PP || {};
       title: `The Losing Position`,
       lens: ['seykota', 'duke'],
       setting: `The desk · 8:47 pm · Down $9,150`,
+      cycle: { t: 3, read: `Middling. Cloud software is off its highs; nobody's euphoric and nobody's selling everything.` },
       types: [
         { id: 'broken', p: 0.6, who: `the news`, label: `The thesis was broken`, tell: `Halvorsen really was moving its workloads in-house. It had been hiring AI platform engineers for a month.` },
         { id: 'noise', p: 0.4, who: `the news`, label: `The news was noise`, tell: `Halvorsen denied the report the next morning. Its CEO had praised Corvane the week before.` }
       ],
       facts: [
         `You <strong>own</strong> 880 shares of Corvane Cloud. You bought in three steps: $56, $51 and $49. Average: <strong>$52.02</strong>.`,
-        `That's about $46,000 at cost, nearly half your account. You make money only if the price rises.`,
-        `It closed at $41.62: <strong>down $9,150</strong>. After hours it's quoted $38.90 to sell, $39.40 to buy, and few shares are trading.`,
+        `That's about $46,000 at cost, 46% of your account. You make money only if the price rises.`,
+        `It closed at $41.62: <strong>down $9,150</strong>, already marked against your $100,000. After hours it's quoted $38.90 to sell, $39.40 to buy, and few shares are trading.`,
         `Your written exit was $47.80, an 8% loss. You passed it nine days ago. Nadia's report flags it.`,
-        `20:41 news: Corvane's biggest customer, Halvorsen Retail, may move its workloads to an in-house AI system.`
+        `20:41 news: Corvane's biggest customer, Halvorsen Retail, may move its workloads to an in-house AI system.`,
+        `The after-hours book is thin: 300 bid at $38.90, 400 at $38.75, 1,000 at $38.50. Selling all 880 now averages about <strong>$38.71</strong>.`
       ],
       cast: [
         { name: `Theo`, role: `Senior trader, 31 years on the desk`, archetype: `The Survivor`, power: `Experience`, note: `Has seen this exact night many times.` }
@@ -97,27 +119,28 @@ window.PP = window.PP || {};
       unknown: [`Whether Halvorsen is really leaving.`, `Where the stock opens tomorrow.`],
       clues: [
         { label: `Read your own note`, text: `"Thesis: retention is strong. The drop is market-wide, not Corvane." Tonight's headline is about Corvane's biggest customer. The thesis was about something that's no longer the problem.` },
-        { label: `Read Nadia's risk report`, text: `"STOP BREACH 47.80 · 9 days · unacknowledged. Position size 46% of account. Added twice below entry." Seeing it in her words is worse.` },
-        { label: `Look for anything that cuts the other way`, text: c => c.type === 'noise' ? `Last week, Halvorsen's CEO praised Corvane on an earnings call: "a partner for years to come." The report tonight cites one unnamed source.` : `Halvorsen has posted fourteen job listings for "in-house AI platform engineers" this month. The report cites three sources.` }
+        { label: `Read Nadia's risk report`, text: `"STOP BREACH 47.80 · 9 days · unacknowledged. 46% of account in one name, 3.7% through your stop. Added twice below entry. Acknowledge tonight. Under 20% by ten, or I flatten it at the open." Seeing it in her words is worse.` },
+        { label: `Look for anything that cuts the other way`, text: c => c.type === 'noise' ? `Last week, Halvorsen's CEO praised Corvane on an earnings call: "a partner for years to come." The report tonight cites one unnamed source.` : `Halvorsen has posted fourteen job listings for "in-house AI platform engineers" this month. The report cites three sources.` },
+        { label: `What's priced in?`, text: `At $38.90 after hours, Corvane already trades below the analysts' bear case of $40. The question isn't whether the news is bad. It's whether it's worse than $38.90 says.` }
       ],
       question: `Are you managing your position, or your ego?`,
       options: [
         {
-          key: 'A', text: `Sell all 880 shares now, after hours, at about $39. Take the $11,500 loss.`, did: `Sold the whole position and took the loss.`, exposure: 'none',
-          q: 4, s: { jdg: 2, reg: 2, bnd: 1, inf: 1 }, cap: { psy: 1, str: 1 },
+          key: 'A', text: `Sell all 880 now into the thin after-hours book, about $38.71 average. Take the loss: $11,700 below what you paid.`, did: `Sold the whole position and took the loss.`, exposure: 'none',
+          q: c => saw(c, 2) && c.type === 'noise' ? 3 : 4, s: { jdg: 2, reg: 2, bnd: 1, inf: 1 }, cap: { str: 1, soc: 1 },
           outcomes: [
-            { p: when('broken'), tone: 'good', fin: -11.5, text: `Out at $39.00. At 6:30 am Halvorsen confirms the move, and Corvane opens at $33.10. Waiting would have cost another $5,200.` },
-            { p: when('noise'), tone: 'mixed', fin: -11.5, text: `Out at $39.00. At 7 am Halvorsen denies the report, and Corvane opens at $44. It stings. You still sold a broken thesis at a loss you could afford.` }
+            { p: when('broken'), tone: 'good', fin: -2.6, text: `Out at an average of $38.71, $2,600 below tonight's close. At 6:30 am Halvorsen confirms the move, and Corvane opens at $33.10. Waiting would have cost another $4,900.` },
+            { p: when('noise'), tone: 'mixed', fin: -2.6, text: `Out at an average of $38.71, $2,600 below tonight's close. At 7 am Halvorsen denies the report, and Corvane opens at $44. It stings. Maybe the thesis was fine. At 46% of the account, you couldn't afford to find out.` }
           ],
           later: `Your account is smaller, and all of it is still yours to use tomorrow.`,
           verdict: { who: 'theo', line: `Took the loss without a speech. That's rarer than a good call.` }
         },
         {
           key: 'B', text: `Hold all 880. It's one unnamed report, and the company is still sound.`, did: `Held a position whose thesis had broken.`, exposure: 'all',
-          q: c => saw(c, 2) ? (c.type === 'noise' ? 2 : 0) : 1, s: { jdg: -2, reg: -1, inf: -1 }, cap: { psy: -1 },
+          q: c => saw(c, 2) ? (c.type === 'noise' ? 2 : 0) : 1, s: { jdg: -2, reg: -1, inf: -1 }, cap: { psy: -1, soc: -2 },
           outcomes: [
-            { p: when('broken'), tone: 'bad', fin: -19.5, text: `Halvorsen confirms. Corvane opens at $33.10 and slides to $29.90 by Friday, when you finally sell. The loss is $19,500.` },
-            { p: when('noise'), tone: 'good', fin: -5.3, text: `Halvorsen denies it. Corvane climbs back to $46 over two weeks, and your loss shrinks to $5,300. It worked. It also taught you that waiting fixes things.` }
+            { p: when('broken'), tone: 'bad', fin: -10.3, text: `Halvorsen confirms. Corvane opens at $33.10 and slides to $29.90 by Friday, when you finally sell: another $10,300 gone, $19,500 below what you paid.` },
+            { p: when('noise'), tone: 'good', fin: 3.9, text: `Halvorsen denies it. Corvane climbs back to $46 over two weeks: $3,900 back, and your loss shrinks to $5,300. It worked. It also taught you that waiting fixes things.` }
           ],
           later: `Hope isn't a risk limit. Whether or not it worked, you held a position your own rule told you to leave nine days ago.`,
           verdict: { who: 'theo', line: `Said it would come back. Some do. That's what makes the habit so expensive.` }
@@ -126,28 +149,28 @@ window.PP = window.PP || {};
           key: 'C', text: `Buy 880 more at $39.40. It lowers your average to about $45.71.`, did: `Doubled down on a losing position.`, exposure: 'all',
           q: 0, s: { reg: -3, jdg: -3, bnd: -2 }, cap: { psy: -2, soc: -1 },
           outcomes: [
-            { p: when('broken'), tone: 'bad', fin: -27.8, text: `Halvorsen confirms. You sell all 1,760 shares at $29.90 on Friday. The loss is $27,800, more than a quarter of your account.` },
-            { p: when('noise'), tone: 'good', fin: 0.5, text: `Halvorsen denies it and Corvane climbs to $46. You're back to even, up $500. It worked, and you'll remember that it worked.` }
+            { p: when('broken'), tone: 'bad', fin: -18.7, text: `Halvorsen confirms. You sell all 1,760 shares at $29.90 on Friday: another $18,700 gone, $27,800 below what you paid. Nadia pulls your capital that afternoon.` },
+            { p: when('noise'), tone: 'good', fin: 9.7, text: `Halvorsen denies it and Corvane climbs to $46. You're back to even on the position, up $500. It worked, and you'll remember that it worked.` }
           ],
-          later: `You turned a mistake into a bigger bet on the same mistake. Averaging down feels like conviction. It's the ego, sizing up.`,
+          later: `Averaging down is a plan only when your estimate of value hasn't moved. Tonight it may have, and you were already at 46% of the account.`,
           verdict: { who: 'nadia', line: `Doubled a position that had blown through its stop nine days earlier. I flagged the account that night.` }
         },
         {
-          key: 'D', text: `Sell 440 now at about $39. Sell the rest at the open if it's below $36.`, did: `Cut half, and drew a line for the rest.`, exposure: 'normal',
-          q: 3, s: { jdg: 1, reg: 1, bnd: 1 }, cap: { psy: 1 },
+          key: 'D', text: `Sell 440 now, about $38.85 in the thin book. Sell the rest at the open if it's below $36.`, did: `Cut half, and drew a line for the rest.`, exposure: 'small',
+          q: c => saw(c, 2) && c.type === 'noise' ? 4 : 3, s: { jdg: 1, reg: 1, bnd: 1 }, cap: { psy: 1 },
           outcomes: [
-            { p: when('broken'), tone: 'mixed', fin: -14.1, text: `Half out at $39. Corvane opens at $33.10, below your line, and the rest goes there. Total loss $14,100. A gap goes straight through any line you draw.` },
-            { p: when('noise'), tone: 'good', fin: -8.4, text: `Half out at $39. Halvorsen denies it, and the half you kept recovers to $46. Total loss $8,400.` }
+            { p: when('broken'), tone: 'mixed', fin: -5, text: `Half out at about $38.85. Corvane opens at $33.10, below your line, and the rest goes there: another $5,000 gone. A gap goes straight through any line you draw.` },
+            { p: when('noise'), tone: 'good', fin: 0.7, text: `Half out at about $38.85. Halvorsen denies it, and the half you kept recovers to $46. Up $700 from tonight's close.` }
           ],
           later: `You cut the risk in half and set a line for the rest. Lines don't protect you from gaps. Only size does.`,
           verdict: { who: 'theo', line: `Cut it in half instead of all the way. Halfway honest. Still better than most.` }
         },
         {
           key: 'E', text: `Wait for the 9:30 open. Decide when there's real volume, not a thin after-hours quote.`, did: `Waited for the open with a broken thesis.`, exposure: 'large',
-          q: c => saw(c, 2) ? (c.type === 'noise' ? 3 : 1) : 2, s: { reg: 1, jdg: -1 }, cap: {},
+          q: c => saw(c, 2) ? (c.type === 'noise' ? 3 : 1) : 2, s: { reg: 1, jdg: -1 }, cap: { soc: -1 },
           outcomes: [
-            { p: when('broken'), tone: 'bad', fin: -16.7, text: `Halvorsen confirms at 6:30. Corvane opens at $33.10, and that's where you sell. The patient fill cost $5,200.` },
-            { p: when('noise'), tone: 'good', fin: -7.1, text: `Halvorsen denies it at 7. Corvane opens at $44, and you sell into the bounce. Loss: $7,100.` }
+            { p: when('broken'), tone: 'bad', fin: -7.5, text: `Halvorsen confirms at 6:30. Corvane opens at $33.10, and that's where you sell: another $7,500 gone. The patient fill cost $4,900 more than selling tonight.` },
+            { p: when('noise'), tone: 'good', fin: 2.1, text: `Halvorsen denies it at 7. Corvane opens at $44, and you sell into the bounce: $2,100 back from tonight's close.` }
           ],
           later: `Waiting for a fair price is sensible when the news is a rumor. When the news is real, the open is where the bill arrives.`,
           verdict: { who: 'nadia', line: `Left a broken position open overnight to get a better fill. Sometimes that works. It's still in the report.` }
@@ -178,6 +201,7 @@ window.PP = window.PP || {};
       title: `The Winning Streak`,
       lens: ['duke', 'seykota'],
       setting: `The desk · April · Seven winners in a row`,
+      cycle: { t: 5, read: `Hot. IPOs at a two-year high, margin debt up 30%, and the chat calls everyone a genius. Theo: "When everybody's a genius, I trim."` },
       types: [
         { id: 'approved', p: 0.62, who: `the FDA`, label: `The drug was approved`, tell: `The stock price had implied about a 62% chance. This time, the likelier outcome happened.` },
         { id: 'rejected', p: 0.38, who: `the FDA`, label: `The drug was rejected`, tell: `The stock price had implied about a 38% chance of this. Not likely, and nowhere near impossible.` }
@@ -197,15 +221,16 @@ window.PP = window.PP || {};
       clues: [
         { label: `Your last seven trades`, text: `Five of the seven came in a market that rose almost every day. The two that didn't depend on that made the smallest gains.` },
         { label: `The options market`, text: `Options imply a move of about 48%, up or down. That tells you how big, not which way. The share price already prices in about a 62% chance of approval.` },
-        { label: `Ask Marco where he heard it`, text: `"My contact at the lab running the trial says it's locked." If that's true, it's inside information, and you can't trade on it. If it isn't, it's just a rumor.` }
+        { label: `Ask Marco where he heard it`, text: `"My contact at the lab running the trial says it's locked." If that's true, it's inside information, and you can't trade on it. If it isn't, it's just a rumor.` },
+        { label: `What's priced in?`, text: `If the chat has heard Marco's tip, so has the market. At $18.40, Quorvia already prices about a 62% chance of approval. To bet on it, you need a reason to think it's higher than everyone else does.` }
       ],
       question: `The streak is real. Is the edge?`,
       options: [
         {
           key: 'A', text: `Go big: buy $50,000 of Quorvia. You're seeing the market clearly right now.`, did: `Bet $50,000 on a streak and a tip.`, exposure: 'all',
-          q: 0, s: { reg: -2, jdg: -3, bnd: -1 }, cap: { psy: -1, soc: -4 },
+          q: 0, s: { reg: -2, jdg: -3, bnd: -1 }, cap: { psy: -1, soc: -5 },
           outcomes: [
-            { p: when('approved'), tone: 'mixed', fin: 20, text: `Compliance calls before lunch: your order landed minutes after a message about a contact at the trial lab. Nadia sits in. Approved. Quorvia opens up 40%. You make $20,000 in eight minutes, and you feel like you can't miss.` },
+            { p: when('approved'), tone: 'bad', fin: 0, text: `Compliance freezes the position before the open: your order landed minutes after a message about a contact at the trial lab. Approved: Quorvia opens up 40%, and the $20,000 gain is held pending review. Your account is restricted. Nadia files the report.` },
             { p: when('rejected'), tone: 'bad', fin: -32.5, text: `Compliance calls before lunch: your order landed minutes after a message about a contact at the trial lab. Nadia sits in. Rejected. Quorvia opens down 65%. You lose $32,500 before your coffee cools. Seven wins, gone in one.` }
           ],
           later: `A streak changes how you feel, not what you know. Your size followed the feeling.`,
@@ -213,9 +238,9 @@ window.PP = window.PP || {};
         },
         {
           key: 'B', text: `Buy your current normal size, $20,000. You've been right. Trust the process.`, did: `Bet normal size on a coin flip, on a tip.`, exposure: 'all',
-          q: 1, s: { jdg: -1, bnd: -1 }, cap: { soc: -3 },
+          q: 1, s: { jdg: -1, bnd: -1 }, cap: { soc: -5 },
           outcomes: [
-            { p: when('approved'), tone: 'mixed', fin: 8, text: `Compliance calls before lunch: your order landed minutes after a message about a contact at the trial lab. Nadia sits in. Approved. Up 40%. An $8,000 gain.` },
+            { p: when('approved'), tone: 'bad', fin: 0, text: `Compliance freezes the position before the open: your order landed minutes after a message about a contact at the trial lab. Approved, up 40%, and the $8,000 gain is held pending review. Your account is restricted.` },
             { p: when('rejected'), tone: 'bad', fin: -13, text: `Compliance calls before lunch: your order landed minutes after a message about a contact at the trial lab. Nadia sits in. Rejected. Down 65%. A $13,000 loss: 13% of your account on one announcement.` }
           ],
           later: `"Normal size" had quietly doubled, and a binary event can lose most of it at once.`,
@@ -223,12 +248,12 @@ window.PP = window.PP || {};
         },
         {
           key: 'C', text: `Buy $2,300, sized so a rejection costs about $1,500, and trim your other trades back to January size.`, did: `Sized it small, and trimmed back after the streak.`, exposure: 'normal',
-          q: c => saw(c, 2) ? 2 : 3, s: { jdg: 2, reg: 1, bnd: 2 }, cap: { psy: 1, str: 1 },
+          q: c => saw(c, 2) ? 1 : 3, s: { jdg: 2, reg: 1, bnd: 2 }, cap: c => saw(c, 2) ? { psy: 1, str: 1, soc: -3 } : { psy: 1, str: 1 },
           outcomes: [
-            { p: when('approved'), tone: 'good', fin: 0.9, text: `Approved. Your small position makes $900, and your trimmed trades ride out the next dip comfortably.` },
-            { p: when('rejected'), tone: 'mixed', fin: -1.5, text: `Rejected. You lose $1,500, exactly what you sized for. It barely registers.` }
+            { p: when('approved'), tone: c => saw(c, 2) ? 'bad' : 'good', fin: c => saw(c, 2) ? 0 : 0.9, text: c => saw(c, 2) ? `Surveillance doesn't care about size. Compliance calls: you bought after a message about a contact at the trial lab. The $900 gain is held pending review.` : `Approved. Your small position makes $900, and your trimmed trades ride out the next dip comfortably.` },
+            { p: when('rejected'), tone: 'mixed', fin: -1.5, text: c => saw(c, 2) ? `Rejected. You lose $1,500, exactly what you sized for, and compliance still opens a file on the trade.` : `Rejected. You lose $1,500, exactly what you sized for. It barely registers.` }
           ],
-          later: `You sized a binary bet so either answer was survivable. If Marco's source was the lab, though, you shouldn't have touched it.`,
+          later: `You sized a binary bet so either answer was survivable. If Marco's source was the lab, though, size doesn't matter: you can't touch it at all.`,
           verdict: { who: 'nadia', line: `Sized a coin flip like a coin flip. I'd have asked about the tip first.` }
         },
         {
@@ -243,13 +268,13 @@ window.PP = window.PP || {};
         },
         {
           key: 'E', text: `Sell all your winning positions now and keep this year's gains. You've proven yourself.`, did: `Sold every winner to lock in the year.`, exposure: 'none',
-          q: 1, s: { reg: -1, lng: -1, jdg: -1 }, cap: { time: -1 },
+          q: 2, s: { reg: -1, lng: -1, jdg: -1 }, cap: { time: -1 },
           outcomes: [
             { p: 0.6, tone: 'mixed', fin: 0, text: `You've sold everything by noon. Your three winners keep rising for another month, up 14%. You were safe, and you were out.` },
             { p: 0.4, tone: 'good', fin: 0, text: `You've sold everything by noon. A week later the market drops 6%. It looks like genius. It was a mood.` }
           ],
-          later: `Cutting winners to feel safe is the mirror image of holding losers to avoid feeling wrong. Both let comfort run the account.`,
-          verdict: { who: 'theo', line: `Sold everything to protect a good feeling. I've done it. It never lasts.` }
+          later: `When everybody's a genius, trimming is reading the room. Selling everything at once is still a mood: the mirror image of holding losers to avoid feeling wrong.`,
+          verdict: { who: 'theo', line: `Sold into a hot tape. Some of that was reading the room. Some of it was a feeling.` }
         }
       ],
       analysis: {
@@ -277,9 +302,10 @@ window.PP = window.PP || {};
       title: `The Empty Hand`,
       lens: ['seykota', 'schelling'],
       setting: `The desk · A slow Thursday · Four ideas before lunch`,
+      cycle: { t: 3, read: `Quiet. Volume 20% below average. Nobody's excited and nobody's scared.` },
       types: [
-        { id: 'closes', p: 0.84, who: `the Ledgerline deal`, label: `The one measurable edge on the screen, the Ledgerline deal, closed`, tell: `Financing was committed and the EU cleared it early. The $1.40 spread paid out, as it does most of the time.` },
-        { id: 'breaks', p: 0.16, who: `the Ledgerline deal`, label: `The one measurable edge on the screen, the Ledgerline deal, broke`, tell: `The EU extended its review, and Arcton walked away. Ledgerline fell back to where it was before the deal.` }
+        { id: 'closes', p: 0.84, who: `the Ledgerline deal`, label: `The one deal you could check, Ledgerline, closed`, tell: `Financing was committed and the EU cleared it early. The $1.40 spread paid out, as it does most of the time.` },
+        { id: 'breaks', p: 0.16, who: `the Ledgerline deal`, label: `The one deal you could check, Ledgerline, broke`, tell: `The EU extended its review, and Arcton walked away. Ledgerline fell back to where it was before the deal.` }
       ],
       facts: [
         `You own nothing right now. A normal trade is about $10,000. Your edge: <strong>{edge}</strong>.`,
@@ -296,10 +322,11 @@ window.PP = window.PP || {};
       clues: [
         { label: `Work out each bet's shape`, text: `Ledgerline: make $490 if the deal closes, lose about $2,450 if it breaks. Voltaic: make about $2,100 if the breakout runs, lose $700 at a 7% stop. Nimbic: a coin flip, ±$2,000. Hashgrid: unknown.` },
         { label: `Theo's screen`, text: `Theo hasn't placed a trade in nine days. He's having his best year in a decade.` },
-        { label: `Check the Ledgerline deal's progress`, text: c => c.type === 'breaks' ? `The EU just extended its review to a second phase. Arcton's CFO says they "remain committed." The spread hasn't moved yet.` : `Arcton's financing is fully committed, and the EU's first-phase review cleared a week early.` }
+        { label: `Check the Ledgerline deal's progress`, text: c => c.type === 'breaks' ? `The EU's first-phase deadline is Friday, and the questions it's asking are about cloud bundling. Two arbitrage desks you know have quietly cut their Ledgerline positions this week; the spread has crept from $1.10 to $1.40.` : `Arcton's financing is fully committed, and the EU's first-phase review cleared a week early.` },
+        { label: `What's priced in?`, text: `Ledgerline's $28.60 prices about an 84% chance the deal closes. Nimbic's options price a 19% earnings move, so the chat's 20% is already paid for. Voltaic's supply deal is priced for one year; nobody's priced the second.` }
       ],
       edgeNote: {
-        research: `Your idea was Ledgerline: a deal you'd read every filing on. But look at its shape. You risk $2,450 to make $490, and only the deal's progress tells you whether that's a good bet today.`,
+        research: `Your idea was Ledgerline: a deal you'd read every filing on. You risk $2,450 to make $490, and at $28.60 the market already prices about an 84% chance it closes. You need a reason to think it's higher.`,
         speed: `Your idea was Voltaic: a clean breakout on heavy volume, risking $700 to make about $2,100. That's the shape a trader who reads price is built for.`,
         patience: `Your honest answer was probably none. A patient trader waits for the rare, obvious setup, and a slow Thursday seldom brings one.`
       },
@@ -317,12 +344,13 @@ window.PP = window.PP || {};
         },
         {
           key: 'B', text: `Buy only the idea that fits your edge ({edge}), at normal size. Pass on the rest.`, did: `Played only the idea that fit your edge.`,
-          exposure: c => edge(c) === 'speed' ? 'small' : 'normal',
+          exposure: c => edge(c) === 'speed' ? 'small' : edge(c) === 'patience' ? 'none' : 'normal',
           q: c => edge(c) === 'speed' ? 4 : edge(c) === 'patience' ? 3 : (saw(c, 2) && c.type === 'breaks' ? 1 : 4),
           s: { jdg: 2, inf: 2, bnd: 1, str: 1 }, cap: { str: 2, psy: 1 },
           outcomes: [
-            { p: c => edge(c) === 'speed' ? 0.55 : when('closes')(c), tone: 'good', fin: c => edge(c) === 'speed' ? 2.1 : 0.5, text: c => edge(c) === 'speed' ? `Voltaic runs. You sell into strength three weeks later, up $2,100.` : `The Ledgerline deal closes on schedule. You collect $490 and your money back.` },
-            { p: c => edge(c) === 'speed' ? 0.45 : when('breaks')(c), tone: c => edge(c) === 'speed' ? 'mixed' : 'bad', fin: c => edge(c) === 'speed' ? -0.7 : -2.5, text: c => edge(c) === 'speed' ? `Voltaic stalls and hits your 7% stop. A $700 loss on a good setup. You'd take it again.` : `Arcton walks away. Ledgerline falls to $21.60 and you lose $2,450: five months of spreads in one morning.` }
+            { p: c => edge(c) === 'patience' ? 0 : edge(c) === 'speed' ? 0.55 : when('closes')(c), tone: 'good', fin: c => edge(c) === 'speed' ? 2.1 : 0.5, text: c => edge(c) === 'speed' ? `Voltaic runs. You sell into strength three weeks later, up $2,100.` : `The Ledgerline deal closes on schedule. You collect $490 and your money back.` },
+            { p: c => edge(c) === 'patience' ? 0 : edge(c) === 'speed' ? 0.45 : when('breaks')(c), tone: c => edge(c) === 'speed' ? 'mixed' : 'bad', fin: c => edge(c) === 'speed' ? -0.7 : -2.5, text: c => edge(c) === 'speed' ? `Voltaic stalls and hits your 7% stop. A $700 loss on a good setup. You'd take it again.` : `Arcton walks away. Ledgerline falls to $21.60 and you lose $2,450: five months of spreads in one morning.` },
+            { p: c => edge(c) === 'patience' ? 1 : 0, tone: 'good', fin: 0, text: `None of the four is the rare, obvious setup you wait for, so you buy nothing. Theo nods without looking up.` }
           ],
           later: `You played the one game you're built for, and looked at the shape of the bet before you placed it.`,
           verdict: { who: 'theo', line: `Took one trade, the one that looked like them. I'd let them sit next to me.` }
@@ -370,7 +398,7 @@ window.PP = window.PP || {};
         concept: { thinker: 'seykota', term: `Edge`, name: `Play only the game you're built for`, body: `The traders in Market Wizards use methods that look nothing alike. What they share is that each plays only the game they're built for. Paul Tudor Jones wouldn't take a trade unless it could make five times what it risked.` },
         second: { thinker: 'schelling', term: `The option not to play`, name: `Declining is a move, and often a strong one`, body: `Schelling showed that declining to engage is a move, and often a strong one. The trader who can say no to everything gets to choose the few things worth a yes.` },
         better: `B, if your edge fits one idea and its shape is good. C if not. Ledgerline risks $2,450 to make $490: only take it when the deal's progress says it's safe.`,
-        lesson: `Ten mediocre decisions can cost more than one good decision earns. Look at the shape before the story.`
+        lesson: `Shape tells you what's at stake. Only probability against price tells you whether it's a bet.`
       },
       life: { title: `The full calendar`, text: `Four invitations arrive in one week: a side project, a board seat, a speaking slot and a friend's startup. Saying yes to all of them feels like momentum. Only one of them uses what you're actually good at.` }
     },
@@ -384,6 +412,7 @@ window.PP = window.PP || {};
       title: `The Changing Market`,
       lens: ['nash', 'duke'],
       setting: `The desk · January · Six losing weeks`,
+      cycle: { t: 1, read: `Cold. Five weeks of outflows, strategists cutting targets, and nobody picks up the phone. Theo: "When nobody calls back, I start reading."` },
       types: [
         { id: 'drawdown', p: 0.45, who: `the market`, label: `It was a normal losing stretch`, tell: `Your method's recoveries had slowed from four days to six, not broken. Within weeks, the dips started bouncing again.` },
         { id: 'regime', p: 0.55, who: `the market`, label: `The market had changed`, tell: `Dips that used to recover in four days were taking nineteen. Cheaper money and booming AI spending had been doing the buying, and both had stopped.` }
@@ -403,8 +432,9 @@ window.PP = window.PP || {};
       unknown: [`Whether this is a normal losing stretch or a new market.`, `Whether Cirrane's cut is the start of a trend.`],
       clues: [
         { label: `Check your method's backtest`, text: `The worst run in two years of testing was seven losing weeks. You're at six. Every method has losing stretches.` },
-        { label: `Check how fast dips are recovering`, text: c => c.type === 'regime' ? `Dips used to recover in about four days. Since October, nineteen. The same signal now means something else.` : `Dips used to recover in about four days. Since October, about six. Slower, but still recovering.` },
-        { label: `Theo's desk`, text: `Theo has been in since 5 am. He hasn't placed a trade. He's reading Cirrane's spending guidance line by line.` }
+        { label: `Check how fast dips are recovering`, text: c => c.type === 'regime' ? `Dips used to recover in about four days. Since October, the last six took 19, 4, 22, 15, 6 and 21. Mostly much slower. Not every one.` : `Dips used to recover in about four days. Since October, the last six took 6, 11, 4, 9, 5 and 7. Slower, and noisier, but still recovering.` },
+        { label: `Theo's desk`, text: `Theo has been in since 5 am. He hasn't placed a trade. He's reading Cirrane's spending guidance line by line.` },
+        { label: `What's priced in?`, text: `Chip stocks trade at a three-year low against earnings. Five weeks of record outflows end in one of two ways: the selling exhausts itself, or it's the start. Which one is in the price?` }
       ],
       edgeNote: {
         research: `Your edge travels better than most. Companies you know deeply are still worth knowing in a new market. Narrow to them while you relearn the rest.`,
@@ -458,7 +488,7 @@ window.PP = window.PP || {};
           q: c => saw(c, 1) ? (c.type === 'regime' ? 4 : 2) : 3, s: { jdg: 1, reg: 2, inf: 2 }, cap: { str: 2, time: -2 },
           outcomes: [
             { p: when('drawdown'), tone: 'mixed', fin: 0, text: `You sit out the month, and the method recovers without you. You come back wiser, and a month behind.` },
-            { p: when('regime'), tone: 'good', fin: 0, text: `You sit out the slide entirely. A month later you come back with a narrower method and a clearer head.` }
+            { p: when('regime'), tone: 'good', fin: 0, text: `The first two dips bounce while you read, and you feel early and foolish. Then the slide comes. Being early looks exactly like being wrong, for a while. A month later you come back with a narrower method and a clearer head.` }
           ],
           later: `Stepping away protected your money and spent your time. Both are capital.`,
           verdict: { who: 'nadia', line: `Stood down for a month and came back with notes. Best thing I saw all quarter.` }
@@ -472,7 +502,7 @@ window.PP = window.PP || {};
         assumptions: `That six weeks is a blip because two years were good. Or the opposite: that six weeks proves the method is dead.`,
         controlled: `Your size, and whether you checked the evidence before deciding.`,
         couldnt: `Rates, cloud spending, the crowd.`,
-        concept: { thinker: 'nash', term: `Regime change`, name: `A best response to a game that changed`, body: `Nash's equilibrium says a strategy is only good relative to the conditions it meets. Change the conditions and the best response changes. Linda Raschke knows her methods' normal drawdowns, so she can tell when one is abnormal.` },
+        concept: { thinker: 'nash', term: `Regime change`, name: `A best response to a game that changed`, body: `A Nash equilibrium is a set of best responses: each strategy is best only against the others being played. When the other players change, when cheap money leaves and the big buyers stop, your best response changes too. Linda Raschke knows her methods' normal drawdowns, so she can tell when one is abnormal.` },
         second: { thinker: 'duke', term: `Bayesian updating`, name: `Move your confidence when the evidence moves`, body: `Duke asks you to hold beliefs with a level of confidence, and to update it. "This method works" was a 90% belief two years ago. The recovery data should move that number, up or down.` },
         better: `Check the recoveries first. If they've broken, C or E. If they've only slowed, A is discipline, not denial.`,
         lesson: `You don't have to predict the shock. You have to know your method well enough to recognize one.`
@@ -489,9 +519,10 @@ window.PP = window.PP || {};
       title: `The Last Player Standing`,
       lens: ['aumann', 'seykota'],
       setting: `The desk · December · The last trade of the year`,
+      cycle: { t: 4, read: `Warm. Year-end chase: funds behind their benchmark are buying anything that moves.` },
       types: [
-        { id: 'works', p: 0.6, who: `the trade`, label: `The setup worked`, tell: `Saros ran to its $104 target before earnings. Your best setups do this about six times in ten.` },
-        { id: 'stopped', p: 0.25, who: `the trade`, label: `The setup failed, gently`, tell: `Saros drifted down to your $72 exit and you were out. A normal loss on a good setup.` },
+        { id: 'works', p: 0.4, who: `the trade`, label: `The setup worked`, tell: `Saros ran to its $104 target before earnings. Your best setups do this about four times in ten. That's what a real edge looks like: wrong more often than right, and paid for it.` },
+        { id: 'stopped', p: 0.45, who: `the trade`, label: `The setup failed, gently`, tell: `Saros drifted down to your $72 exit and you were out. A normal loss on a good setup.` },
         { id: 'gapped', p: 0.15, who: `the trade`, label: `The setup failed at earnings`, tell: `Saros held until earnings, then opened 25% lower, straight through your exit. Lines don't stop gaps.` }
       ],
       facts: [
@@ -499,7 +530,7 @@ window.PP = window.PP || {};
         `You'd be <strong>buying</strong>. Target: $104 (+30%). Exit if wrong: $72 (−10%). Earnings are in three weeks.`,
         `Your account: <strong>{account}</strong>. Your rule: {rule} of the account at risk on any one idea.`,
         `Nadia approves up to 2× leverage, with at most 25% of the account in one stock. Anything more is an exception.`,
-        `At 4× leverage, a 25% fall wipes out the whole account.`
+        `At 4× leverage, a 25% fall wipes out the whole account. The options market prices a 14% earnings move; your exit is 10% away.`
       ],
       cast: [
         { name: `Theo`, role: `Senior trader`, archetype: `The Survivor`, power: `Memory`, note: `Keeps a list of brilliant traders who aren't here anymore.` },
@@ -508,27 +539,28 @@ window.PP = window.PP || {};
       known: [`Target $104, exit $72.`, `Earnings in three weeks.`, `2× leverage approved; 4× needs an exception.`],
       unknown: [`Whether it works. Even a real edge loses often.`, `What earnings will do.`],
       clues: [
-        { label: `Your trade log`, text: `Your best setups have worked about 60% of the time. Winners averaged +30%. Losers averaged −10%, except when earnings gapped them.` },
+        { label: `Your trade log`, text: `Your best setups have worked about 40% of the time. Winners averaged +30%. Losers averaged −10%, except when earnings gapped them. Forty-one trades: a real edge, and a small sample.` },
         { label: `The earnings calendar`, text: `Saros reports in three weeks. Its last two reports moved the stock 18% and 24%. An exit line won't help if it opens below it.` },
-        { label: `Theo's desk drawer`, text: `Theo keeps a list of traders he knew who were brilliant, until one trade. It's longer than you'd think.` }
+        { label: `Theo's desk drawer`, text: `Theo keeps a list of traders he knew who were brilliant, until one trade. It's longer than you'd think.` },
+        { label: `What's priced in?`, text: `Options price a 14% move on earnings. Your exit is 10% away. The gap is in the price; it isn't in your plan.` }
       ],
       edgeNote: {
         research: `It's your kind of trade: a company you know cold. That's exactly when overconfidence is most persuasive, and when sizing up is most justified. Both are true.`,
-        speed: `It's your kind of trade: the cleanest breakout you've seen in two years. Clean breakouts still fail four times in ten.`,
+        speed: `It's your kind of trade: the cleanest breakout you've seen in two years. Clean breakouts still fail six times in ten. The winners pay for them.`,
         patience: `This is the rare, obvious setup you wait all year for. Waiting earned you the right to size up, not the right to bet everything.`
       },
       question: `How much are you willing to risk to win?`,
       options: [
         {
-          key: 'A', text: `Ask Nadia for an exception: 4× leverage, the whole account. This is the one.`, did: `Asked for 4× on the whole account.`, exposure: 'all',
+          key: 'A', text: `Ask Nadia for an exception: 4× leverage, the whole account. This is the one.`, did: `Asked for 4× on the whole account.`, exposure: 'all', asks: true,
           q: 0, s: { reg: -3, jdg: -3, lng: -3, bnd: -2 }, cap: { psy: -2, soc: -2 },
           outcomes: [
-            { p: c => lowTrust(c) ? 0 : when('works')(c), tone: 'good', fin: 120, text: `It works. With 4× leverage, a 30% move more than doubles your account. You're the best performer on the floor, and you'll spend years trying to feel this again.` },
-            { p: c => lowTrust(c) ? 0 : when('stopped')(c), tone: 'bad', fin: -48, text: `Saros slips 12%. At 4×, that's nearly half your account, and the margin call sells you out before your exit is ever reached.` },
-            { p: c => lowTrust(c) ? 0 : when('gapped')(c), tone: 'bad', ruin: true, fin: -999, text: `Saros opens 25% lower after earnings. At 4× leverage, your account is gone before you can do anything, and you owe the desk the difference.` },
-            { p: c => lowTrust(c) ? 1 : 0, tone: 'mixed', fin: 0, text: `Nadia reads the request and slides it back. "Not with this year's record. Two times, a quarter of the account, or nothing." You end the year without Saros, and without the exception.` }
+            { p: c => refuses(c) ? 0 : when('works')(c), tone: 'good', fin: 120, text: `It works. With 4× leverage, a 30% move more than doubles your account. You're the best performer on the floor, and you'll spend years trying to feel this again.` },
+            { p: c => refuses(c) ? 0 : when('stopped')(c), tone: 'bad', fin: -44, text: `Saros slides to your $72 exit and the stop fills at $71.20. At 4×, an 11% drop is 44% of your account.` },
+            { p: c => refuses(c) ? 0 : when('gapped')(c), tone: 'bad', ruin: true, fin: -999, text: `Saros opens 25% lower after earnings. At 4×, a 25% gap is the whole account. It's gone at the open, before your exit can do anything.` },
+            { p: c => refuses(c) ? 1 : 0, tone: 'mixed', fin: 0, text: `Nadia reads the request and slides it back. "Not with this year's record. Two times, a quarter of the account, or nothing." You end the year without Saros, and without the exception.` }
           ],
-          later: `Even a 60% edge loses four times in ten. Betting everything on one throw turned a good edge into a coin flip for your career.`,
+          later: `A real edge here loses six times in ten. Betting everything on one throw turned a good edge into a coin flip for your career.`,
           verdict: { who: 'nadia', line: `Asked me for an exception to bet the whole account. That's how good traders leave.` }
         },
         {
@@ -543,8 +575,8 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Sized it like they meant it, then forgot to decide where they'd be wrong.` }
         },
         {
-          key: 'C', text: `Your normal size, $10,000, out at $72. That risks $1,000.`, did: `Normal size, with an exit.`, exposure: 'small',
-          q: 3, s: { jdg: 2, reg: 2, lng: 2, bnd: 1 }, cap: { psy: 1, soc: 1 },
+          key: 'C', text: `Your normal size, $10,000, out at $72. That risks $1,000, or $2,500 if earnings gap it.`, did: `Normal size, with an exit.`, exposure: 'normal',
+          q: c => c.rules && c.rules.risk === 'tight' ? 4 : 3, s: { jdg: 2, reg: 2, lng: 2, bnd: 1 }, cap: { psy: 1, soc: 1 },
           outcomes: [
             { p: when('works'), tone: 'mixed', fin: 3, text: `It works. You make $3,000 on the best setup in two years. Safe, and you'll wonder what right-sized would have made.` },
             { p: when('stopped'), tone: 'mixed', fin: -1, text: `It drifts to $72 and your exit takes you out. A $1,000 loss. You'll be here in January.` },
@@ -557,7 +589,7 @@ window.PP = window.PP || {};
           key: 'D', text: `Start with $5,000. Add $5,000 at +8% and again at +16%, and raise your exit to break-even.`, did: `Started small, and added only as it worked.`, exposure: 'small',
           q: 4, s: { jdg: 2, reg: 1, lng: 2, inf: 1 }, cap: { psy: 1, str: 1 },
           outcomes: [
-            { p: when('works'), tone: 'good', fin: 4.2, text: `It works, and you add twice as it proves you right. Up $4,200, most of it on money the trade earned for you.` },
+            { p: when('works'), tone: 'good', fin: 3.1, text: `It works, and you add twice as it proves you right. Up $3,100, most of it on money the trade earned for you.` },
             { p: when('stopped'), tone: 'mixed', fin: -0.5, text: `It fails before your first add. You lose $500.` },
             { p: when('gapped'), tone: 'mixed', fin: -1.3, text: `It gaps down on earnings while you're still small. A $1,300 loss.` }
           ],
@@ -576,28 +608,39 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Sat out the best setup of the year. Safe. Not quite the point.` }
         },
         {
-          key: 'F', text: `Size up: $25,000, out at $72. That risks $2,500, and could make $7,500.`, exposure: 'normal',
-          q: 4, s: { jdg: 2, reg: 1, lng: 2, str: 1 }, cap: { psy: 1, str: 2 },
+          key: 'F', text: `Size up: $25,000, out at $72, and hold it through earnings. That risks $2,500, or $6,300 on a gap.`, did: `Sized up and held through earnings.`, exposure: 'large',
+          q: 3, s: { jdg: 2, reg: 1, lng: 2, str: 1 }, cap: { psy: 1, str: 2 },
           outcomes: [
             { p: when('works'), tone: 'good', fin: 7.5, text: `It works. $7,500 on the best setup in two years, with a planned loss you could always afford.` },
             { p: when('stopped'), tone: 'mixed', fin: -2.5, text: `It drifts to $72 and your exit takes you out. A $2,500 loss, exactly what you planned.` },
             { p: when('gapped'), tone: 'bad', fin: -6.3, text: `It gaps 25% lower on earnings, through your exit. A $6,300 loss: earnings risk you knew about and sized for only partly.` }
           ],
-          later: `Druckenmiller's lesson: it isn't how often you're right, it's how much you make when you are. You sized up on your best idea and still knew exactly where you'd be wrong.`,
-          verdict: { who: 'nadia', line: `Sized up on the best setup of the year and kept a hard exit. That's what the limit is for.` }
+          later: `Druckenmiller's lesson: it isn't how often you're right, it's how much you make when you are. You sized up and knew where you'd be wrong, except at earnings, which you knew about too.`,
+          verdict: { who: 'nadia', line: `Sized up on the best setup of the year with a hard exit. Then held full size into earnings. I'd have asked about that.` }
+        },
+        {
+          key: 'G', text: `Size up: $25,000, out at $72, and cut to $10,000 the day before earnings.`, did: `Sized up, and cut size before earnings.`, exposure: 'normal',
+          q: c => c.rules && c.rules.risk === 'tight' ? 3 : 4, s: { jdg: 2, reg: 2, lng: 2, str: 1 }, cap: { psy: 1, str: 2 },
+          outcomes: [
+            { p: when('works'), tone: 'good', fin: 7.5, text: `It runs to $104 before earnings. $7,500 on the best setup in two years, with a planned loss you could always afford.` },
+            { p: when('stopped'), tone: 'mixed', fin: -2.5, text: `It drifts to $72 and your exit takes you out. A $2,500 loss, exactly what you planned.` },
+            { p: when('gapped'), tone: 'mixed', fin: -2.5, text: `You cut to $10,000 the day before. It gaps 25% lower on earnings: a $2,500 loss instead of $6,300.` }
+          ],
+          later: `Big when the edge was working, small when the one risk your exit couldn't handle arrived. That's sizing to the bad case you could see.`,
+          verdict: { who: 'nadia', line: `Sized up, then cut before the event the exit couldn't cover. That's the account I'd give more room.` }
         }
       ],
       analysis: {
         game: `The last round of a game that never really ends. A single bet can't be repeated, but a career is nothing but repetition.`,
         incentives: `The leaderboard rewards whoever finishes highest this year. Your life rewards whoever is still playing in ten.`,
-        leverage: `Time, and knowing your edge's shape: right six times in ten, +30% when right, −10% when wrong, and worse at earnings.`,
+        leverage: `Time, and knowing your edge's shape: right four times in ten, +30% when right, −10% when wrong, and worse at earnings.`,
         missing: `The outcome. It always is. That's why size, not certainty, decides your fate.`,
         assumptions: `That a real edge means a sure thing. That the safest size is always the best one.`,
         controlled: `How much of yourself to put on the table, and where you'd get out.`,
         couldnt: `The breakout, the earnings report, the gap.`,
-        concept: { thinker: 'aumann', term: `Risk of ruin`, name: `A career is a repeated game. Don't bet it on one round`, body: `Aumann won a Nobel Prize for showing how behavior changes when a game repeats. A move that's rational once can be ruinous when you'll play again and again. A career is a repeated game.` },
-        second: { thinker: 'seykota', term: `Kelly-style sizing`, name: `Bet more when you're right, never everything`, body: `Seykota's rules protect your capital, and Druckenmiller's add the other half: when the setup is exceptional, size up. The skill is doing both at once.` },
-        better: `F or D. A real edge, sized so the bad four in ten never ends your game, and big enough that the good six matter.`,
+        concept: { thinker: 'aumann', term: `Repeated games`, name: `A career is a repeated game. Don't bet it on one round`, body: `Aumann won a Nobel Prize for showing how behavior changes when a game repeats: a move that's rational once can be foolish when you'll play again and again. The math of ruin, from John Kelly and Ed Thorp, says the same thing in numbers: never bet so much that one round ends the game.` },
+        second: { thinker: 'seykota', term: `Kelly-style sizing`, name: `Bet more when you're right, never everything`, body: `Kelly on your log says a big bet: your edge is real. That's exactly when to distrust the log. Forty-one trades is a small sample, and the most overconfident number you own is your own win rate. Pros bet a fraction of Kelly, and never through an event their exit can't handle.` },
+        better: `G, or D. A real edge, sized so the bad six in ten never end your game, big enough that the good four matter, and smaller before the one event your exit can't cover.`,
         lesson: `The objective was never to win every round. It was to become the kind of player who could keep playing, and play big when it counts.`
       },
       life: { title: `The leap`, text: `A once-in-a-decade chance: quit your job and put everything into a business with a real advantage. You can go all in, start it on the side and grow it as it proves itself, or pass. The size of the leap, not the idea, decides whether failure is a setback or the end.` }
@@ -672,7 +715,7 @@ window.PP = window.PP || {};
           T(646, b[1] + 20, '+40%?', { size: 16, fill: C.teal }) + T(646, b[3] - 8, '−65%?', { size: 16, fill: C.red }) +
           panel(716, 182, 252, 354, [['YOU OWN', { size: 17, fill: C.dim }], ['No Quorvia', { size: 26, sans: true, weight: 600, gap: 54 }], ['PRICE IMPLIES', { size: 17, fill: C.dim }], ['~62% approval', { size: 22, sans: true, gap: 54 }], ['NORMAL SIZE', { size: 17, fill: C.amber }], ['$20k (Jan: $10k)', { size: 22, sans: true }]]);
       },
-      right: () => feed('RECENT TRADES · SEVEN WINS IN A ROW', [['APR 02', 'Kestral  +$1,840', C.teal], ['APR 05', 'Wrenfold  +$1,210', C.teal], ['APR 09', 'Tensora  +$2,460', C.teal], ['APR 11', 'Arcton  +$980', C.teal], ['APR 16', 'Saros  +$3,120', C.teal], ['APR 19', 'Cirrane  +$2,740', C.teal]]) + T(36, 536, 'Normal size: $20k, up from $10k in January', { size: 20, fill: C.amber })
+      right: () => feed('RECENT TRADES · SEVEN WINS IN A ROW', [['MAR 28', 'Brightwell  +$1,120', C.teal], ['APR 02', 'Kestral  +$1,840', C.teal], ['APR 05', 'Wrenfold  +$1,210', C.teal], ['APR 09', 'Tensora  +$2,460', C.teal], ['APR 11', 'Arcton  +$980', C.teal], ['APR 16', 'Saros  +$3,120', C.teal], ['APR 19', 'Cirrane  +$2,740', C.teal]]) + T(36, 536, 'Normal size: $20k, up from $10k in January', { size: 20, fill: C.amber })
     },
     'empty-hand': {
       center: () => T(36, 92, `FOUR IDEAS · YOU OWN NOTHING · WHAT YOU COULD MAKE / LOSE`, { size: 18, fill: C.dim }) +
@@ -779,8 +822,8 @@ window.PP = window.PP || {};
       options: {
         A: { line: `(Sell all of it. Now.)`, preview: `Ends the damage at a bad price. Admits you were wrong.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`SOLD 880 CORVANE @ 39.00 · Loss −11,450`) }, { who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`PRE-MARKET · CORVANE 33.10 · customer confirms move`) }] },
-            { beats: [{ cam: 'screens', ...alert(`SOLD 880 CORVANE @ 39.00 · Loss −11,450`) }, { who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`PRE-MARKET · CORVANE 44.00 · customer denies report`), caption: `Wrong about the news. Right about the decision.` }] }
+            { beats: [{ cam: 'screens', ...alert(`SOLD 880 CORVANE · AVG 38.71 · Loss −11,713`) }, { who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`PRE-MARKET · CORVANE 33.10 · customer confirms move`) }] },
+            { beats: [{ cam: 'screens', ...alert(`SOLD 880 CORVANE · AVG 38.71 · Loss −11,713`) }, { who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`PRE-MARKET · CORVANE 44.00 · customer denies report`), caption: `Wrong about the news. Right about the decision.` }] }
           ] },
         B: { line: `(Hold. One unnamed source. The company's still sound.)`, preview: `Keeps the hope, and all the risk.`,
           outcomes: [
@@ -794,8 +837,8 @@ window.PP = window.PP || {};
           ] },
         D: { line: `(Sell half now. The rest goes at the open if it's under $36.)`, preview: `Cuts the risk. Keeps a foot in.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`SOLD 440 CORVANE @ 39.00`) }, { cam: 'screens', ...alert(`OPEN 33.10 · rest sold below your line`), caption: `A gap goes straight through any line you draw.` }] },
-            { beats: [{ cam: 'screens', ...alert(`SOLD 440 CORVANE @ 39.00`) }, { who: 'theo', mood: 'neutral', act: 'nod' }, { cam: 'wide', caption: `The customer denies it. The half you kept recovers.` }] }
+            { beats: [{ cam: 'screens', ...alert(`SOLD 440 CORVANE · AVG 38.85`) }, { cam: 'screens', ...alert(`OPEN 33.10 · rest sold below your line`), caption: `A gap goes straight through any line you draw.` }] },
+            { beats: [{ cam: 'screens', ...alert(`SOLD 440 CORVANE · AVG 38.85`) }, { who: 'theo', mood: 'neutral', act: 'nod' }, { cam: 'wide', caption: `The customer denies it. The half you kept recovers.` }] }
           ] },
         E: { line: `(Not in a thin market. I'll decide at the open.)`, preview: `A fairer price, if the news turns out to be wrong.`,
           outcomes: [
@@ -877,7 +920,8 @@ window.PP = window.PP || {};
         B: { line: `(Just the one that fits how I trade.)`, preview: `One trade, the one you understand. Check its shape.`,
           outcomes: [
             { beats: [{ who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', caption: `Weeks later, your one trade has done what your trades are supposed to do.` }] },
-            { beats: [{ who: 'theo', mood: 'neutral', act: 'nod' }, { cam: 'screens', caption: `It went against you. Was the shape worth it?` }] }
+            { beats: [{ who: 'theo', mood: 'neutral', act: 'nod' }, { cam: 'screens', caption: `It went against you. Was the shape worth it?` }] },
+            { beats: [{ who: 'theo', mood: 'smile', pose: 'mug', act: 'nod' }, { cam: 'screens', caption: `None of the four was yours. You buy nothing, on purpose.` }] }
           ] },
         C: { line: `(Nothing today.)`, preview: `Patience, at the cost of maybe missing yours.`,
           outcomes: [
@@ -968,8 +1012,9 @@ window.PP = window.PP || {};
         A: { line: `Nadia, I want an exception. Four times, the whole account.`, preview: `Ahead of everyone, or gone.`,
           outcomes: [
             { beats: [{ who: 'nadia', mood: 'awkward', pose: 'tablet' }, { cam: 'screens', ...alert(`SAROS 104 · account more than doubles`), caption: `You'll spend years trying to feel this again.` }] },
-            { beats: [{ who: 'nadia', mood: 'frustrated' }, { cam: 'screens', ...alert(`MARGIN CALL · position sold at −12%`) }] },
-            { beats: [{ who: 'nadia', mood: 'surprised' }, { cam: 'screens', ...alert(`SAROS OPENS −25% · ACCOUNT LIQUIDATED`) }, { who: 'theo', mood: 'neutral', act: 'sigh', caption: `It's over before the open finishes.` }] }
+            { beats: [{ who: 'nadia', mood: 'frustrated' }, { cam: 'screens', ...alert(`STOP FILLED · 71.20 · −44% of account`) }] },
+            { beats: [{ who: 'nadia', mood: 'surprised' }, { cam: 'screens', ...alert(`SAROS OPENS −25% · ACCOUNT LIQUIDATED`) }, { who: 'theo', mood: 'neutral', act: 'sigh', caption: `It's over before the open finishes.` }] },
+            { beats: [{ who: 'nadia', mood: 'skeptical', pose: 'crossed', say: `Not with this year's record. Two times, a quarter of the account, or nothing.` }] }
           ] },
         B: { line: `(Twenty-five thousand. I don't need an exit. I'm sure.)`, preview: `The right size, with no plan for being wrong.`,
           outcomes: [
@@ -985,7 +1030,7 @@ window.PP = window.PP || {};
           ] },
         D: { line: `Five thousand to start. I'll add as it proves itself, and raise my exit to break-even.`, preview: `Let the market confirm you before you commit more.`,
           outcomes: [
-            { beats: [{ who: 'nadia', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`Added twice · SAROS 104 · +4,200`), caption: `The winner ran, and you let it.` }] },
+            { beats: [{ who: 'nadia', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`Added twice · SAROS 104 · +3,100`), caption: `The winner ran, and you let it.` }] },
             { beats: [{ who: 'nadia', mood: 'neutral', act: 'nod' }, { cam: 'screens', ...alert(`−500 · position closed`) }] },
             { beats: [{ cam: 'screens', ...alert(`SAROS OPENS −25% · −1,300`), caption: `It failed while you were still small.` }] }
           ] },
@@ -995,7 +1040,13 @@ window.PP = window.PP || {};
             { beats: [{ cam: 'screens', ...alert(`SAROS 72`), caption: `It fails. You feel clever, briefly.` }] },
             { beats: [{ cam: 'screens', ...alert(`SAROS OPENS −25%`), caption: `You weren't in it. Luck, not a plan.` }] }
           ] },
-        F: { line: `Twenty-five thousand, out at seventy-two. Two and a half percent at risk.`, preview: `Bigger when you're right. Still a planned loss when you're not.`,
+        G: { line: `Twenty-five thousand, out at seventy-two. Back to ten the day before earnings.`, preview: `Big while the exit protects you. Small when it can't.`,
+          outcomes: [
+            { beats: [{ who: 'nadia', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`SAROS 104 · +7,500`), caption: `Right, and sized like you meant it.` }] },
+            { beats: [{ who: 'nadia', mood: 'neutral', act: 'nod' }, { cam: 'screens', ...alert(`EXIT HIT · 72 · −2,500`), caption: `Exactly the loss you planned.` }] },
+            { beats: [{ cam: 'screens', ...alert(`CUT TO 10,000 · SAROS OPENS −25% · −2,500`) }, { who: 'nadia', mood: 'smile', act: 'nod', caption: `The gap you saw coming cost what you planned for.` }] }
+          ] },
+        F: { line: `Twenty-five thousand, out at seventy-two. I'll hold it through earnings.`, preview: `Bigger when you're right. The exit can't cover a gap.`,
           outcomes: [
             { beats: [{ who: 'nadia', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`SAROS 104 · +7,500`), caption: `Right, and sized like you meant it.` }] },
             { beats: [{ who: 'nadia', mood: 'neutral', act: 'nod' }, { cam: 'screens', ...alert(`EXIT HIT · 72 · −2,500`), caption: `Exactly the loss you planned.` }] },

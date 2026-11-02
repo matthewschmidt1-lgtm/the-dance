@@ -44,7 +44,7 @@ PP.callGame = (function () {
   const readsFor = psy => psy >= 7 ? 3 : psy >= 4 ? 2 : 1;
   const ruleMax = () => rules ? ruleOf(rules.risk).max : 4;
   const breaksRisk = exposure => MK.exposure[exposure] > ruleMax();
-  const trustLocked = (cap, exposure) => cap.soc < 5 && MK.exposure[exposure] > 2;
+  const lockReason = (cap, o) => MK.lockReason(cap, o.exposure, o);
 
   function hud(cap, prev) { return PP.ui.hud(cap, prev); }
 
@@ -447,21 +447,24 @@ PP.callGame = (function () {
     const max = rules.risk === 'open' ? null : ruleOf(rules.risk).max === 1 ? 1 : 2.5;
     return { inv, win: Math.round(inv * n.gain * 10) / 10, lose: Math.round(inv * n.loss * 10) / 10, risk, inRule: max === null ? pct <= 10 : risk <= max + 1e-9, ruin: fin - inv * n.loss <= MK.ruin };
   }
+  // Kelly at 25% instead of her 40%: 0.25 / 0.6 − 0.75 / 2 ≈ 4% of the account.
+  const SAFE = 4.2;
   function sizeMoment(n) {
-    const steps = n.steps, cap10 = s.cap.soc < 5;
+    const steps = n.steps, cap10 = s.cap.soc < 5 || s.cap.fin <= 90;
     const j = steps.indexOf(s.size), r = sizeRow(s.size);
     const max = rules.risk === 'open' ? null : ruleOf(rules.risk).label;
     act(`<p class="cl-prompt">${esc(n.prompt)}</p>
       <div class="cl-size">
         <input type="range" min="0" max="${steps.length - 1}" step="1" value="${j}" id="cl-size-in" aria-label="Share of your account" aria-valuetext="${s.size}% of your account">
-        <ol class="cl-size-ticks" aria-hidden="true">${steps.map(p => `<li class="${cap10 && p > 10 ? 'is-locked' : ''} ${sizeRow(p).inRule && p ? 'is-rule' : ''}">${p}%</li>`).join('')}</ol>
+        <ol class="cl-size-ticks" aria-hidden="true">${steps.map(p => `<li class="${cap10 && p > 10 ? 'is-locked' : ''} ${sizeRow(p).inRule && p ? 'is-rule' : ''} ${p && p <= SAFE ? 'is-safe' : ''}">${p}%</li>`).join('')}</ol>
+        <p class="cl-size-band">Underlined: still a good bet even if her 40% is really 25%. Green: inside your rule.</p>
         <dl class="cl-size-out">
           <div><dt>You put in</dt><dd>$${r.inv}k</dd></div>
           <div><dt>If approved</dt><dd class="up">+$${r.win}k</dd></div>
           <div><dt>If rejected</dt><dd class="down">−$${r.lose}k</dd></div>
           <div><dt>Account if wrong</dt><dd class="${r.ruin ? 'down' : ''}">$${Math.round((s.cap.fin - r.lose) * 10) / 10}k</dd></div>
         </dl>
-        <p class="cl-size-note">${s.size === 0 ? 'Nothing. You say no.' : r.ruin ? 'If she\'s wrong, the desk pulls your capital.' : r.inRule ? (max ? `Inside your ${max} rule.` : 'Within what you could survive being wrong about.') : (max ? `Breaks your ${max} rule: ${Math.round(r.risk * 10) / 10}% of the account at risk.` : `${Math.round(r.risk * 10) / 10}% of the account at risk.`)}${cap10 ? ' Trust is ' + s.cap.soc + ': Nadia caps new positions at 10%.' : ''}</p>
+        <p class="cl-size-note">${s.size === 0 ? 'Nothing. You say no.' : r.ruin ? 'If she\'s wrong, the desk pulls your capital.' : r.inRule ? (max ? `Inside your ${max} rule.` : 'Within what you could survive being wrong about.') : (max ? `Breaks your ${max} rule: ${Math.round(r.risk * 10) / 10}% of the account at risk.` : `${Math.round(r.risk * 10) / 10}% of the account at risk.`)}${cap10 ? (s.cap.soc < 5 ? ` Trust is ${s.cap.soc}: Nadia caps new positions at 10%.` : ` You're down 10%: Nadia caps new positions at 10%.`) : ''}</p>
       </div>
       <div class="cl-row"><button type="button" class="btn btn-primary" data-cact="size-done">${s.size ? `Tell her: ${s.size}%` : 'Tell her no'}</button>${hangLink}</div>`);
     const inp = $('#cl-size-in');
@@ -482,7 +485,7 @@ PP.callGame = (function () {
 
   function options() {
     const d = s.call.decide;
-    return d.options.filter(o => !o.when || o.when(s)).map(o => ({ ...o, q: val(o.q, s), locked: trustLocked(s.cap, o.exposure) ? `Trust ${s.cap.soc}: Nadia won't sign it` : null }));
+    return d.options.filter(o => !o.when || o.when(s)).map(o => ({ ...o, q: val(o.q, s), locked: lockReason(s.cap, o) }));
   }
 
   function decide() {
@@ -500,14 +503,16 @@ PP.callGame = (function () {
     const r = sizeRow(s.picked), a = s.truth === 'approve';
     const passes = hist.filter(e => ['D', 'E'].includes(e.key) || e.key === 'A' && e.id === 'warning').length;
     const exposure = s.picked === 0 ? 'none' : r.risk <= 1 ? 'small' : r.risk <= 2.5 ? 'normal' : r.risk <= 10 ? 'large' : 'all';
+    const asked = s.flags.askedPrice || s.flags.askedDoubt ? ' And you asked the question most people skip.' : '';
     const verdict = s.picked === 0
       ? (passes >= 3 ? { q: 2, cap: { soc: 1 }, line: `You've said no a lot this year. Sometimes that's discipline. Sometimes it's being afraid to be wrong in public. Call me when you know which.` } : { q: 3, cap: { soc: 1 }, line: `Fair. I'd rather back someone who can say no than someone who can't.` })
-      : r.ruin ? { q: 0, cap: { soc: -2 }, line: `You'd have bet the account on someone else's forty percent. I can't give you ours.` }
-        : r.inRule ? { q: 4, cap: { soc: 2, time: 3 }, set: 'allocation', line: `That's the answer I was hoping for. Monday, win or lose, I'd like to talk about you managing some of our money.` }
-          : { q: 1, cap: { soc: -1 }, line: `You'd make money Monday or you wouldn't. Either way, that size tells me what I needed to know.` };
+      : r.ruin || s.picked >= 50 ? { q: 0, cap: { soc: -2 }, line: `You'd have bet the account on someone else's forty percent. I can't give you ours.` }
+        : s.picked >= 25 ? { q: 1, cap: { soc: -1 }, line: `You'd make money Monday or you wouldn't. Either way, that size tells me what I needed to know.` }
+          : s.picked >= 10 ? { q: 3, cap: { soc: 1, time: 1 }, line: `A little rich for a number nobody knows to the decimal. But you'd survive being wrong about me. Let's talk in January.${asked}` }
+            : { q: 4, cap: { soc: 2, time: 3 }, set: 'allocation', line: `That's the answer I was hoping for. Big enough to matter, small enough to survive my being wrong. Monday, win or lose, I'd like to talk about you managing some of our money.${asked}` };
     return {
       opt: { key: `${s.picked}%`, text: s.picked ? `Put ${s.picked}% of the account into Merrin.` : `Said no to Merrin.`, did: s.picked ? (r.inRule ? `Sized the big idea inside the rule: ${s.picked}%.` : `Bet ${s.picked}% of the account on one Monday.`) : `Walked away from the biggest idea of the year.`, exposure, q: verdict.q, breaks: !r.inRule && s.picked ? ['walk'] : [], cap: verdict.cap, set: verdict.set },
-      out: { fin: s.picked ? (a ? r.win : -r.lose) : 0, tone: s.picked ? (a ? 'good' : r.inRule ? 'mixed' : 'bad') : (a ? 'mixed' : 'good'), text: a ? `Monday, 7:02 AM: Merrin is approved. The stock opens up 190%.` : `Monday, 7:02 AM: Merrin is rejected. The stock opens down 62%.` },
+      out: { fin: s.picked ? (a ? r.win : -r.lose) : 0, tone: s.picked ? (a ? 'good' : r.inRule ? 'mixed' : 'bad') : (a ? 'mixed' : 'good'), text: a ? `Monday, 7:02 AM: Merrin is approved. The stock is indicated up 200% before the open.` : `Monday, 7:02 AM: Merrin is rejected. The stock is indicated down 60% before the open.` },
       verdict: verdict.line
     };
   }
@@ -521,6 +526,8 @@ PP.callGame = (function () {
       if (!opt || opt.locked) return;
       out = s.call.decide.out[key](s);
       after = s.call.decide.after ? s.call.decide.after(s, key) : null;
+      // A frozen position keeps its losses and none of its gains.
+      if (after && after.zero) out = { ...out, fin: Math.min(0, out.fin) };
     }
     set(opt.set);
     const breaks = [...(val(opt.breaks, s) || [])];
@@ -631,7 +638,7 @@ PP.callGame = (function () {
       dims: [
         dim(`Consistency`, kept >= H.length - 1 ? 3 : kept >= H.length / 2 ? 2 : 1, `You kept your rules in ${NUM[kept] || kept} of ${NUM[H.length] || H.length} calls.`),
         dim(`Adaptability`, !sh ? 1 : ['B', 'D'].includes(sh.key) ? 3 : sh.key === 'C' ? 2 : 1, !sh ? `You never reached the call that tested it.` : sh.key === 'A' ? `When the evidence turned, you defended the method${sh.sortedAway ? ', and filed the hardest evidence under "doesn\'t change it"' : ''}.` : sh.key === 'E' ? `When the evidence turned, you threw everything out at once. Changing your mind and abandoning your method aren't the same thing.` : `When the evidence turned, you changed how much you bet before you changed what you believe.`),
-        dim(`Risk management`, big === 0 ? 3 : big === 1 ? 2 : 1, big === 0 ? `You never put more at risk than you could afford to be wrong about.` : `${big === 1 ? 'Once' : `${NUM[big]} times`}, you took a position big enough to change your year.`),
+        dim(`Risk management`, big === 0 ? 3 : big === 1 ? 2 : 1, big === 0 ? `You never put more at risk than you could afford to be wrong about.` : `${big === 1 ? 'Once' : `${NUM[big].charAt(0).toUpperCase() + NUM[big].slice(1)} times`}, you took a position big enough to change your year.`),
         dim(`Information gathering`, gathered >= 8 ? 3 : gathered >= 4 ? 2 : 1, `You asked, checked or tested ${gathered} times before deciding.${listened ? ` You let the silence work ${listened === 1 ? 'once' : NUM[listened] + ' times'}.` : ''}`),
         dim(`Psychological discipline`, K.cap.psy >= 6 && !H.some(e => e.hungUp) ? 3 : K.cap.psy >= 4 ? 2 : 1, `You finished with Composure ${K.cap.psy}.${H.some(e => e.id === 'silence' && e.key === 'A') ? ' You chased a move because a friend was in it.' : ''}${H.some(e => e.hungUp) ? ' You hung up when a call got uncomfortable.' : ''}`)
       ]

@@ -1484,6 +1484,8 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .cl-size input[type="range"] { width: 100%; accent-color: #a8372c; }
 .cl-size-ticks { display: flex; justify-content: space-between; margin: 4px 0 10px; padding: 0; list-style: none; font-family: var(--f-mono); font-size: .6875rem; color: #6f685c; }
 .cl-size-ticks .is-rule { color: #1e4d48; font-weight: 600; }
+.cl-size-ticks .is-safe { text-decoration: underline; text-decoration-color: #c49d5e; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.cl-size-band { margin: -4px 0 10px; font-family: var(--f-mono); font-size: .625rem; letter-spacing: .04em; color: #6f685c; }
 .cl-size-ticks .is-locked { opacity: .45; text-decoration: line-through; }
 .cl-size-out { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
 .cl-size-out div { padding: 8px 10px; background: #fffdf7; border: 1px solid rgba(29, 27, 23, .14); }
@@ -1675,3 +1677,17 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
   .hm-tm-chart .px, .hm-tm-chart circle, .hm-tm-tick b, .hm-tm-line, .hm-tm-key path, .hm-tm-note, .hm-tm-ring i { animation: none !important; opacity: 1; stroke-dashoffset: 0; clip-path: none; }
   .hm-tm-door, .hm-tm-bg img { transition: none; }
 }
+
+/* Nadia's ladder, the cycle, and the R ledger */
+.mk-ladder { display: inline-flex; flex-wrap: wrap; gap: 4px; margin: 0 4px; vertical-align: middle; }
+.mk-ladder span { padding: 1px 7px; border: 1px solid var(--line); border-radius: 999px; font-family: var(--f-mono); font-size: .6875rem; color: var(--muted); }
+.mk-ladder span.is-now { background: #a8372c; border-color: #a8372c; color: #fff; }
+.mk-cycle { display: inline-flex; gap: 3px; margin: 0 4px; vertical-align: middle; }
+.mk-cycle i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #8a6a33; }
+.mk-cycle i.on { background: #c49d5e; border-color: #c49d5e; }
+.rl { width: 100%; border-collapse: collapse; font-size: .9375rem; }
+.rl th, .rl td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.rl thead th { font-family: var(--f-mono); font-size: .6875rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.rl td { font-family: var(--f-mono); }
+.rl tr.is-broke th::after { content: " · broke your rule"; font-family: var(--f-mono); font-size: .6875rem; color: #a8372c; }
+.rl-sum { margin-top: 12px; font-size: .9688rem; line-height: 1.55; }

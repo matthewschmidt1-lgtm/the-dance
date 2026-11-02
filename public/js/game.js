@@ -726,14 +726,14 @@
     const press = sc.play && sc.press ? val(sc.press, ctxNow(sc)) : null;
     const options = optsNow(sc).map(o => `<li>
       <input type="radio" name="move" id="move-${sc.id}-${o.key}" value="${o.key}" ${draft.selected === o.key ? 'checked' : ''} ${trustLocked(o) ? 'disabled' : ''}>
-      <label for="move-${sc.id}-${o.key}" class="option ${trustLocked(o) ? 'is-locked' : ''}"><span class="option-key">${o.key}</span><span class="option-text">${fill(o.text)}${o.exposure ? `<span class="exp exp-${o.exposure} ${breaks(o) ? 'is-over' : ''}">${MK.exposureLabel[o.exposure]}${breaks(o) ? ' · over your limit' : ''}${trustLocked(o) ? ' · Nadia won\'t sign it' : ''}</span>` : ''}</span></label>
+      <label for="move-${sc.id}-${o.key}" class="option ${trustLocked(o) ? 'is-locked' : ''}"><span class="option-key">${o.key}</span><span class="option-text">${fill(o.text)}${o.exposure ? `<span class="exp exp-${o.exposure} ${breaks(o) ? 'is-over' : ''}">${MK.exposureLabel[o.exposure]}${breaks(o) ? ' · over your limit' : ''}${trustLocked(o) ? ` · ${lockReason(o)}` : ''}</span>` : ''}</span></label>
     </li>`).join('');
     return `<form id="decide-form" class="decide">
       <div class="decide-top">
         ${press ? `<blockquote class="beat-say beat-say-lead"><span>${PP.people[press.who].name}</span>“${press.say}”</blockquote>` : ''}
         ${sc.facts ? `<section class="facts" aria-label="The situation"><p class="facts-k">The situation</p><ul>${sc.facts.map(f => `<li>${fill(f)}</li>`).join('')}</ul></section>` : ''}
         <fieldset><legend class="decide-q">${sc.question}</legend>
-          ${isMarket() && rules ? marketState() : ''}
+          ${isMarket() && rules ? marketState(sc) : ''}
           ${isMarket() && rules ? `<p class="rules-mini">Your rules: <strong>${ruleOf('risk', rules.risk).label}</strong> risk per decision · edge: <strong>${ruleOf('edge', rules.edge).label}</strong></p>` : ''}
           <ul class="options">${options}</ul></fieldset>
       </div>
@@ -754,15 +754,20 @@
   }
   const readsOf = sc => isMarket() ? marketReads() : sc.reads;
   const readsLeft = sc => readsOf(sc) ? Math.max(0, readsOf(sc) - draft.clues.length) : Infinity;
-  // Nadia won't sign anything bigger than a normal-size risk for someone she doesn't trust.
-  const trustLocked = o => isMarket() && capitals().cap.soc < 5 && MK.exposure[o.exposure] > 2;
-  function marketState() {
+  // Nadia won't sign it: either the account is down her ladder, or she doesn't trust you.
+  const lockReason = o => isMarket() ? MK.lockReason(capitals().cap, o.exposure, o) : null;
+  const trustLocked = o => !!lockReason(o);
+  function marketState(sc) {
     const c = capitals().cap, lines = [];
+    const st = MK.step(c.fin);
+    lines.push(`<strong>Nadia's limits.</strong> <span class="mk-ladder">${MK.ladder.map(l => `<span class="${st && st.k === l.k ? 'is-now' : ''}">${l.label}</span>`).join('')}</span>${st ? ` ${st.note}` : ` Account $${c.fin}k: no limits on you yet.`}`);
+    if (sc && sc.cycle) lines.push(`<strong>The cycle.</strong> <span class="mk-cycle" aria-label="${sc.cycle.t} of 5, cold to hot">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= sc.cycle.t ? 'on' : ''}"></i>`).join('')}</span> ${sc.cycle.read}`);
     const reads = marketReads();
     if (c.psy <= 3) lines.push(`<strong>Rattled.</strong> Composure ${c.psy}/10: you only have it in you to check ${NUM[reads]} ${reads === 1 ? 'thing' : 'things'} before you decide.`);
     else lines.push(`<strong>${c.psy >= 7 ? 'Clear-headed' : 'Steady'}.</strong> Composure ${c.psy}/10: you can check ${NUM[reads]} things before you decide.`);
     if (c.str >= 7) lines.push(`<strong>Sharp edge.</strong> Edge ${c.str}/10: you know what you're looking for, so one more look is free.${c.psy <= 3 ? ' You know what to do. The question is whether you will.' : ''}`);
     if (c.soc < 5) lines.push(`<strong>Nadia is watching.</strong> Trust ${c.soc}/10: she won't sign anything above a normal-size risk.`);
+    else if (c.soc >= 8) lines.push(`<strong>Nadia trusts you.</strong> Trust ${c.soc}/10: she'll hear an exception, though she may still say no.`);
     lines.push(`<strong>Runway ${c.time}/10.</strong> Every challenge spends one. It's the season you have left to recover from mistakes.`);
     return `<ul class="mk-state">${lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
   }
@@ -898,7 +903,7 @@
         return `<li class="capd ${d > 0 ? 'up' : d < 0 ? 'down' : ''}"><span class="capd-k">${c.name}</span><span class="capd-v">${c.k === 'fin' ? `$${C.steps[idx].after.fin}k` : C.steps[idx].after[c.k]}</span><span class="capd-d">${d ? (c.k === 'fin' ? money(d) : (d > 0 ? '+' : '−') + Math.abs(d)) : '·'}</span></li>`;
       }).join('');
       body = `
-        ${out ? `<div class="ruin"><p class="eyebrow">The desk has pulled your capital</p><h2>You're out of the game.</h2><p>Your account fell below half of what you started with. ${LIST.length - idx - 1 ? `You won't get to play the ${NUM[LIST.length - idx - 1]} challenge${LIST.length - idx - 1 === 1 ? '' : 's'} that remained.` : ''} Everything you learned is still yours. The account isn't.</p></div>` : ''}
+        ${out ? `<div class="ruin"><p class="eyebrow">The desk has pulled your capital</p><h2>You're out of the game.</h2><p>Your account fell 20% below where you started, and the desk took your capital back. ${LIST.length - idx - 1 ? `You won't get to play the ${NUM[LIST.length - idx - 1]} challenge${LIST.length - idx - 1 === 1 ? '' : 's'} that remained.` : ''} Everything you learned is still yours. The account isn't.</p></div>` : ''}
         <div class="verdict">
           <div class="verdict-glyph g${opt.q}" aria-hidden="true">${g.glyph}</div>
           <div class="verdict-copy">
@@ -1259,7 +1264,7 @@
       ${rulesCard}
       <section class="wrap mk-caps">
         <div class="section-head"><p class="eyebrow">${n ? 'Your capital so far' : 'You start with five kinds of capital'}</p><h2>Money is only one of them.</h2>
-          <p class="lede">You can win financially and lose your reputation, or protect your money and run out of time. Lose half your account and the desk pulls your capital. That ends the section.</p></div>
+          <p class="lede">You can win financially and lose your reputation, or protect your money and run out of time. Nadia's limits tighten as you lose: half size at −10%, small risk only at −15%, and at −20% the desk pulls your capital. That ends the section.</p></div>
         <div class="hud hud-lg">${hud(C.cap)}</div>
         <ul class="cap-notes">${MK.capitals.map(c => `<li><strong>${c.name}</strong> <span>${c.kind}.</span> ${c.note}</li>`).join('')}</ul>
       </section>
@@ -1302,11 +1307,11 @@
         <span class="capr-v">${c.k === 'fin' ? `$${b}k` : b}<small class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d ? (c.k === 'fin' ? money(d) : (d > 0 ? '+' : '−') + Math.abs(d)) : 'no change'}</small></span></li>`;
     }).join('');
     const soft = MK.capitals.filter(c => c.k !== 'fin').map(c => ({ c, d: C.cap[c.k] - c.start })).sort((x, y) => y.d - x.d);
-    const capLine = `${fin > 100 ? `You made money` : fin === 100 ? `You protected your money` : out ? (fin === 0 ? `You lost the whole account` : `You lost more than half your account`) : `You lost some money`}${soft[0].d > 0 ? ` and built ${soft[0].c.name.toLowerCase()}` : ''}${soft[soft.length - 1].d < 0 ? `, and spent ${soft[soft.length - 1].c.name.toLowerCase()}` : ''}.`;
+    const capLine = `${fin > 100 ? `You made money` : fin === 100 ? `You protected your money` : out ? (fin === 0 ? `You lost the whole account` : `You lost 20% of the account, and the desk's capital with it`) : `You lost some money`}${soft[0].d > 0 ? ` and built ${soft[0].c.name.toLowerCase()}` : ''}${soft[soft.length - 1].d < 0 ? `, and spent ${soft[soft.length - 1].c.name.toLowerCase()}` : ''}.`;
 
     const eh = C.steps.find(x => x.sc.id === 'empty-hand');
     const edgeSummary = !rules || !eh ? '' : eh.opt.key === 'B' ? `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}, and when four ideas arrived you played only the one that fit it.`
-      : eh.opt.key === 'C' ? `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}. On the slow Thursday you waited, which is never wrong, though one idea may have been yours.`
+      : eh.opt.key === 'C' ? `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}. On the slow Thursday you waited. Waiting was cheap here. Check whether one of the four was yours.`
         : `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}. On the slow Thursday you played someone else's game.`;
 
     const review = C.steps.map((x, i) => {
@@ -1321,12 +1326,31 @@
     }).join('') + (out ? LIST.slice(played).map((sc, j) => `<li class="dr is-unplayed"><span class="dr-n">${played + j + 1}</span><div class="dr-main"><h4>${sc.title}</h4><p class="dr-row">Never played. You were out of the game.</p></div></li>`).join('') : '');
 
 
+    // The R ledger: what each decision planned to risk, what it made or lost, in units of that plan.
+    const R = C.steps.map(x => {
+      const plan = val(x.opt.risk, {}) || MK.plannedRisk[x.opt.exposure] || 0;
+      const fin = x.oc.ruin ? -x.before.fin : x.oc.fin;
+      return { x, plan, fin, r: plan ? fin / plan : null };
+    });
+    const risked = R.filter(z => z.plan);
+    const fmtR = r => `${r >= 0 ? '+' : '−'}${Math.abs(r).toFixed(1)}R`;
+    const expect = risked.length ? risked.reduce((a, z) => a + z.r, 0) / risked.length : null;
+    const beyond = risked.reduce((a, z) => a + (z.fin < -z.plan ? (-z.fin - z.plan) / z.plan : 0), 0);
+    const brokeLoss = R.reduce((a, z) => a + (z.x.broke && z.fin < 0 ? -z.fin : 0), 0);
+    const ledger = `<section class="block"><h2 class="block-h">The R ledger <span class="block-hint">what a desk reviews</span></h2>
+        <p class="small">R is what a decision planned to risk. A trade that loses 1R lost exactly what you planned. One that loses 3R went wrong in a way your plan didn't cover.</p>
+        <table class="rl"><thead><tr><th scope="col">Decision</th><th scope="col">Planned risk</th><th scope="col">Result</th><th scope="col">In R</th></tr></thead><tbody>
+        ${R.map(z => `<tr class="${z.x.broke ? 'is-broke' : ''}"><th scope="row">${z.x.sc.title}</th><td>${z.plan ? `$${z.plan}k` : 'None'}</td><td>${money(Math.round(z.fin * 10) / 10)}</td><td>${z.r === null ? '—' : fmtR(z.r)}</td></tr>`).join('')}
+        </tbody></table>
+        <p class="rl-sum">${expect === null ? `You never put new money at risk.` : `Expectancy: <strong>${fmtR(expect)}</strong> per decision that risked anything.`} Lost beyond plan, to gaps and thin books: <strong>${beyond.toFixed(1)}R</strong>. Lost on decisions that broke your rule: <strong>${brokeLoss ? `$${Math.round(brokeLoss * 10) / 10}k` : 'nothing'}</strong>.</p>
+      </section>`;
+
     const said = C.steps.filter(x => x.opt.verdict).map(x => `<li class="said"><span class="said-face">${portrait(x.opt.verdict.who, x.opt.q >= 3 ? 'smile' : x.opt.q === 2 ? 'neutral' : 'skeptical')}</span>
         <blockquote><p>“${x.opt.verdict.line}”</p><footer><strong>${PP.people[x.opt.verdict.who].name}</strong> · ${x.sc.title}</footer></blockquote></li>`).join('');
 
     return `${mkHero(`<p class="eyebrow eyebrow-on-dark">${out ? `Challenge ${C.ruinedAt + 1} · The desk pulled your capital` : `The Trader's Mind · Part I complete`}</p>
         <h1 class="mk-title">${out ? 'Out of the game.' : 'Still standing.'}</h1>
-        <p class="mk-sub">${out ? `Your account fell below half of what you started with. Nothing teaches survival like losing the ability to continue.` : `The objective was never to win every round. It was to become the kind of player who could keep playing.`}</p>`)}
+        <p class="mk-sub">${out ? `Your account fell 20% below where you started, and the desk took your capital back. Nothing teaches survival like losing the ability to continue.` : `The objective was never to win every round. It was to become the kind of player who could keep playing.`}</p>`)}
       <section class="wrap page mk-review">
         <div class="mk-final">
           <div class="rating-card"><span class="rating-label">Account</span><span class="rating-num">$${fin}k</span><span class="rating-sub">Started at $100k</span></div>
@@ -1335,6 +1359,7 @@
         <section class="block card"><h2 class="block-h">Five kinds of capital <span class="block-hint">the tick marks where you started</span></h2><ul class="caprs">${capRows}</ul></section>
         ${rules ? mirror(C, edgeSummary) : ''}
         <section class="block"><h2 class="block-h">Decision review</h2><p class="small">What you knew, what you chose, what happened, and whether the reasoning was sound. Annie Duke's distinction: a good decision can lose, and a bad one can win.</p><ol class="drs">${review}</ol></section>
+        ${ledger}
         ${said ? `<section class="block"><h2 class="block-h">What the desk saw</h2><svg width="0" height="0" class="defs-only" aria-hidden="true">${PP.art.DEFS}</svg><ul class="said-list">${said}</ul></section>` : ''}
         <div class="carry"><p class="eyebrow">What Ed Seykota would leave you with</p><p class="carry-q">You don't have to predict the future. You have to develop the judgment, discipline and resilience to survive it.</p></div>
         <div class="page-actions">

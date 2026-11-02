@@ -59,11 +59,13 @@ A separate section, inspired by Jack Schwager's *Market Wizards*: lessons from t
 - **Your rules first.** Before you sit down you choose how much of the account you'll risk on one idea (1%, 2.5% or no limit) and what your edge is. Every option shows how much it puts at risk, and the game tracks when you break your own rule.
 - **One world per play.** Each challenge rolls its event once (did the customer leave, was the drug approved, is it a normal losing stretch or a new market), clues hint at which, and grades judge the decision against what you could know, not the roll.
 - **Fictional tech companies.** Corvane Cloud, Quorvia Bio, Nimbic AI, Ledgerline, Voltaic Cells, Hashgrid, Tensora, Cirrane and Saros Robotics are invented, because the scenes invent news about them.
-- **Five kinds of capital**: Account, Trust, Edge, Composure and Runway. Lose half the account and the desk pulls your capital, which ends the section early.
+- **Five kinds of capital that interact**: Account, Trust, Edge, Composure and Runway. Composure sets how many details you can check before deciding (rattled, one; calm, three), a sharp Edge buys one more look, and below 5 Trust Nadia won't sign anything above a normal-size risk. Runway is the season left: each challenge spends one. Lose half the account and the desk pulls your capital, which ends the section early.
+- **Five opponents**: your ego, your confidence, your impatience, your assumptions, your desire for more. The market is almost incidental.
+- **One campaign**: each challenge remembers the ones before it (Nadia initials a clean exit, Compliance calls about the tip, she won't hear an exception from someone she doesn't trust).
 - **After each decision**: the risk chart (what every move could cost or earn), what Theo or Nadia saw, and the same decision in everyday life.
-- **The review** reveals the five principles underneath (protect your downside, find your edge, follow the evidence, master yourself, stay in the game), scored from what you actually did.
+- **The Mirror** ends the run: the rules you set before the first trade, beside what you actually did under pressure, challenge by challenge, and whether you played the game you said you would.
 
-The after-hours trading floor is rendered in Blender (`tools/make_trading_textures.py` draws the baked screen and handwritten notes first). The center and right monitors are drawn live in SVG on top of the render, so each challenge shows its own chart and news, and notifications appear across the top of the center screen.
+The desk sits in a private office that looks out on the ocean, rendered in Blender five ways (`desk-dusk`, `desk-morning`, `desk-noon`, `desk-rain`, `desk-night`): a sunset over the water, bright morning, flat midday, a grey sea in the rain and a moonlit night. The hour, the weather, the lamp, the coffee and the paper on the desk change with the season. The center and right monitors are drawn live in SVG on top of the render, and so are the things the desk remembers: your rules card, your journal of earlier decisions (broken rules crossed out), the phone, the clock and the calendar. The after-hours floor (`trading`) is still used for the home page and the section's landing page.
 
 ## How each scene plays
 

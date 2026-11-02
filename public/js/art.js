@@ -559,6 +559,8 @@ PP.art = (function () {
   // Live monitors. A scene can draw its own content onto a set's screens, in a 1000 × 562
   // space mapped onto each screen's projected corners (exported by the Blender render).
   const SCR_W = 1000, SCR_H = 562;
+  // Paper on the desk (the rules card, the journal, the calendar) shows through: no screen behind it.
+  const PAPER = new Set(['rules', 'journal', 'calendar']);
   const MONO = 'JetBrains Mono, ui-monospace, Menlo, monospace';
   const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   function screenLayer(scene, ctx) {
@@ -576,7 +578,7 @@ PP.art = (function () {
       const m = [ax, ay, cx, cy, mx, my].map(v => +v.toFixed(4)).join(' ');
       const id = `scr${++uid}`;
       return `<clipPath id="${id}"><polygon points="${q.map(p => `${p.x},${p.y}`).join(' ')}"/></clipPath>
-        <g clip-path="url(#${id})"><g class="scr scr-${k}" transform="matrix(${m})"><rect x="-20" y="-20" width="${SCR_W + 40}" height="${SCR_H + 40}" fill="#0a1012"/>${typeof draw === 'function' ? draw(ctx || {}) : draw}${k === 'center' ? '<g class="scr-alert"></g>' : ''}<rect width="${SCR_W}" height="${SCR_H}" fill="url(#scrGlass)"/></g></g>`;
+        <g clip-path="url(#${id})"><g class="scr scr-${k}" transform="matrix(${m})">${PAPER.has(k) ? '' : `<rect x="-20" y="-20" width="${SCR_W + 40}" height="${SCR_H + 40}" fill="${k === 'clock' ? '#120f0c' : '#0a1012'}"/>`}${typeof draw === 'function' ? draw(ctx || {}) : draw}${k === 'center' ? '<g class="scr-alert"></g>' : ''}<rect width="${SCR_W}" height="${SCR_H}" fill="url(#scrGlass)"/></g></g>`;
     }).join('');
   }
   // The latest notification, as a bar across the top of the center screen.

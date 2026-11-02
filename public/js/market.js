@@ -73,6 +73,7 @@ window.PP = window.PP || {};
     // ───────────────────────────────────────── 1. A broken thesis, or noise?
     {
       id: 'losing-position',
+      opponent: `your ego`,
       tests: `Can you accept being wrong?`,
       level: `Sunk cost`,
       title: `The Losing Position`,
@@ -102,7 +103,7 @@ window.PP = window.PP || {};
       question: `Are you managing your position, or your ego?`,
       options: [
         {
-          key: 'A', text: `Sell all 880 shares now, after hours, at about $39. Take the $11,500 loss.`, exposure: 'none',
+          key: 'A', text: `Sell all 880 shares now, after hours, at about $39. Take the $11,500 loss.`, did: `Sold the whole position and took the loss.`, exposure: 'none',
           q: 4, s: { jdg: 2, reg: 2, bnd: 1, inf: 1 }, cap: { psy: 1, str: 1 },
           outcomes: [
             { p: when('broken'), tone: 'good', fin: -11.5, text: `Out at $39.00. At 6:30 am Halvorsen confirms the move, and Corvane opens at $33.10. Waiting would have cost another $5,200.` },
@@ -112,7 +113,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Took the loss without a speech. That's rarer than a good call.` }
         },
         {
-          key: 'B', text: `Hold all 880. It's one unnamed report, and the company is still sound.`, exposure: 'all',
+          key: 'B', text: `Hold all 880. It's one unnamed report, and the company is still sound.`, did: `Held a position whose thesis had broken.`, exposure: 'all',
           q: c => saw(c, 2) ? (c.type === 'noise' ? 2 : 0) : 1, s: { jdg: -2, reg: -1, inf: -1 }, cap: { psy: -1 },
           outcomes: [
             { p: when('broken'), tone: 'bad', fin: -19.5, text: `Halvorsen confirms. Corvane opens at $33.10 and slides to $29.90 by Friday, when you finally sell. The loss is $19,500.` },
@@ -122,7 +123,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Said it would come back. Some do. That's what makes the habit so expensive.` }
         },
         {
-          key: 'C', text: `Buy 880 more at $39.40. It lowers your average to about $45.71.`, exposure: 'all',
+          key: 'C', text: `Buy 880 more at $39.40. It lowers your average to about $45.71.`, did: `Doubled down on a losing position.`, exposure: 'all',
           q: 0, s: { reg: -3, jdg: -3, bnd: -2 }, cap: { psy: -2, soc: -1 },
           outcomes: [
             { p: when('broken'), tone: 'bad', fin: -27.8, text: `Halvorsen confirms. You sell all 1,760 shares at $29.90 on Friday. The loss is $27,800, more than a quarter of your account.` },
@@ -132,7 +133,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Doubled a position that had blown through its stop nine days earlier. I flagged the account that night.` }
         },
         {
-          key: 'D', text: `Sell 440 now at about $39. Sell the rest at the open if it's below $36.`, exposure: 'normal',
+          key: 'D', text: `Sell 440 now at about $39. Sell the rest at the open if it's below $36.`, did: `Cut half, and drew a line for the rest.`, exposure: 'normal',
           q: 3, s: { jdg: 1, reg: 1, bnd: 1 }, cap: { psy: 1 },
           outcomes: [
             { p: when('broken'), tone: 'mixed', fin: -14.1, text: `Half out at $39. Corvane opens at $33.10, below your line, and the rest goes there. Total loss $14,100. A gap goes straight through any line you draw.` },
@@ -142,7 +143,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Cut it in half instead of all the way. Halfway honest. Still better than most.` }
         },
         {
-          key: 'E', text: `Wait for the 9:30 open. Decide when there's real volume, not a thin after-hours quote.`, exposure: 'large',
+          key: 'E', text: `Wait for the 9:30 open. Decide when there's real volume, not a thin after-hours quote.`, did: `Waited for the open with a broken thesis.`, exposure: 'large',
           q: c => saw(c, 2) ? (c.type === 'noise' ? 3 : 1) : 2, s: { reg: 1, jdg: -1 }, cap: {},
           outcomes: [
             { p: when('broken'), tone: 'bad', fin: -16.7, text: `Halvorsen confirms at 6:30. Corvane opens at $33.10, and that's where you sell. The patient fill cost $5,200.` },
@@ -171,6 +172,7 @@ window.PP = window.PP || {};
     // ───────────────────────────────────────── 2. Sizing a coin flip after seven wins
     {
       id: 'winning-streak',
+      opponent: `your confidence`,
       tests: `Can you avoid overconfidence?`,
       level: `Overconfidence`,
       title: `The Winning Streak`,
@@ -200,7 +202,7 @@ window.PP = window.PP || {};
       question: `The streak is real. Is the edge?`,
       options: [
         {
-          key: 'A', text: `Go big: buy $50,000 of Quorvia. You're seeing the market clearly right now.`, exposure: 'all',
+          key: 'A', text: `Go big: buy $50,000 of Quorvia. You're seeing the market clearly right now.`, did: `Bet $50,000 on a streak and a tip.`, exposure: 'all',
           q: 0, s: { reg: -2, jdg: -3, bnd: -1 }, cap: { psy: -1, soc: -4 },
           outcomes: [
             { p: when('approved'), tone: 'mixed', fin: 20, text: `Compliance calls before lunch: your order landed minutes after a message about a contact at the trial lab. Nadia sits in. Approved. Quorvia opens up 40%. You make $20,000 in eight minutes, and you feel like you can't miss.` },
@@ -210,7 +212,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `$50,000 on a binary event, on a tip from a trial lab. Win or lose, that's the trade I worry about.` }
         },
         {
-          key: 'B', text: `Buy your current normal size, $20,000. You've been right. Trust the process.`, exposure: 'all',
+          key: 'B', text: `Buy your current normal size, $20,000. You've been right. Trust the process.`, did: `Bet normal size on a coin flip, on a tip.`, exposure: 'all',
           q: 1, s: { jdg: -1, bnd: -1 }, cap: { soc: -3 },
           outcomes: [
             { p: when('approved'), tone: 'mixed', fin: 8, text: `Compliance calls before lunch: your order landed minutes after a message about a contact at the trial lab. Nadia sits in. Approved. Up 40%. An $8,000 gain.` },
@@ -220,7 +222,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Normal size, they said. Their normal had doubled since January.` }
         },
         {
-          key: 'C', text: `Buy $2,300, sized so a rejection costs about $1,500, and trim your other trades back to January size.`, exposure: 'normal',
+          key: 'C', text: `Buy $2,300, sized so a rejection costs about $1,500, and trim your other trades back to January size.`, did: `Sized it small, and trimmed back after the streak.`, exposure: 'normal',
           q: c => saw(c, 2) ? 2 : 3, s: { jdg: 2, reg: 1, bnd: 2 }, cap: { psy: 1, str: 1 },
           outcomes: [
             { p: when('approved'), tone: 'good', fin: 0.9, text: `Approved. Your small position makes $900, and your trimmed trades ride out the next dip comfortably.` },
@@ -230,7 +232,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Sized a coin flip like a coin flip. I'd have asked about the tip first.` }
         },
         {
-          key: 'D', text: `Don't buy Quorvia, and cut your trade sizes back to January's $10,000 for a while.`, exposure: 'none',
+          key: 'D', text: `Don't buy Quorvia, and cut your trade sizes back to January's $10,000 for a while.`, did: `Sat it out, and cut size after the streak.`, exposure: 'none',
           q: 4, s: { jdg: 2, reg: 2, bnd: 2, lng: 1 }, cap: { psy: 1, soc: 1, str: 1 },
           outcomes: [
             { p: when('approved'), tone: 'mixed', fin: 0, text: `Approved, up 40%, and you weren't in it. Two weeks later the market turns, and your smaller positions take the hit gently.` },
@@ -240,7 +242,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Cut their own size before I had to ask. I trust that account more than its returns.` }
         },
         {
-          key: 'E', text: `Sell all your winning positions now and keep this year's gains. You've proven yourself.`, exposure: 'none',
+          key: 'E', text: `Sell all your winning positions now and keep this year's gains. You've proven yourself.`, did: `Sold every winner to lock in the year.`, exposure: 'none',
           q: 1, s: { reg: -1, lng: -1, jdg: -1 }, cap: { time: -1 },
           outcomes: [
             { p: 0.6, tone: 'mixed', fin: 0, text: `You've sold everything by noon. Your three winners keep rising for another month, up 14%. You were safe, and you were out.` },
@@ -269,6 +271,7 @@ window.PP = window.PP || {};
     // ───────────────────────────────────────── 3. Four ideas, and the shape of each bet
     {
       id: 'empty-hand',
+      opponent: `your impatience`,
       tests: `Can you wait for an edge?`,
       level: `Selective participation`,
       title: `The Empty Hand`,
@@ -303,7 +306,7 @@ window.PP = window.PP || {};
       question: `Four ideas. How many deserve your money?`,
       options: [
         {
-          key: 'A', text: `Buy all four, about $10,000 each. More shots, more chances.`, exposure: 'large',
+          key: 'A', text: `Buy all four, about $10,000 each. More shots, more chances.`, did: `Bought all four ideas.`, exposure: 'large',
           q: 0, s: { reg: -2, jdg: -2, inf: -1 }, cap: { psy: -1, str: -1 },
           outcomes: [
             { p: when('closes'), tone: 'mixed', fin: -2.9, text: `Nimbic misses and drops 20%, Hashgrid keeps falling, Voltaic runs and Ledgerline closes. A busy month, $2,900 lighter.` },
@@ -313,7 +316,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Four trades before lunch. I remember being that busy. I don't remember it working.` }
         },
         {
-          key: 'B', text: `Buy only the idea that fits your edge ({edge}), at normal size. Pass on the rest.`,
+          key: 'B', text: `Buy only the idea that fits your edge ({edge}), at normal size. Pass on the rest.`, did: `Played only the idea that fit your edge.`,
           exposure: c => edge(c) === 'speed' ? 'small' : 'normal',
           q: c => edge(c) === 'speed' ? 4 : edge(c) === 'patience' ? 3 : (saw(c, 2) && c.type === 'breaks' ? 1 : 4),
           s: { jdg: 2, inf: 2, bnd: 1, str: 1 }, cap: { str: 2, psy: 1 },
@@ -325,7 +328,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Took one trade, the one that looked like them. I'd let them sit next to me.` }
         },
         {
-          key: 'C', text: `Buy nothing today. Nothing here is good enough.`, exposure: 'none',
+          key: 'C', text: `Buy nothing today. Nothing here is good enough.`, did: `Waited. Bought nothing.`, exposure: 'none',
           q: c => edge(c) === 'patience' || (edge(c) === 'research' && saw(c, 2) && c.type === 'breaks') ? 4 : 3,
           s: { jdg: 1, reg: 2, bnd: 1 }, cap: { psy: 1, time: -1 },
           outcomes: [
@@ -336,7 +339,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Didn't trade. Good. Next time, notice when the one you've been waiting for walks in.` }
         },
         {
-          key: 'D', text: `Buy Hashgrid at normal size. Down 40% in a morning, it has to bounce.`, exposure: 'large',
+          key: 'D', text: `Buy Hashgrid at normal size. Down 40% in a morning, it has to bounce.`, did: `Bought the stock that had just fallen 40%.`, exposure: 'large',
           q: 1, s: { jdg: -2, inf: -2 }, cap: { psy: -1 },
           outcomes: [
             { p: 0.6, tone: 'bad', fin: -3.5, text: `The auditor's letter comes out Friday. Hashgrid falls another 35%. You lose $3,500 on a company you hadn't heard of yesterday.` },
@@ -346,7 +349,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Bought a stock that was falling for reasons nobody knew. Nothing broke. That's the scary part.` }
         },
         {
-          key: 'E', text: `Buy Nimbic at normal size before earnings. Everyone's in it, and you don't want to miss out.`, exposure: 'normal',
+          key: 'E', text: `Buy Nimbic at normal size before earnings. Everyone's in it, and you don't want to miss out.`, did: `Followed the crowd into earnings.`, exposure: 'normal',
           q: 1, s: { jdg: -1, reg: -1 }, cap: {},
           outcomes: [
             { p: 0.55, tone: 'bad', fin: -2, text: `Nimbic misses and drops 20%. The chat room goes silent. You lose $2,000.` },
@@ -375,6 +378,7 @@ window.PP = window.PP || {};
     // ───────────────────────────────────────── 4. A normal losing stretch, or a new market?
     {
       id: 'changing-market',
+      opponent: `your assumptions`,
       tests: `Can you abandon your assumptions?`,
       level: `Regime change`,
       title: `The Changing Market`,
@@ -410,7 +414,7 @@ window.PP = window.PP || {};
       question: `Your method stopped working. Does the method change, or do you?`,
       options: [
         {
-          key: 'A', text: `Stay the course: keep buying the dips at normal size. Every method has losing stretches.`, exposure: 'normal',
+          key: 'A', text: `Stay the course: keep buying the dips at normal size. Every method has losing stretches.`, did: `Stayed the course at full size.`, exposure: 'normal',
           q: c => saw(c, 1) ? (c.type === 'regime' ? 1 : 3) : 2, s: { jdg: -1, reg: 1 }, cap: {},
           outcomes: [
             { p: when('drawdown'), tone: 'good', fin: 4, text: `The losing stretch ends in week seven, just as your backtest said it might. The dips bounce again. Up $4,000.` },
@@ -420,7 +424,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Kept buying dips. Whether that was discipline or denial depended on a number they could have checked.` }
         },
         {
-          key: 'B', text: `Use every bit of your remaining limit to win back the six weeks.`, exposure: 'all',
+          key: 'B', text: `Use every bit of your remaining limit to win back the six weeks.`, did: `Bet everything to win back the losses.`, exposure: 'all',
           q: 0, s: { reg: -3, jdg: -3, bnd: -2 }, cap: { psy: -2, soc: -1 },
           outcomes: [
             { p: when('drawdown'), tone: 'good', fin: 7, text: `The bounce comes, and your full-size positions catch it. Up $7,000. It worked, which makes the next time more dangerous.` },
@@ -430,7 +434,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Maxed out their limit to get even. That's when I stop watching the numbers and start watching the person.` }
         },
         {
-          key: 'C', text: `Halve your size and test whether the method still works, with small trades you write down.`, exposure: 'small',
+          key: 'C', text: `Halve your size and test whether the method still works, with small trades you write down.`, did: `Halved size and tested the method.`, exposure: 'small',
           q: c => saw(c, 1) && c.type === 'regime' ? 4 : 3, s: { jdg: 2, inf: 2, reg: 2, lng: 1 }, cap: { str: 2, psy: 1 },
           outcomes: [
             { p: when('drawdown'), tone: 'mixed', fin: 1.5, text: `Your small tests work. The method was fine, and you made $1,500 instead of $4,000. You'll know faster next time.` },
@@ -440,7 +444,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Cut size and started measuring again. From the outside, adapting looks boring. Good.` }
         },
         {
-          key: 'D', text: `Switch to what's working now: bet AI-chip stocks will fall (short them), like everyone else.`, exposure: 'normal',
+          key: 'D', text: `Switch to what's working now: bet AI-chip stocks will fall (short them), like everyone else.`, did: `Switched to what everyone else was doing.`, exposure: 'normal',
           q: 1, s: { jdg: -1, inf: -1, reg: -1 }, cap: { str: -1 },
           outcomes: [
             { p: when('drawdown'), tone: 'bad', fin: -5.4, text: `A week later Cirrane says the cut was a one-time pause. Chip stocks jump 18%. You lose $5,400 with a method you'd never used.` },
@@ -450,7 +454,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Jumped to the hot trade with no map. I've seen people make money that way. Once.` }
         },
         {
-          key: 'E', text: `Stop trading for a month. Study what changed before you risk anything.`, exposure: 'none',
+          key: 'E', text: `Stop trading for a month. Study what changed before you risk anything.`, did: `Stopped to study what changed.`, exposure: 'none',
           q: c => saw(c, 1) ? (c.type === 'regime' ? 4 : 2) : 3, s: { jdg: 1, reg: 2, inf: 2 }, cap: { str: 2, time: -2 },
           outcomes: [
             { p: when('drawdown'), tone: 'mixed', fin: 0, text: `You sit out the month, and the method recovers without you. You come back wiser, and a month behind.` },
@@ -479,6 +483,7 @@ window.PP = window.PP || {};
     // ───────────────────────────────────────── 5. Too timid, sized right, or too big
     {
       id: 'final-bet',
+      opponent: `your desire for more`,
       tests: `Can you protect your ability to play again?`,
       level: `Survival`,
       title: `The Last Player Standing`,
@@ -515,7 +520,7 @@ window.PP = window.PP || {};
       question: `How much are you willing to risk to win?`,
       options: [
         {
-          key: 'A', text: `Ask Nadia for an exception: 4× leverage, the whole account. This is the one.`, exposure: 'all',
+          key: 'A', text: `Ask Nadia for an exception: 4× leverage, the whole account. This is the one.`, did: `Asked for 4× on the whole account.`, exposure: 'all',
           q: 0, s: { reg: -3, jdg: -3, lng: -3, bnd: -2 }, cap: { psy: -2, soc: -2 },
           outcomes: [
             { p: c => lowTrust(c) ? 0 : when('works')(c), tone: 'good', fin: 120, text: `It works. With 4× leverage, a 30% move more than doubles your account. You're the best performer on the floor, and you'll spend years trying to feel this again.` },
@@ -527,7 +532,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Asked me for an exception to bet the whole account. That's how good traders leave.` }
         },
         {
-          key: 'B', text: `Buy $25,000 with no exit planned. You're sure about this one.`, exposure: 'large',
+          key: 'B', text: `Buy $25,000 with no exit planned. You're sure about this one.`, did: `Bet big with no exit.`, exposure: 'large',
           q: 1, s: { jdg: -1, reg: -1, bnd: -1 }, cap: { psy: -1 },
           outcomes: [
             { p: when('works'), tone: 'good', fin: 7.5, text: `It works. A $7,500 gain to close the year.` },
@@ -538,7 +543,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Sized it like they meant it, then forgot to decide where they'd be wrong.` }
         },
         {
-          key: 'C', text: `Your normal size, $10,000, out at $72. That risks $1,000.`, exposure: 'small',
+          key: 'C', text: `Your normal size, $10,000, out at $72. That risks $1,000.`, did: `Normal size, with an exit.`, exposure: 'small',
           q: 3, s: { jdg: 2, reg: 2, lng: 2, bnd: 1 }, cap: { psy: 1, soc: 1 },
           outcomes: [
             { p: when('works'), tone: 'mixed', fin: 3, text: `It works. You make $3,000 on the best setup in two years. Safe, and you'll wonder what right-sized would have made.` },
@@ -549,7 +554,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Normal size on the setup of the year. Safe. I'd have liked to see a little more conviction.` }
         },
         {
-          key: 'D', text: `Start with $5,000. Add $5,000 at +8% and again at +16%, and raise your exit to break-even.`, exposure: 'small',
+          key: 'D', text: `Start with $5,000. Add $5,000 at +8% and again at +16%, and raise your exit to break-even.`, did: `Started small, and added only as it worked.`, exposure: 'small',
           q: 4, s: { jdg: 2, reg: 1, lng: 2, inf: 1 }, cap: { psy: 1, str: 1 },
           outcomes: [
             { p: when('works'), tone: 'good', fin: 4.2, text: `It works, and you add twice as it proves you right. Up $4,200, most of it on money the trade earned for you.` },
@@ -560,7 +565,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Built the position as it proved itself. I barely had to look at that account.` }
         },
         {
-          key: 'E', text: `Nothing. Protect what you have. The year is done.`, exposure: 'none',
+          key: 'E', text: `Nothing. Protect what you have. The year is done.`, did: `Protected the year and stayed out.`, exposure: 'none',
           q: 2, s: { reg: 1 }, cap: { time: -1 },
           outcomes: [
             { p: when('works'), tone: 'mixed', fin: 0, text: `Saros runs to $104 without you. Safe, and smaller than you could have been.` },
@@ -698,12 +703,66 @@ window.PP = window.PP || {};
   };
 
   // ───────────────────────────────────────── Staging
-  // One desk for all five. The player is the trader, seen over the shoulder.
+  // One desk, five hours of the season: dusk, a bright morning, a quiet afternoon, a rainy dawn,
+  // and one lamp at night. The desk remembers: your rules stay pinned to the screen, your journal
+  // fills with what you did, and the phone carries the rest of your life, and its consequences.
   const alert = t => ({ screen: t });
+  const INK = '#2b2620', RED = '#a3382b', SERIF = 'Source Serif 4, Georgia, serif', MONO = 'JetBrains Mono, ui-monospace, Menlo, monospace';
+  const hand = (x, y, t, o = {}) => `<text x="${x}" y="${y}" font-family="${SERIF}" font-style="italic" font-size="${o.size || 40}" fill="${o.fill || INK}"${o.strike ? ' text-decoration="line-through"' : ''}${o.anchor ? ` text-anchor="${o.anchor}"` : ''}${o.weight ? ` font-weight="${o.weight}"` : ''}>${String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</text>`;
+  const clip = (t, n) => t.length > n ? t.slice(0, n - 1) + '…' : t;
+  const DAYS = [
+    { clock: '8:47 PM', month: 'MARCH', day: '11', wd: 'TUESDAY', msg: ['Sam', 'Dinner is in the oven. Coming home?'] },
+    { clock: '9:14 AM', month: 'APRIL', day: '22', wd: 'MONDAY', msg: ['Mom', 'Saw the markets are up! So proud of you.'] },
+    { clock: '1:40 PM', month: 'JUNE', day: '12', wd: 'THURSDAY', msg: ['Sam', "Don't forget Mia's recital at 6."] },
+    { clock: '6:15 AM', month: 'JANUARY', day: '14', wd: 'WEDNESDAY', msg: ['Sam', 'You were up at 4 again. Talk tonight?'] },
+    { clock: '10:05 PM', month: 'DECEMBER', day: '18', wd: 'FRIDAY', msg: ['Mia', 'Are you coming to the party?'] }
+  ];
+  // What the phone shows: your life, unless the desk has something to say first.
+  const phoneMsg = (i, ctx) => {
+    const past = ctx.past || {}, steps = ctx.steps || [], cap = ctx.cap || {};
+    if (i === 2 && /^[AB]$/.test(past['winning-streak'] || '')) return ['Compliance', 'Please call ext. 4410 about your Quorvia order.'];
+    if (i === 3 && steps.filter(x => x.broke).length >= 2) return ['Nadia', "Let's talk about your sizing. 8:30?"];
+    if (i === 4 && cap.soc < 5) return ['Nadia', "I've read your file. Don't ask for an exception."];
+    return DAYS[i].msg;
+  };
+  const desk = i => ({
+    clock: () => `<text x="500" y="410" font-family="${MONO}" font-size="300" fill="#e7b75a" text-anchor="middle">${DAYS[i].clock.replace(/ (AM|PM)/, '')}</text><text x="900" y="200" font-family="${MONO}" font-size="90" fill="#e7b75a" text-anchor="end">${DAYS[i].clock.slice(-2)}</text>`,
+    calendar: () => `<rect width="1000" height="140" fill="${RED}"/><text x="500" y="105" font-family="${MONO}" font-size="84" fill="#f6efe2" text-anchor="middle" letter-spacing="10">${DAYS[i].month}</text>` +
+      `<text x="500" y="420" font-family="${SERIF}" font-size="280" fill="${INK}" text-anchor="middle">${DAYS[i].day}</text><text x="500" y="520" font-family="${MONO}" font-size="60" fill="${INK}" text-anchor="middle" letter-spacing="8">${DAYS[i].wd}</text>`,
+    rules: ctx => {
+      const r = ctx.rules, steps = ctx.steps || [], broke = steps.filter(x => x.broke).length;
+      if (!r) return hand(40, 120, 'My rules:', { size: 70, weight: 600 });
+      const risk = M.rules.risk.options.find(o => o.v === r.risk), ed = M.rules.edge.options.find(o => o.v === r.edge);
+      return hand(40, 110, 'My rules', { size: 80, weight: 600 }) +
+        hand(40, 240, r.risk === 'open' ? 'Size by conviction' : `Risk ≤ ${risk.label} per idea`, { size: 72 }) +
+        hand(40, 350, `Edge: ${ed.label.toLowerCase()}`, { size: 72 }) +
+        hand(40, 460, 'Stay in the game.', { size: 72 }) +
+        (broke ? hand(960, 520, `broken ×${broke}`, { size: 60, fill: RED, anchor: 'end' }) : '');
+    },
+    journal: ctx => {
+      const steps = ctx.steps || [];
+      const lines = i === 0 ? [{ t: 'Corvane 880 @ 52.02.' }, { t: 'Thesis: retention is strong.' }, { t: 'The drop is market-wide,' }, { t: 'not Corvane.' }]
+        : steps.map(x => ({ t: `${x.title}: ${x.did}`, strike: x.broke }));
+      const today = i === 0 ? [] : [{ t: `${DAYS[i].month.charAt(0) + DAYS[i].month.slice(1).toLowerCase()} ${DAYS[i].day}: ?`, today: true }];
+      return hand(30, 60, 'Journal', { size: 44, weight: 600 }) + [...lines, ...today].slice(-6).map((l, k) =>
+        hand(30, 130 + k * 72, clip(l.t, 44), { size: 36, strike: l.strike, fill: l.strike ? RED : l.today ? '#6a5f52' : INK })).join('');
+    },
+    phone: ctx => {
+      const [who, what] = phoneMsg(i, ctx);
+      // The phone is portrait: draw at its own width, then stretch to the screen's 1000-wide space.
+      return `<g transform="scale(3.7,1)"><rect width="270" height="562" fill="#0d1114"/><rect x="14" y="150" width="242" height="220" rx="18" fill="#26303a"/>` +
+        `<text x="28" y="196" font-family="${MONO}" font-size="20" fill="#9fc8d8">${who.toUpperCase()}</text>` +
+        what.match(/.{1,22}(\s|$)/g).slice(0, 4).map((ln, k) => `<text x="28" y="${236 + k * 30}" font-family="system-ui, sans-serif" font-size="22" fill="#eef2f4">${ln.trim().replace(/&/g, '&amp;').replace(/</g, '&lt;')}</text>`).join('') +
+        `<text x="135" y="90" font-family="system-ui, sans-serif" font-size="44" fill="#eef2f4" text-anchor="middle">${DAYS[i].clock.replace(/ (AM|PM)/, '')}</text></g>`;
+    }
+  });
+  const ENV = { 'losing-position': 'desk-dusk', 'winning-streak': 'desk-morning', 'empty-hand': 'desk-noon', 'changing-market': 'desk-rain', 'final-bet': 'desk-night' };
+  const ORDER = ['losing-position', 'winning-streak', 'empty-hand', 'changing-market', 'final-bet'];
+  const screensFor = id => ({ ...SCREENS[id], ...desk(ORDER.indexOf(id)) });
   M.scenes = {
     'losing-position': {
-      env: 'trading',
-      screens: SCREENS['losing-position'],
+      env: ENV['losing-position'],
+      screens: screensFor('losing-position'),
       cast: [{ id: 'theo', spot: 'theo', mood: 'neutral', pose: 'pocket', wants: `Nothing from you. He's watched this night happen to a lot of people.` }],
       intro: [
         { cam: 'wide', caption: `8:47 pm. The trading floor is nearly empty.` },
@@ -748,11 +807,13 @@ window.PP = window.PP || {};
     },
 
     'winning-streak': {
-      env: 'trading',
-      screens: SCREENS['winning-streak'],
+      env: ENV['winning-streak'],
+      screens: screensFor('winning-streak'),
       cast: [{ id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `For you to still be trading next year, and to stay inside the rules.` }],
       intro: [
         { cam: 'wide', caption: `April. Seven winning trades in a row. The desk feels different when you're right.` },
+        { if: c => /^[AD]$/.test((c.past || {})['losing-position'] || ''), cam: 'rules', caption: `Nadia initialed your Corvane exit back in March. "Clean," she wrote. It's still on your card.` },
+        { if: c => /^[BCE]$/.test((c.past || {})['losing-position'] || ''), cam: 'journal', caption: `Corvane is still in your journal. So is the night you didn't sell.` },
         { cam: 'wide', caption: `Nadia runs risk for the desk. She sets how much each trader may bet.` },
         { who: 'nadia', mood: 'smile', say: `Good month.` },
         { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `Your normal size was ten thousand in January. It's twenty now. Just so you know that I know.` },
@@ -792,11 +853,13 @@ window.PP = window.PP || {};
     },
 
     'empty-hand': {
-      env: 'trading',
-      screens: SCREENS['empty-hand'],
+      env: ENV['empty-hand'],
+      screens: screensFor('empty-hand'),
       cast: [{ id: 'theo', spot: 'theo', mood: 'neutral', pose: 'mug', wants: `To trade only when the trade is obvious.` }],
       intro: [
         { cam: 'wide', caption: `A slow Thursday. Four ideas cross your desk before lunch.` },
+        { if: c => /^[AB]$/.test((c.past || {})['winning-streak'] || ''), cam: 'phone', caption: `Your phone lights up. Compliance, again, about Quorvia. The trade is closed. The question isn't.` },
+        { if: c => (c.past || {})['winning-streak'] === 'D', caption: `Marco hasn't said much since you passed on Quorvia. Your account hasn't missed him.` },
         { cam: 'screens', ...alert(`Trading chat: everyone loading up on Nimbic AI before earnings`) },
         { cam: 'screens', ...alert(`Ledgerline: being bought for $30 · trades at $28.60`) },
         { cam: 'screens', ...alert(`Voltaic Cells: two-year high on 3× volume`) },
@@ -836,14 +899,16 @@ window.PP = window.PP || {};
     },
 
     'changing-market': {
-      env: 'trading',
-      screens: SCREENS['changing-market'],
+      env: ENV['changing-market'],
+      screens: screensFor('changing-market'),
       cast: [
         { id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `To keep you inside your limits.` },
         { id: 'theo', spot: 'theo', mood: 'thinking', pose: 'thinking', wants: `To understand what changed before he risks anything.` }
       ],
       intro: [
-        { cam: 'wide', caption: `January. For two years one method made your money: buy AI-chip stocks when they dip.` },
+        { cam: 'window', caption: `January. Rain since midnight. For two years one method made your money: buy AI-chip stocks when they dip.` },
+        { if: c => (c.cap || {}).psy <= 3, caption: `You haven't slept properly in weeks. It shows in how fast you want to act.` },
+        { if: c => (c.cap || {}).fin > 110, caption: `The account is up on the year. The method is not. Those are two different facts.` },
         { cam: 'screens', caption: `For six weeks, it has lost.` },
         { cam: 'screens', ...alert(`06:02 · Cirrane Cloud cuts data-center spending 30%`), caption: `Overnight, the biggest buyer of AI chips pulled back.` },
         { cam: 'screens', ...alert(`Tensora −14% before the open`) },
@@ -882,16 +947,19 @@ window.PP = window.PP || {};
     },
 
     'final-bet': {
-      env: 'trading',
-      screens: SCREENS['final-bet'],
+      env: ENV['final-bet'],
+      screens: screensFor('final-bet'),
       cast: [
         { id: 'theo', spot: 'theo', mood: 'neutral', pose: 'pocket', wants: `To see you here next December.` },
         { id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `To approve only what you can survive.` }
       ],
       intro: [
-        { cam: 'window', caption: `December. A year of decisions at this desk. You've won some and lost some.` },
+        { cam: 'window', caption: `December. Ten at night, one lamp on. A year of decisions at this desk. You've won some and lost some.` },
+        { cam: 'journal', caption: `Your journal is nearly full. Some lines are crossed out.` },
         { cam: 'screens', caption: `Tonight: Saros Robotics, breaking out after a year going sideways. The best setup you've seen in two years.` },
         { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `Two times leverage is approved, up to a quarter of your account in one name. Anything beyond that is an exception, and I'd have to sign it.` },
+        { if: c => (c.cap || {}).soc < 5, who: 'nadia', mood: 'skeptical', pose: 'crossed', say: `I've read your file this year. You know what I'm going to say about exceptions.` },
+        { if: c => (c.cap || {}).soc >= 7, who: 'nadia', mood: 'smile', say: `Your file's clean. That buys you a conversation, not a blank check.` },
         { who: 'theo', mood: 'thinking', pose: 'pocket', say: `I keep a list of traders who were brilliant until one afternoon. It's longer than you'd think.` },
         { you: `(One trade could put me ahead of everyone on this floor.)` },
         { cam: 'screens', ...alert(`Earnings in three weeks · How much are you willing to risk to win?`) }

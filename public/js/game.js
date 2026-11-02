@@ -581,7 +581,7 @@
       <div class="wrap play-head">
         ${strip(idx, derive(history))}
         <div class="play-meta">
-          <p class="meta">${isMarket() ? `The Trader's Mind · Challenge ${at.n} of ${at.of}` : `Episode ${at.ep.number} · Scene ${at.n} of ${at.of}`} · ${place.name}</p>
+          <p class="meta">${isMarket() ? `The Trader's Mind · Challenge ${at.n} of ${at.of}${sc.opponent ? ` · The opponent: ${sc.opponent}` : ''}` : `Episode ${at.ep.number} · Scene ${at.n} of ${at.of} · ${place.name}`}</p>
           ${isMarket() ? `<button type="button" class="btn btn-link play-out" data-act="market">All challenges</button>` : `<button type="button" class="btn btn-link play-out" data-act="episodes">All episodes</button>`}
           <div class="chips"><span class="chip">${sc.level}</span>${sc.lens.map((k, i) => `<span class="chip ${i ? '' : 'chip-lens'}">${i ? 'Also' : 'Lens'} · ${thinkers[k].short}</span>`).join('')}</div>
         </div>
@@ -595,13 +595,21 @@
     </section>`;
   }
 
+  // What the desk remembers before challenge idx: your capital, your rules, and what you did.
+  function marketMemory(idx) {
+    const C = capitals(history.slice(0, idx));
+    const steps = C.steps.map(x => ({ id: x.sc.id, title: x.sc.title, key: x.opt.key, did: x.opt.did || x.opt.text, broke: x.broke, tone: x.oc.tone, fin: x.oc.ruin ? null : x.oc.fin, opponent: x.sc.opponent }));
+    return { cap: C.cap, past: Object.fromEntries(steps.map(x => [x.id, x.key])), steps, day: idx };
+  }
+
   function mountStage(sc, idx) {
     if (stage) stage.destroy();
     const d = derive(history.slice(0, idx));
     if (idx >= history.length && sc.types && !draft.type) draft.type = drawType(sc, history.slice(0, idx));
     const type = idx < history.length ? typeOf(sc, history[idx]) : draft.type;
     stage = new PP.Stage(document.getElementById('stage-mount'), sc.stage, {
-      ctx: { rel: d.rel, flags: d.flags, type, account: isMarket() ? capitals(history.slice(0, idx)).cap.fin : null, rules },
+      ctx: { rel: d.rel, flags: d.flags, type, account: isMarket() ? capitals(history.slice(0, idx)).cap.fin : null, rules,
+        ...(isMarket() ? marketMemory(idx) : {}) },
       label: `${sc.title}. ${sc.setting}`,
       onFreeze: () => { ui.frozen = true; renderPanel(); },
       onResume: () => { ui.frozen = false; renderPanel(); }
@@ -685,14 +693,15 @@
     }
     const press = sc.play && sc.press ? val(sc.press, ctxNow(sc)) : null;
     const options = optsNow(sc).map(o => `<li>
-      <input type="radio" name="move" id="move-${sc.id}-${o.key}" value="${o.key}" ${draft.selected === o.key ? 'checked' : ''}>
-      <label for="move-${sc.id}-${o.key}" class="option"><span class="option-key">${o.key}</span><span class="option-text">${fill(o.text)}${o.exposure ? `<span class="exp exp-${o.exposure} ${breaks(o) ? 'is-over' : ''}">${MK.exposureLabel[o.exposure]}${breaks(o) ? ' · over your limit' : ''}</span>` : ''}</span></label>
+      <input type="radio" name="move" id="move-${sc.id}-${o.key}" value="${o.key}" ${draft.selected === o.key ? 'checked' : ''} ${trustLocked(o) ? 'disabled' : ''}>
+      <label for="move-${sc.id}-${o.key}" class="option ${trustLocked(o) ? 'is-locked' : ''}"><span class="option-key">${o.key}</span><span class="option-text">${fill(o.text)}${o.exposure ? `<span class="exp exp-${o.exposure} ${breaks(o) ? 'is-over' : ''}">${MK.exposureLabel[o.exposure]}${breaks(o) ? ' · over your limit' : ''}${trustLocked(o) ? ' · Nadia won\'t sign it' : ''}</span>` : ''}</span></label>
     </li>`).join('');
     return `<form id="decide-form" class="decide">
       <div class="decide-top">
         ${press ? `<blockquote class="beat-say beat-say-lead"><span>${PP.people[press.who].name}</span>“${press.say}”</blockquote>` : ''}
         ${sc.facts ? `<section class="facts" aria-label="The situation"><p class="facts-k">The situation</p><ul>${sc.facts.map(f => `<li>${fill(f)}</li>`).join('')}</ul></section>` : ''}
         <fieldset><legend class="decide-q">${sc.question}</legend>
+          ${isMarket() && rules ? marketState() : ''}
           ${isMarket() && rules ? `<p class="rules-mini">Your rules: <strong>${ruleOf('risk', rules.risk).label}</strong> risk per decision · edge: <strong>${ruleOf('edge', rules.edge).label}</strong></p>` : ''}
           <ul class="options">${options}</ul></fieldset>
       </div>
@@ -705,8 +714,28 @@
   }
 
   // The room's details. In a beat scene you only get so many reads, and they close once you answer.
-  const readsLeft = sc => sc.reads ? Math.max(0, sc.reads - draft.clues.length) : Infinity;
+  // In The Trader's Mind your state sets how much you can take in: rattled, you check one thing;
+  // calm, three; a sharp edge buys one more look.
+  function marketReads() {
+    const c = capitals().cap;
+    return (c.psy >= 7 ? 3 : c.psy >= 4 ? 2 : 1) + (c.str >= 7 ? 1 : 0);
+  }
+  const readsOf = sc => isMarket() ? marketReads() : sc.reads;
+  const readsLeft = sc => readsOf(sc) ? Math.max(0, readsOf(sc) - draft.clues.length) : Infinity;
+  // Nadia won't sign anything bigger than a normal-size risk for someone she doesn't trust.
+  const trustLocked = o => isMarket() && capitals().cap.soc < 5 && MK.exposure[o.exposure] > 2;
+  function marketState() {
+    const c = capitals().cap, lines = [];
+    const reads = marketReads();
+    if (c.psy <= 3) lines.push(`<strong>Rattled.</strong> Composure ${c.psy}/10: you only have it in you to check ${NUM[reads]} ${reads === 1 ? 'thing' : 'things'} before you decide.`);
+    else lines.push(`<strong>${c.psy >= 7 ? 'Clear-headed' : 'Steady'}.</strong> Composure ${c.psy}/10: you can check ${NUM[reads]} things before you decide.`);
+    if (c.str >= 7) lines.push(`<strong>Sharp edge.</strong> Edge ${c.str}/10: you know what you're looking for, so one more look is free.${c.psy <= 3 ? ' You know what to do. The question is whether you will.' : ''}`);
+    if (c.soc < 5) lines.push(`<strong>Nadia is watching.</strong> Trust ${c.soc}/10: she won't sign anything above a normal-size risk.`);
+    lines.push(`<strong>Runway ${c.time}/10.</strong> Every challenge spends one. It's the season you have left to recover from mistakes.`);
+    return `<ul class="mk-state">${lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
+  }
   const readsOpen = sc => !sc.play || (draft.step !== 'choose' && draft.step !== 'push');
+  const readsNote = sc => readsOf(sc) && isFinite(readsLeft(sc)) ? `<p class="reads-note">${readsLeft(sc)} of ${readsOf(sc)} ${readsOf(sc) === 1 ? 'read' : 'reads'} left</p>` : '';
   function clueList(sc) {
     return sc.clues.map((c, i) => {
       const open = draft.clues.includes(i), shut = !open && (!readsLeft(sc) || !readsOpen(sc));
@@ -768,7 +797,7 @@
         <section class="fz"><h2 class="block-h">Information</h2>
           <div class="ku"><div><h3 class="ku-h">You know</h3><ul class="ticks">${sc.known.map(k => `<li>${k}</li>`).join('')}</ul></div>
           <div><h3 class="ku-h">Still uncertain</h3><ul class="ticks ticks-q">${sc.unknown.map(k => `<li>${k}</li>`).join('')}</ul></div></div>
-          <h3 class="ku-h ku-gap">Read the room</h3><ul class="clues">${clues}</ul></section>
+          <h3 class="ku-h ku-gap">Read the room</h3>${readsNote(sc)}<ul class="clues">${clues}</ul></section>
       </div>
       ${canDecide ? `<section class="fz"><h2 class="block-h">Your options and where they might lead</h2><ol class="fopts">${opts}</ol>
         <p class="small">These are possibilities, not grades. The scene decides what actually happens.</p></section>` : ''}
@@ -1196,6 +1225,26 @@
       ${rules ? '' : `<section class="wrap">${ruleForm}</section>`}`;
   }
 
+  // The Mirror: the rules you set before the first trade, beside what you did under pressure.
+  function mirror(C, edgeSummary) {
+    const rr = ruleOf('risk', rules.risk), ed = ruleOf('edge', rules.edge);
+    const kept = C.steps.filter(x => !x.broke).length, n = C.steps.length;
+    const verdict = rules.risk === 'open' ? `You never set a limit, so you never broke one. The right-hand column is the limit you actually played by.`
+      : kept === n ? `Yes. Every decision fit the rules you set before the first trade.`
+        : `Not quite. You kept your own rule in ${NUM[kept] || kept} of ${NUM[n] || n} decisions. Look at when you broke it: it's rarely the calm moments.`;
+    const said = [rules.risk === 'open' ? `No fixed limit. Size by conviction.` : `Risk no more than ${rr.label} of the account on any one idea.`, `My edge is ${ed.label.toLowerCase()}. ${ed.d}`, `Stay in the game.`];
+    const did = C.steps.map(x => `<li class="mirror-row ${x.broke ? 'is-broke' : ''}"><span class="mirror-opp">vs. ${x.sc.opponent || 'yourself'}</span><strong>${x.sc.title}</strong><span>${x.opt.did || fill(x.opt.text)}</span><em>${x.broke ? `Broke your ${rr.label} rule` : rules.risk === 'open' ? MK.exposureLabel[x.opt.exposure] : 'Kept your rule'}</em></li>`).join('');
+    return `<section class="block mirror" aria-labelledby="mirror-h">
+      <div class="section-head"><p class="eyebrow">The Mirror</p><h2 id="mirror-h">Did you play the game you said you would play?</h2></div>
+      <div class="mirror-grid">
+        <div class="mirror-col"><p class="mirror-k">What you said · before the first trade</p><ul class="mirror-said">${said.map(x => `<li>${x}</li>`).join('')}</ul></div>
+        <div class="mirror-col"><p class="mirror-k">What you did · under pressure</p><ol class="mirror-did">${did}</ol></div>
+      </div>
+      <p class="mirror-verdict">${verdict}</p>
+      ${edgeSummary ? `<p class="mind-p">${edgeSummary}</p>` : ''}
+    </section>`;
+  }
+
   function viewMarketReview(C) {
     const out = C.ruinedAt !== null;
     const played = C.steps.length;
@@ -1210,12 +1259,6 @@
     const soft = MK.capitals.filter(c => c.k !== 'fin').map(c => ({ c, d: C.cap[c.k] - c.start })).sort((x, y) => y.d - x.d);
     const capLine = `${fin > 100 ? `You made money` : fin === 100 ? `You protected your money` : out ? (fin === 0 ? `You lost the whole account` : `You lost more than half your account`) : `You lost some money`}${soft[0].d > 0 ? ` and built ${soft[0].c.name.toLowerCase()}` : ''}${soft[soft.length - 1].d < 0 ? `, and spent ${soft[soft.length - 1].c.name.toLowerCase()}` : ''}.`;
 
-    const brokeN = C.steps.filter(x => x.broke).length;
-    const rr = rules ? ruleOf('risk', rules.risk) : null;
-    const ruleSummary = !rules ? '' : rules.risk === 'open'
-      ? `You set no fixed limit on risk. Every decision was sized by how you felt about it, which is exactly what a limit protects you from.`
-      : brokeN ? `You said you'd risk no more than ${rr.label} of the account on any one idea. You broke that rule in ${NUM[brokeN]} of ${NUM[played]} decisions.`
-        : `You said you'd risk no more than ${rr.label} of the account on any one idea, and you kept that promise every time.`;
     const eh = C.steps.find(x => x.sc.id === 'empty-hand');
     const edgeSummary = !rules || !eh ? '' : eh.opt.key === 'B' ? `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}, and when four ideas arrived you played only the one that fit it.`
       : eh.opt.key === 'C' ? `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}. On the slow Thursday you waited, which is never wrong, though one idea may have been yours.`
@@ -1232,12 +1275,6 @@
       </li>`;
     }).join('') + (out ? LIST.slice(played).map((sc, j) => `<li class="dr is-unplayed"><span class="dr-n">${played + j + 1}</span><div class="dr-main"><h4>${sc.title}</h4><p class="dr-row">Never played. You were out of the game.</p></div></li>`).join('') : '');
 
-    const code = MK.principles.map(pr => {
-      const ms = C.steps.filter(x => pr.scenes.includes(x.sc.id));
-      const avg = ms.length ? ms.reduce((a, x) => a + x.opt.q, 0) / ms.length : null;
-      const [cls, word] = avg === null ? ['none', 'Never reached'] : avg >= 3 ? ['good', 'Lived it'] : avg >= 2 ? ['mid', 'Partly'] : ['low', 'Still learning'];
-      return `<li class="pr pr-${cls}"><p class="pr-k">${word}</p><h4>${pr.name}</h4><p>${pr.line}</p><p class="pr-from">Tested in ${pr.scenes.map(id => LIST.find(s => s.id === id).title).join(' and ')}</p></li>`;
-    }).join('');
 
     const said = C.steps.filter(x => x.opt.verdict).map(x => `<li class="said"><span class="said-face">${portrait(x.opt.verdict.who, x.opt.q >= 3 ? 'smile' : x.opt.q === 2 ? 'neutral' : 'skeptical')}</span>
         <blockquote><p>“${x.opt.verdict.line}”</p><footer><strong>${PP.people[x.opt.verdict.who].name}</strong> · ${x.sc.title}</footer></blockquote></li>`).join('');
@@ -1251,11 +1288,8 @@
           <p class="lede">${capLine}</p>
         </div>
         <section class="block card"><h2 class="block-h">Five kinds of capital <span class="block-hint">the tick marks where you started</span></h2><ul class="caprs">${capRows}</ul></section>
-        ${rules ? `<section class="block card mk-said"><h2 class="block-h">What you said vs. what you did</h2><p class="mind-p">${ruleSummary}</p>${edgeSummary ? `<p class="mind-p">${edgeSummary}</p>` : ''}</section>` : ''}
+        ${rules ? mirror(C, edgeSummary) : ''}
         <section class="block"><h2 class="block-h">Decision review</h2><p class="small">What you knew, what you chose, what happened, and whether the reasoning was sound. Annie Duke's distinction: a good decision can lose, and a bad one can win.</p><ol class="drs">${review}</ol></section>
-        <section class="block"><div class="section-head"><p class="eyebrow">The code underneath</p><h2>Five principles ran through every challenge.</h2>
-          <p class="lede">They weren't shown up front, because you can't learn them from a list. Here they are, now that you've felt them.</p></div>
-          <ol class="prs">${code}</ol></section>
         ${said ? `<section class="block"><h2 class="block-h">What the desk saw</h2><svg width="0" height="0" class="defs-only" aria-hidden="true">${PP.art.DEFS}</svg><ul class="said-list">${said}</ul></section>` : ''}
         <div class="carry"><p class="eyebrow">What Ed Seykota would leave you with</p><p class="carry-q">You don't have to predict the future. You have to develop the judgment, discipline and resilience to survive it.</p></div>
         <div class="page-actions">
@@ -1424,6 +1458,7 @@
     if (stage && stage.paused) stage.resume();
     const sc = LIST[history.length];
     const opt = optsNow(sc).find(o => o.key === draft.selected);
+    if (trustLocked(opt)) return;
     const p = sc.play && opt.push && val(opt.push, ctxNow(sc));
     if (p) {
       draft.step = 'push'; renderPanel();

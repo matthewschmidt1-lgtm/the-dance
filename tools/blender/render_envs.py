@@ -289,6 +289,11 @@ CINEMA = {
     'cabin':      dict(focus=(0.2, 2.4, 1.4), fstop=2.8, haze=0.006, rim=((1.7, 4.4, 1.6), '#dfe9f2', 160), dim=0.5),
     'restaurant': dict(focus=(0.2, 1.8, 1.4), fstop=2.4, haze=0.008, rim=((0.6, 4.0, 2.4), '#ffd9a0', 300), dim=0.4),
     'family':     dict(focus=(0.3, 2.4, 1.4), fstop=2.8, haze=0.004, rim=((0.4, 4.4, 2.4), '#fff4dd', 260), dim=0.55),
+    'desk-dusk': dict(focus=(0.0, 1.3, 1.13), fstop=2.0, haze=0.004, rim=((1.6, 5.0, 2.6), '#c7a07a', 200), dim=0.55),
+    'desk-morning': dict(focus=(0.0, 1.3, 1.13), fstop=2.0, haze=0.006, rim=((1.6, 5.0, 2.6), '#ffe6c2', 220), dim=0.85),
+    'desk-noon': dict(focus=(0.0, 1.3, 1.13), fstop=2.0, haze=0.004, rim=((1.6, 5.0, 2.6), '#e9eef0', 140), dim=0.8),
+    'desk-rain': dict(focus=(0.0, 1.3, 1.13), fstop=2.0, haze=0.008, rim=((1.6, 5.0, 2.6), '#a9bccb', 160), dim=0.6),
+    'desk-night': dict(focus=(0.0, 1.3, 1.13), fstop=2.0, haze=0.004, rim=((1.6, 5.0, 2.6), '#9fc8d8', 220), dim=0.55),
     'trading':    dict(focus=(0.0, 1.3, 1.13), fstop=2.0, haze=0.004, rim=((1.6, 5.0, 2.6), '#9fc8d8', 260), dim=0.6),
 }
 
@@ -1271,7 +1276,170 @@ def env_family():
     }
 
 
-ENVS = {'checkout': env_checkout, 'desks': env_desks, 'kitchen': env_kitchen, 'conference': env_conference, 'street': env_street, 'yard': env_yard, 'bathroom': env_bathroom, 'lobby': env_lobby, 'trading': env_trading, 'openhouse': env_openhouse, 'dealer': env_dealer, 'cabin': env_cabin, 'restaurant': env_restaurant, 'family': env_family}
+# The trader's own office, five ways: a private room with the ocean outside the window. Same room,
+# same people; the hour, the weather and the sea change with the season, and the desk fills up with
+# the year. Paper and small displays are left blank and exported as quads, so the game can write the
+# player's own rules, journal, messages, the time and the date onto them.
+DESK = {
+    'dusk':    dict(sky='#2f3d5c', sky_e=1.5, glow='#e3864f', glow_e=2.6, sea='#1b2738', sea_r=0.06, sun=None, disc=None, room=0.25, wall='#b9a78f', lamp=1.0, coffee='cold', rain=False, clouds=None, mess=1),
+    'morning': dict(sky='#a9cdea', sky_e=3.4, glow='#f8e2bb', glow_e=3.4, sea='#1c5b82', sea_r=0.3, sun=(6.0, '#ffd9a6'), disc=((-140, 400, 34), 7, '#fff1cf', 30), room=1.1, wall='#e8dcc6', lamp=0.0, coffee='hot', rain=False, clouds='#ffffff', mess=0),
+    'noon':    dict(sky='#c3dbea', sky_e=3.0, glow='#e9eef0', glow_e=3.0, sea='#2a6a8a', sea_r=0.3, sun=(2.0, '#f4f1ea'), disc=None, room=0.9, wall='#e2d8c6', lamp=0.0, coffee='lunch', rain=False, clouds='#f4f6f7', mess=1),
+    'rain':    dict(sky='#56616b', sky_e=1.4, glow='#76828c', glow_e=1.5, sea='#36444b', sea_r=0.35, sun=None, disc=None, room=0.55, wall='#c4b8a6', lamp=0.8, coffee='hot', rain=True, clouds='#4b545c', mess=2),
+    'night':   dict(sky='#0a1322', sky_e=0.7, glow='#16253c', glow_e=0.9, sea='#07101b', sea_r=0.04, sun=None, disc=((110, 400, 30), 5, '#e9eef6', 6), room=0.0, wall='#5d5346', lamp=1.4, coffee='two', rain=False, clouds=None, mess=3),
+}
+
+
+def env_desk(v):
+    o = DESK[v]
+    world('#0b1114' if o['lamp'] else ('#efe2cc' if v == 'morning' else '#cdd6dc'), 0.35 if o['lamp'] else (1.1 if v == 'morning' else 0.9))
+    # The room: warm plaster, wood floor, one wall of glass.
+    box('floor', (0, 1.0, -0.01), (6.2, 5.4, 0.01), mat('#6b4a32', 0.4))
+    box('rug', (0, 1.0, 0.002), (3.4, 2.4, 0.004), mat('#5a3a32', 0.95))
+    box('ceiling', (0, 1.0, 2.95), (6.2, 5.4, 0.05), mat('#efe9df' if o['room'] else '#1d1b19', 0.9))
+    wall = mat(o['wall'], 0.85)
+    box('wall-left', (-3.05, 1.0, 0), (0.1, 5.4, 2.95), wall)
+    box('wall-right', (3.05, 1.0, 0), (0.1, 5.4, 2.95), wall)
+    box('sill-wall', (0, 3.68, 0), (6.2, 0.12, 0.55), wall)
+    box('header', (0, 3.68, 2.75), (6.2, 0.12, 0.2), wall)
+    box('sill', (0, 3.6, 0.55), (6.0, 0.22, 0.04), mat('#4a3426', 0.5))
+    box('glass', (0, 3.7, 0.55), (6.0, 0.03, 2.2), mat('#a9c3d0', 0.02, alpha=0.05))
+    boxes('mullions', [(x, 3.7, 0.55, 0.06, 0.06, 2.2) for x in (-3, -1.5, 0, 1.5, 3)] + [(0, 3.7, 1.95, 6.0, 0.05, 0.05)], mat('#2a221c', 0.45, 0.2))
+    # Outside: open sea to the horizon, and a sky that changes with the hour and the weather.
+    box('sky', (0, 430, -10), (1400, 2, 520), mat('#000', 0.5, emit=o['sky'], emit_strength=o['sky_e']))
+    box('glow', (0, 425, -8), (1400, 2, 16), mat('#000', 0.5, emit=o['glow'], emit_strength=o['glow_e']))
+    box('sea', (0, 210, -7), (1400, 420, 0.1), mat(o['sea'], max(0.22, o['sea_r']), spec=0.6))
+    if o['disc']:
+        (dx, dy, dz), r, col, e = o['disc']
+        ball('disc', (dx, dy, dz), r, mat('#000', 0.5, emit=col, emit_strength=e), sub=3)
+    if o['clouds']:
+        rc = random.Random(9)
+        for k in range(9):
+            ball(f'cloud{k}', (rc.uniform(-320, 320), rc.uniform(300, 400), rc.uniform(25, 70)), rc.uniform(18, 34), mat('#000', 0.9, emit=o['clouds'], emit_strength=o['sky_e'] * (0.55 if v == 'rain' else 0.9)), scale=(2.6, 1, 0.5), sub=2)
+    if o['rain']:
+        rr = random.Random(3)
+        boxes('rain', [(rr.uniform(-2.9, 2.9), 3.68, rr.uniform(0.6, 2.7), 0.01, 0.004, rr.uniform(0.15, 0.6)) for _ in range(380)], mat('#e6eef3', 0.05, alpha=0.4))
+        boxes('drops', [(rr.uniform(-2.9, 2.9), 3.67, rr.uniform(0.6, 2.7), 0.02, 0.004, 0.02) for _ in range(180)], mat('#f2f6f8', 0.05, alpha=0.45))
+    if o['sun']:
+        sun((math.radians(64), 0, math.radians(172)), o['sun'][0], o['sun'][1], angle=1.5)
+        area('window-fill', (0, 3.2, 1.7), 5.4, 700 * o['sun'][0] / 6, o['sun'][1], rot=(math.radians(-90), 0, 0), sy=2.0)
+    elif o['glow_e'] > 1.2:
+        area('window-fill', (0, 3.2, 1.7), 5.4, 160, o['glow'], rot=(math.radians(-90), 0, 0), sy=2.0)
+    if o['room']:
+        area('ceil', (0, 1.4, 2.85), 2.4, 220 * o['room'], '#fff1dc', sy=1.6)
+    # The rest of the room: books, a door, art, a plant.
+    bookshelf('books', -2.15, 1.5, 1.4)
+    box('door', (-2.98, 3.0, 0), (0.05, 0.9, 2.1), mat('#3b2a20', 0.5))
+    box('art', (2.98, 1.6, 1.25), (0.03, 1.1, 0.75), mat('#2f4a54', 0.7))
+    box('art-frame', (2.995, 1.6, 1.22), (0.02, 1.18, 0.81), mat('#2a211b', 0.5))
+    cyl('pot', (2.45, 3.05, 0), 0.2, 0.4, mat('#6b4f3a', 0.7))
+    ball('plant', (2.45, 3.05, 0.85), 0.46, mat('#3d5a3b', 0.85), scale=(1, 1, 1.3), sub=2)
+
+    # Your desk: warm walnut, leather, paper.
+    box('desk-top', (0, 1.0, 0.74), (2.6, 0.95, 0.04), mat('#5b3b25', 0.42), 'fg')
+    boxes('desk-legs', [(-1.22, 0.62, 0, 0.05, 0.05, 0.74), (1.22, 0.62, 0, 0.05, 0.05, 0.74), (-1.22, 1.4, 0, 0.05, 0.05, 0.74), (1.22, 1.4, 0, 0.05, 0.05, 0.74)], mat('#2a211b', 0.4, 0.3), 'fg')
+    box('modesty', (0, 1.44, 0.2), (2.4, 0.03, 0.5), mat('#3a2c22', 0.6), 'fg')
+    box('blotter', (0.05, 0.86, 0.762), (0.9, 0.36, 0.004), mat('#2c2420', 0.7), 'fg')
+    screens = [('screen-left.png', (-0.78, 1.22, 1.13), 22), (None, (0.0, 1.3, 1.13), 0), (None, (0.78, 1.22, 1.13), -22)]
+    quads = {}
+
+    def upright(c, w, h, yaw=0.0, tilt=0.0):
+        """Corners of an upright rectangle facing the camera (-y), yawed and tilted back."""
+        cy, sy = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+        ct, st = math.cos(math.radians(tilt)), math.sin(math.radians(tilt))
+        def at(u, v):
+            return (c[0] + u * cy - v * st * sy, c[1] + u * sy + v * st * cy, c[2] + v * ct)
+        return [at(-w / 2, h / 2), at(w / 2, h / 2), at(w / 2, -h / 2), at(-w / 2, -h / 2)]
+
+    for i, (tex, c, yaw) in enumerate(screens):
+        rot = (math.radians(90), 0, math.radians(yaw))
+        box(f'bezel{i}', (c[0], c[1] + 0.025, c[2] - 0.22), (0.74, 0.03, 0.44), mat('#151413', 0.3), 'fg', rot=(0, 0, math.radians(yaw)))
+        n = (math.sin(math.radians(yaw)), -math.cos(math.radians(yaw)))
+        sc = (c[0] + n[0] * 0.03, c[1] + n[1] * 0.03, c[2])
+        if tex:
+            img_plane(f'screen{i}', tex, sc, 0.7, 0.394, rot, 'fg', emit=1.6)
+        else:
+            box(f'screen{i}', (sc[0], sc[1], sc[2] - 0.197), (0.7, 0.004, 0.394), mat('#000', 0.08, emit='#0a1416', emit_strength=1.2), 'fg', rot=(0, 0, math.radians(yaw)))
+            cy, sy = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+            corner = lambda u, v: (sc[0] + u * cy + n[0] * 0.004, sc[1] + u * sy + n[1] * 0.004, sc[2] + v)
+            quads['center' if i == 1 else 'right'] = [corner(-0.35, 0.197), corner(0.35, 0.197), corner(0.35, -0.197), corner(-0.35, -0.197)]
+        box(f'stand{i}', (c[0], c[1] + 0.07, 0.78), (0.06, 0.04, 0.2), mat('#1a1c1f', 0.4, 0.6), 'fg')
+        box(f'foot{i}', (c[0], c[1] + 0.05, 0.78), (0.24, 0.16, 0.012), mat('#1a1c1f', 0.4, 0.6), 'fg')
+    paper = mat('#f2ebdc', 0.9)
+    # Your rules, on a card pinned to the left screen's bezel.
+    rc = (-0.62, 1.155, 0.965)
+    box('rules-card', (rc[0], rc[1] + 0.002, rc[2] - 0.055), (0.17, 0.003, 0.11), paper, 'fg', rot=(0, 0, math.radians(22)))
+    ball('pin', (rc[0] - 0.06, rc[1] - 0.02, rc[2] + 0.045), 0.006, mat('#a33a2a', 0.4), 'fg')
+    quads['rules'] = upright((rc[0] - 0.001, rc[1] - 0.003, rc[2]), 0.16, 0.1, yaw=22)
+    # The journal stands open on a book stand beside the keyboard, facing you: your own history.
+    jb, jw, jh, jt = (-0.56, 0.86, 0.79), 0.32, 0.2, 45
+    box('stand-foot', (jb[0], jb[1] - 0.02, 0.78), (0.3, 0.12, 0.01), mat('#3b2a20', 0.6), 'fg')
+    box('journal-cover', (jb[0], jb[1] + 0.006, jb[2]), (jw + 0.02, 0.008, jh + 0.01), mat('#3b2a20', 0.6), 'fg', rot=(math.radians(-jt), 0, 0))
+    box('journal-pages', (jb[0], jb[1], jb[2] + 0.004), (jw, 0.004, jh), paper, 'fg', rot=(math.radians(-jt), 0, 0))
+    jc = (jb[0], jb[1] + jh / 2 * math.sin(math.radians(jt)) - 0.004, jb[2] + 0.004 + jh / 2 * math.cos(math.radians(jt)))
+    quads['journal'] = upright(jc, jw - 0.02, jh - 0.02, tilt=jt)
+    cyl('pen', (jb[0] + 0.2, jb[1] - 0.12, 0.79), 0.004, 0.14, mat('#111', 0.3, 0.4), 'fg', rot=(0, math.radians(90), math.radians(30)))
+    box('keyboard', (0.0, 0.82, 0.78), (0.44, 0.14, 0.018), mat('#2a2622', 0.45), 'fg', bevel=0.004)
+    box('mouse', (0.34, 0.8, 0.78), (0.06, 0.1, 0.02), mat('#2a2622', 0.35), 'fg', bevel=0.008)
+    # Coffee: fresh, cold, swapped for lunch, or two cups deep.
+    mugs = {'hot': [(0.62, 0.86)], 'cold': [(0.62, 0.86)], 'lunch': [(0.7, 1.05)], 'two': [(0.62, 0.86), (0.5, 1.1)]}[o['coffee']]
+    for k, (x, y) in enumerate(mugs):
+        cyl(f'mug{k}', (x, y, 0.78), 0.042, 0.1, mat('#e9e4da', 0.45), 'fg')
+        cyl(f'coffee{k}', (x, y, 0.872), 0.036, 0.004, mat('#2a1a10' if o['coffee'] != 'cold' else '#3a2a1e', 0.15 if o['coffee'] != 'cold' else 0.6), 'fg')
+    if o['coffee'] == 'hot':
+        for k in range(3):
+            cyl(f'steam{k}', (0.62 + 0.012 * (k - 1), 0.86, 0.9 + k * 0.02), 0.008 + 0.004 * k, 0.07, mat('#ffffff', 0.5, alpha=0.08), 'fg')
+    if o['coffee'] == 'lunch':
+        box('lunch', (0.56, 0.86, 0.78), (0.18, 0.12, 0.05), mat('#a9b8a6', 0.6), 'fg', bevel=0.01)
+    # Phone, face up: the game lights it with whoever is writing to you.
+    pb, pt = (0.84, 0.9, 0.792), 18
+    box('dock', (pb[0], pb[1] + 0.01, 0.78), (0.09, 0.07, 0.014), mat('#2a2622', 0.4), 'fg', bevel=0.004)
+    box('phone', pb, (0.075, 0.008, 0.15), mat('#0d0e10', 0.2), 'fg', rot=(math.radians(-pt), 0, 0))
+    quads['phone'] = upright((pb[0], pb[1] + 0.075 * math.sin(math.radians(pt)) - 0.005, pb[2] + 0.075 * math.cos(math.radians(pt))), 0.066, 0.136, tilt=pt)
+    # A small desk clock and a flip calendar, both blank for the game to fill.
+    box('clock-body', (0.3, 1.22, 0.78), (0.14, 0.05, 0.07), mat('#2a2622', 0.4), 'fg', bevel=0.006)
+    quads['clock'] = upright((0.3, 1.194, 0.815), 0.12, 0.05)
+    box('calendar-back', (-0.28, 1.24, 0.78), (0.16, 0.012, 0.12), mat('#3b2a20', 0.6), 'fg', rot=(math.radians(-14), 0, 0))
+    box('calendar-page', (-0.28, 1.231, 0.785), (0.15, 0.003, 0.11), paper, 'fg', rot=(math.radians(-14), 0, 0))
+    quads['calendar'] = upright((-0.28, 1.222, 0.842), 0.14, 0.1, tilt=14)
+    # A photograph, reading glasses, books: a life outside the account.
+    box('photo-frame', (1.0, 1.0, 0.78), (0.11, 0.012, 0.14), mat('#2a211b', 0.5), 'fg', rot=(math.radians(-10), 0, math.radians(-20)))
+    box('photo', (1.0, 0.993, 0.79), (0.09, 0.003, 0.12), mat('#c79c72', 0.7), 'fg', rot=(math.radians(-10), 0, math.radians(-20)))
+    for k, dx in enumerate((-0.02, 0.025)):
+        cyl(f'lens{k}', (0.18 + dx, 0.62, 0.782), 0.018, 0.003, mat('#cfd8dc', 0.05, alpha=0.4), 'fg')
+    box('glasses-bridge', (0.182, 0.62, 0.784), (0.012, 0.002, 0.002), mat('#2a211b', 0.4), 'fg')
+    for k, (col, h) in enumerate((('#7a2f2a', 0.03), ('#264a43', 0.026), ('#c8b48a', 0.034))):
+        box(f'book{k}', (1.02, 1.28, 0.78 + sum(x[1] for x in (('', 0.03), ('', 0.026), ('', 0.034))[:k])), (0.24, 0.17, h), mat(col, 0.7), 'fg', rot=(0, 0, math.radians(4 - 6 * k)))
+    # The week piles up: more paper by Friday night.
+    rp = random.Random(7)
+    for k in range(o['mess'] * 3):
+        box(f'sheet{k}', (rp.uniform(-1.1, -0.85), rp.uniform(0.7, 1.25), 0.78 + k * 0.002), (0.21, 0.28, 0.002), paper, 'fg', rot=(0, 0, math.radians(rp.uniform(-25, 25))))
+    # The lamp: off in daylight, the only light left at night.
+    cyl('lamp-base', (1.05, 1.15, 0.78), 0.08, 0.02, mat('#a8844f', 0.3, 0.8), 'fg')
+    cyl('lamp-arm', (1.05, 1.15, 0.8), 0.008, 0.42, mat('#a8844f', 0.3, 0.8), 'fg')
+    cyl('lamp-shade', (1.05, 1.15, 1.17), 0.085, 0.1, mat('#1f3b33', 0.4, 0.3), 'fg', r2=0.04)
+    if o['lamp']:
+        ball('bulb', (1.05, 1.15, 1.19), 0.03, mat('#fff', 0.5, emit='#ffd9a8', emit_strength=12), 'fg')
+        area('lamp', (1.02, 1.05, 1.13), 0.1, 40 * o['lamp'], '#ffcf96', rot=(math.radians(25), 0, 0))
+    area('screen-glow', (0.0, 1.05, 1.15), 1.6, 50, '#9fd6e0', rot=(math.radians(-90), 0, 0), sy=0.4)
+
+    camera((0.42, -1.3, 1.46), (0.05, 2.2, 1.14), 27)
+    return {
+        'spots': {'theo': spot((-2.3, 2.9, 0)), 'nadia': spot((1.85, 1.65, 0))},
+        'cams': {
+            'screens': point((0.0, 1.3, 1.13), 2.2),
+            'note': point((jc[0], jc[1], jc[2]), 2.8),
+            'journal': point((jc[0], jc[1], jc[2]), 2.8),
+            'sticky': point((rc[0], rc[1], rc[2]), 3.4),
+            'rules': point((rc[0], rc[1], rc[2]), 3.4),
+            'phone': point((pb[0], pb[1], 0.86), 3.4),
+            'clock': point((0.3, 1.2, 0.82), 3.4),
+            'window': point((0.0, 3.7, 1.75), 1.5),
+        },
+        'quads': {k: [point(c) for c in q] for k, q in quads.items()},
+    }
+
+
+ENVS = {'checkout': env_checkout, 'desks': env_desks, 'kitchen': env_kitchen, 'conference': env_conference, 'street': env_street, 'yard': env_yard, 'bathroom': env_bathroom, 'lobby': env_lobby, 'trading': env_trading, 'openhouse': env_openhouse, 'dealer': env_dealer, 'cabin': env_cabin, 'restaurant': env_restaurant, 'family': env_family, 'desk-dusk': lambda: env_desk('dusk'), 'desk-morning': lambda: env_desk('morning'), 'desk-noon': lambda: env_desk('noon'), 'desk-rain': lambda: env_desk('rain'), 'desk-night': lambda: env_desk('night')}
 
 data = {}
 if os.path.exists(DATA):

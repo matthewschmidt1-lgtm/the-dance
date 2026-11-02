@@ -458,18 +458,6 @@
         </div>
       </section>
 
-      <section class="hm-eps" aria-labelledby="hm-eps-h">
-        <div class="wrap">
-          <header class="hm-sec-head">
-            <p class="ix-label hm-label-accent">The episodes</p>
-            <h2 id="hm-eps-h">Three chapters. One board.</h2>
-            <p class="hm-sec-deck">Each episode moves you into rooms with more at stake: everyday life, then money, then the people you can't walk away from. Every scene remembers the ones before it.</p>
-          </header>
-          ${EPS.map(chapter).join('')}
-          ${soon ? `<article class="hm-ch ix-ch-later"><header class="hm-ch-head"><div class="hm-ch-id"><span class="ix-ch-num">${String(soon.number).padStart(2, '0')}</span><span class="ix-label">Episode · In development</span></div><div class="hm-ch-main"><h3 class="hm-ch-title">${soon.title}</h3><p class="hm-ch-deck">${soon.blurb}</p></div></header></article>` : ''}
-        </div>
-      </section>
-
       <section class="hm-mk" aria-labelledby="hm-mk-h">
         <div class="hm-mk-art" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
         <div class="hm-mk-board" aria-hidden="true"></div>
@@ -480,6 +468,30 @@
           <p class="hm-mk-body">A harder board, with fewer people and more noise. Five challenges at one trading desk, with one account and no way to see what's coming. Inspired by <em>Market Wizards</em>, it tests what markets punish: how you size a risk, admit you're wrong, wait, adapt, and stay in the game.</p>
           <ol class="hm-mk-tests">${TRACKS.market.list.map((sc, k) => `<li><span class="hm-mk-n">${String(k + 1).padStart(2, '0')}</span><strong>${sc.title}</strong><span>${sc.tests}</span></li>`).join('')}</ol>
           <button class="hm-btn hm-btn-light" data-act="market">Enter The Trader's Mind</button>
+        </div>
+      </section>
+
+      <section class="wrap bench-sec hm-bench">
+        <header class="hm-sec-head"><p class="ix-label hm-label-accent">The bench</p><h2>Six thinkers and a trader. One question each.</h2>
+          <p class="hm-sec-deck">Each scene is seen through one of their lenses. Thomas Schelling sits at the head of the table: he studied people whose interests partly conflict and partly overlap, which describes almost everyone you'll meet.</p></header>
+        <ul class="bench-grid">${bench}</ul>
+        <dialog class="thinker-dialog" id="thinker-dialog" aria-labelledby="thinker-dialog-h">
+          <div class="thinker thinker-pop"></div>
+          <form method="dialog" class="thinker-close-row"><button class="btn btn-ghost btn-sm" value="close">Close</button></form>
+          <form method="dialog"><button class="thinker-x" value="close" aria-label="Close" autofocus>×</button></form>
+        </dialog>
+        <button class="hm-link" data-act="bench">Read what each one teaches ${IX_ARROW}</button>
+      </section>
+
+      <section class="hm-eps" aria-labelledby="hm-eps-h">
+        <div class="wrap">
+          <header class="hm-sec-head">
+            <p class="ix-label hm-label-accent">The episodes</p>
+            <h2 id="hm-eps-h">Three chapters. One board.</h2>
+            <p class="hm-sec-deck">Each episode moves you into rooms with more at stake: everyday life, then money, then the people you can't walk away from. Every scene remembers the ones before it.</p>
+          </header>
+          ${EPS.map(chapter).join('')}
+          ${soon ? `<article class="hm-ch ix-ch-later"><header class="hm-ch-head"><div class="hm-ch-id"><span class="ix-ch-num">${String(soon.number).padStart(2, '0')}</span><span class="ix-label">Episode · In development</span></div><div class="hm-ch-main"><h3 class="hm-ch-title">${soon.title}</h3><p class="hm-ch-deck">${soon.blurb}</p></div></header></article>` : ''}
         </div>
       </section>
 
@@ -496,18 +508,6 @@
             <ol class="still-legend">${cred.stage.cast.map((c, i) => `<li><span class="pin pin-inline">${i + 1}</span><strong>${PP.people[c.id].name}</strong> wants ${c.wants.charAt(0).toLowerCase() + c.wants.slice(1)}</li>`).join('')}</ol>
           </div>
         </div>
-      </section>
-
-      <section class="wrap bench-sec hm-bench">
-        <header class="hm-sec-head"><p class="ix-label hm-label-accent">The bench</p><h2>Six thinkers and a trader. One question each.</h2>
-          <p class="hm-sec-deck">Each scene is seen through one of their lenses. Thomas Schelling sits at the head of the table: he studied people whose interests partly conflict and partly overlap, which describes almost everyone you'll meet.</p></header>
-        <ul class="bench-grid">${bench}</ul>
-        <dialog class="thinker-dialog" id="thinker-dialog" aria-labelledby="thinker-dialog-h">
-          <div class="thinker thinker-pop"></div>
-          <form method="dialog" class="thinker-close-row"><button class="btn btn-ghost btn-sm" value="close">Close</button></form>
-          <form method="dialog"><button class="thinker-x" value="close" aria-label="Close" autofocus>×</button></form>
-        </dialog>
-        <button class="hm-link" data-act="bench">Read what each one teaches ${IX_ARROW}</button>
       </section>
 
       <section class="wrap hm-next" aria-labelledby="next-move-h">

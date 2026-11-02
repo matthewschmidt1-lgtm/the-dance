@@ -67,6 +67,19 @@ A separate section, inspired by Jack Schwager's *Market Wizards*: lessons from t
 
 The desk sits in a private office that looks out on the ocean, rendered in Blender five ways (`desk-dusk`, `desk-morning`, `desk-noon`, `desk-rain`, `desk-night`): a sunset over the water, bright morning, flat midday, a grey sea in the rain and a moonlit night. The hour, the weather, the lamp, the coffee and the paper on the desk change with the season. The center and right monitors are drawn live in SVG on top of the render, and so are the things the desk remembers: your rules card, your journal of earlier decisions (broken rules crossed out), the phone, the clock and the calendar. The after-hours floor (`trading`) is still used for the home page and the section's landing page.
 
+### Part II: The Call
+
+Five phone calls, one account, the same five kinds of capital. Every call holds two games: the conversation you think you're having, and the one the caller may be playing. On the home page and the market page the two parts share one space, with tabs for Part I (The Desk) and Part II (The Call).
+
+- **Five callers, five hidden truths.** Michael Reeves (a warning, or shopping your shares to his client?), Richard Cole (a tip from the deal team, an exit for his own position, or nothing at all), David Mercer (a real breakout, or a friend who's had a bad month), Sarah Bennett (a regime change, or one bad quarter) and Catherine Hale (who has been watching all year). Each call draws its truth once; what you ask, reveal and leave unsaid decides how much of it you see.
+- **Different ways to act inside a call**: choose what to say, decide how much to reveal, stay silent and let the caller fill the gap, ask a limited number of questions (Composure sets how many), spend minutes checking a tip against a deadline that isn't yours, sort evidence by whether it changes your view, and size a bet on a slider that shows your rule and the ruin line. You can let it ring or hang up at any point.
+- **The paper.** Beside the phone, the conversation is written down as it's spoken. Key phrases are circled, boxed or underlined in ink, and your own thoughts appear in pencil in the margin, with arrows and question marks. Tap the paper to write faster. The office behind it is the same ocean-view render, at the hour and in the weather of each call.
+- **What wasn't said** follows every call: what the caller wanted, knew and didn't know, the incentive, one established fact kept apart from a plausible reading, what you gave away, and which signals you noticed or missed.
+- **The campaign remembers behavior.** Tell Michael your size and Richard knows it the next week; talk David out of a trade and Sarah hears about it; by Friday Catherine has heard all of it. Low Trust locks big positions, low Composure means you can't sit in a silence, a sharp Edge points at the question that matters.
+- **The Mirror** sets your risk rule and two promises (verify, keep positions private, never chase, follow the evidence, size down when unsure) beside what you did, then describes how you played (consistency, adaptability, risk management, information gathering, discipline) and what your calls say about you, without winner or loser labels.
+
+Content lives in `js/call.js`; the engine, the paper and the screens in `js/callplay.js`. Ring and line sounds are made with Web Audio and follow the voices setting.
+
 ## How each scene plays
 
 1. **Establishing shot** of a lit 3D set, with a title card.
@@ -115,6 +128,8 @@ public/
   js/insight.js         what each move pursues, what people say about you, closing questions
   js/episode1-3.js      each episode's other scenes: substance, staging and verdicts together
   js/market.js          The Trader's Mind: challenges, staging, capital, rules and principles
+  js/call.js            The Call: five callers, their hidden truths, moments and reveals
+  js/callplay.js        The Call: engine, the phone, the paper and The Mirror
   js/env-data.js        generated: where people stand in each render, camera targets
   js/art.js             character renderer (moods, poses) and environment layering
   js/stage.js           playback engine: camera, dialogue, freeze, skip

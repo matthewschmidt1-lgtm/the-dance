@@ -14,8 +14,8 @@
   let track = 'main';
   let LIST = TRACKS.main.list;
   const isMarket = () => track === 'market';
-  const trackFor = view => (view === 'market' || view === 'trade') ? 'market' : view === 'bench' ? track : 'main';
-  const NAV_OF = { trade: 'market', episodes: 'play' };
+  const trackFor = view => ['market', 'trade', 'call', 'phone'].includes(view) ? 'market' : view === 'bench' ? track : 'main';
+  const NAV_OF = { trade: 'market', episodes: 'play', call: 'market', phone: 'market' };
   const placeOf = id => [...EPS, MK.ep].flatMap(e => e.places).find(p => p.scenes.includes(id));
   // Scene numbers restart in each episode.
   const pos = i => { const sc = LIST[i], eps = LIST.filter(s => s.ep === sc.ep); return { n: eps.indexOf(sc) + 1, of: eps.length, ep: sc.ep }; };
@@ -120,7 +120,7 @@
   // Five meters. The account shows the line where the desk pulls your capital.
   function hud(cap, prev) {
     return MK.capitals.map(c => {
-      const v = cap[c.k], d = prev ? v - prev[c.k] : 0;
+      const v = cap[c.k], d = prev ? Math.round((v - prev[c.k]) * 10) / 10 : 0;
       const pct = Math.max(0, Math.min(100, v / c.max * 100));
       const val = c.k === 'fin' ? `$${v}k` : `${v}`;
       const danger = c.k === 'fin' ? v <= MK.ruin + 15 : v <= 2;
@@ -247,17 +247,18 @@
 
   function teardown() {
     if (stage) { stage.destroy(); stage = null; }
+    PP.callGame.stop();
     ui.runId++;
   }
 
-  function go(view) {
+  function go(view, keepScroll) {
     teardown();
     useTrack(trackFor(view));
     ui.view = view;
     const hash = view === 'home' ? '' : '#' + view;
     if (location.hash !== hash) window.history.replaceState(null, '', hash || location.pathname);
     render();
-    window.scrollTo({ top: 0, behavior: 'auto' });
+    if (!keepScroll) window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
   // ───────────────────────── Shared pieces
@@ -465,9 +466,20 @@
           <p class="hm-mk-k"><span class="ix-node" aria-hidden="true"></span>Playing the Odds · Inspired by Market Wizards</p>
           <h2 id="hm-mk-h">The Trader's Mind</h2>
           <p class="hm-mk-sub">You don't have to predict the future. You have to survive it.</p>
-          <p class="hm-mk-body">A harder board, with fewer people and more noise. Five challenges at one trading desk, with one account and no way to see what's coming. Inspired by <em>Market Wizards</em>, it tests what markets punish: how you size a risk, admit you're wrong, wait, adapt, and stay in the game.</p>
-          <ol class="hm-mk-tests">${TRACKS.market.list.map((sc, k) => `<li><span class="hm-mk-n">${String(k + 1).padStart(2, '0')}</span><strong>${sc.title}</strong><span>${sc.tests}</span></li>`).join('')}</ol>
-          <button class="hm-btn hm-btn-light" data-act="market">Enter The Trader's Mind</button>
+          <div class="hm-mk-parts" role="tablist" aria-label="The Trader's Mind">
+            <button type="button" role="tab" id="hm-tab-desk" aria-controls="hm-part-desk" aria-selected="true" class="hm-mk-part" data-act="hm-part" data-v="desk"><span>Part I</span>The Desk</button>
+            <button type="button" role="tab" id="hm-tab-call" aria-controls="hm-part-call" aria-selected="false" class="hm-mk-part" data-act="hm-part" data-v="call" tabindex="-1"><span>Part II</span>The Call</button>
+          </div>
+          <div class="hm-mk-panel" id="hm-part-desk" role="tabpanel" aria-labelledby="hm-tab-desk">
+            <p class="hm-mk-body">A harder board, with fewer people and more noise. Five challenges at one trading desk, with one account and no way to see what's coming. Inspired by <em>Market Wizards</em>, it tests what markets punish: how you size a risk, admit you're wrong, wait, adapt, and stay in the game.</p>
+            <ol class="hm-mk-tests">${TRACKS.market.list.map((sc, k) => `<li><span class="hm-mk-n">${String(k + 1).padStart(2, '0')}</span><strong>${sc.title}</strong><span>${sc.tests}</span></li>`).join('')}</ol>
+            <button class="hm-btn hm-btn-light" data-act="market">Sit down at the desk</button>
+          </div>
+          <div class="hm-mk-panel" id="hm-part-call" role="tabpanel" aria-labelledby="hm-tab-call" hidden>
+            <p class="hm-mk-body">Some of the most expensive decisions begin with a phone call. Five callers, each with a reason for calling that isn't quite the one they give. Every call has two games in it: the conversation you think you're having, and the one they're playing.</p>
+            <ol class="hm-mk-tests">${PP.call.calls.map((c, k) => `<li><span class="hm-mk-n">${String(k + 1).padStart(2, '0')}</span><strong>${c.title}</strong><span>${c.tests}</span></li>`).join('')}</ol>
+            <button class="hm-btn hm-btn-light" data-act="call">Answer the phone</button>
+          </div>
         </div>
       </section>
 
@@ -1174,11 +1186,24 @@
 
   // ───────────────────────── The Trader's Mind
 
-  function mkHero(inner) {
+  // Both parts share one hero. The tabs swap the page beneath it, not the address you came in on.
+  function mkHero(inner, part = 'desk') {
+    const env = part === 'call' ? 'desk-dusk' : 'trading';
+    const tab = (v, n, t, d) => `<button type="button" class="mk-part ${part === v ? 'is-on' : ''}" data-act="mk-part" data-v="${v}" aria-pressed="${part === v}"><span class="mk-part-n">${n}</span><span class="mk-part-t">${t}</span><span class="mk-part-d">${d}</span></button>`;
     return `<section class="mk-hero">
-      <div class="mk-art" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350"></div>
-      <div class="mk-over"><div class="wrap">${inner}</div></div>
+      <div class="mk-art" aria-hidden="true"><img src="/img/env/${env}-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350"><img src="/img/env/${env}-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350"></div>
+      <div class="mk-over"><div class="wrap">${inner}
+        <div class="mk-parts">${tab('desk', 'Part I', 'The Desk', 'Five challenges')}${tab('call', 'Part II', 'The Call', 'Five phone calls')}</div></div></div>
     </section>`;
+  }
+
+  function viewCall() {
+    const n = PP.callGame.count;
+    return `${mkHero(`<p class="eyebrow eyebrow-on-dark">The Trader's Mind · Part II</p>
+        <h1 class="mk-title">The Call</h1>
+        <p class="mk-sub">Every call has two games in it. The one you think you're playing, and the one the caller is.</p>
+        ${PP.callGame.ready ? `<div class="hero-actions"><button class="btn btn-primary" data-act="phone">${n ? `Continue · Call ${n + 1}` : 'Answer the phone'}</button></div>` : ''}`, 'call')}
+      ${PP.callGame.overviewHTML()}`;
   }
 
   function viewMarket() {
@@ -1279,7 +1304,7 @@
     const said = C.steps.filter(x => x.opt.verdict).map(x => `<li class="said"><span class="said-face">${portrait(x.opt.verdict.who, x.opt.q >= 3 ? 'smile' : x.opt.q === 2 ? 'neutral' : 'skeptical')}</span>
         <blockquote><p>“${x.opt.verdict.line}”</p><footer><strong>${PP.people[x.opt.verdict.who].name}</strong> · ${x.sc.title}</footer></blockquote></li>`).join('');
 
-    return `${mkHero(`<p class="eyebrow eyebrow-on-dark">${out ? `Challenge ${C.ruinedAt + 1} · The desk pulled your capital` : `The Trader's Mind · Complete`}</p>
+    return `${mkHero(`<p class="eyebrow eyebrow-on-dark">${out ? `Challenge ${C.ruinedAt + 1} · The desk pulled your capital` : `The Trader's Mind · Part I complete`}</p>
         <h1 class="mk-title">${out ? 'Out of the game.' : 'Still standing.'}</h1>
         <p class="mk-sub">${out ? `Your account fell below half of what you started with. Nothing teaches survival like losing the ability to continue.` : `The objective was never to win every round. It was to become the kind of player who could keep playing.`}</p>`)}
       <section class="wrap page mk-review">
@@ -1306,8 +1331,10 @@
     const settled = ui.phase !== 'result' && ui.phase !== 'react';
     if (ui.view === 'play' && history.length >= LIST.length && settled) ui.view = 'profile';
     if (ui.view === 'trade' && settled && (!rules || marketOver())) ui.view = 'market';
-    const views = { home: viewHome, bench: viewBench, episodes: viewEpisodes, play: viewPlay, trade: viewPlay, profile: viewProfile, market: viewMarket };
+    if (ui.view === 'phone' && !PP.callGame.ready) ui.view = 'call';
+    const views = { home: viewHome, bench: viewBench, episodes: viewEpisodes, play: viewPlay, trade: viewPlay, profile: viewProfile, market: viewMarket, call: viewCall, phone: PP.callGame.playHTML };
     app.innerHTML = views[ui.view]();
+    if (ui.view === 'phone') PP.callGame.mount();
     document.querySelectorAll('[data-nav]').forEach(a => a.setAttribute('aria-current', a.dataset.nav === (NAV_OF[ui.view] || ui.view) ? 'page' : 'false'));
     // The home page opens on a dark image, so its nav bar and the phone's browser bar go dark to match.
     document.body.classList.toggle('on-home', ui.view === 'home');
@@ -1315,7 +1342,7 @@
     if (light) light.content = ui.view === 'home' ? '#0e1014' : '#f6f1e7';
     const playing = ui.view === 'play' || ui.view === 'trade';
     const sc = playing ? LIST[currentIndex()] : null;
-    document.title = (sc ? `${sc.title} · ` : ui.view === 'bench' ? 'The Bench · ' : ui.view === 'profile' ? 'Profile · ' : ui.view === 'market' ? 'The Trader\'s Mind · ' : '') + 'The Dance';
+    document.title = (sc ? `${sc.title} · ` : ui.view === 'phone' ? `${PP.callGame.title} · The Call · ` : ui.view === 'call' ? 'The Call · ' : ui.view === 'bench' ? 'The Bench · ' : ui.view === 'profile' ? 'Profile · ' : ui.view === 'market' ? 'The Trader\'s Mind · ' : '') + 'The Dance';
 
     if (playing) {
       if (ui.phase === 'result') { mountStage(LIST[history.length - 1], history.length - 1); settleResult(); renderPanel(); }
@@ -1372,6 +1399,15 @@
       case 'play': ui.phase = 'intro'; go('play'); break;
       case 'trade': ui.phase = 'intro'; go('trade'); break;
       case 'market': go('market'); break;
+      case 'call': go('call'); break;
+      case 'phone': PP.callGame.unlockAudio(); go('phone'); break;
+      case 'mk-part': go(act.dataset.v === 'call' ? 'call' : 'market', true); break;
+      case 'hm-part': {
+        const sec = act.closest('.hm-mk');
+        sec.querySelectorAll('[role="tab"]').forEach(t => { const on = t === act; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; });
+        sec.querySelectorAll('[role="tabpanel"]').forEach(p => { p.hidden = p.id !== `hm-part-${act.dataset.v}`; });
+        break;
+      }
       case 'rules-edit': rules = null; saveRules(); render(); break;
       case 'market-reset':
         if (!confirmReset) { confirmReset = true; render(); app.querySelector('[data-act="market-reset"]').focus(); return; }
@@ -1486,10 +1522,13 @@
   window.addEventListener('resize', () => { if (stage && stage.paused) stage.placePins(); });
   window.addEventListener('hashchange', () => {
     const h = location.hash.replace('#', '');
-    if (['bench', 'profile', 'episodes', 'play', 'market', 'trade'].includes(h) && h !== ui.view) { ui.phase = 'intro'; go(h); }
+    if (['bench', 'profile', 'episodes', 'play', 'market', 'trade', 'call', 'phone'].includes(h) && h !== ui.view) { ui.phase = 'intro'; go(h); }
   });
 
+  PP.ui = { hud, marketRules: () => rules };
+  PP.nav = go;
+
   const initial = location.hash.replace('#', '');
-  if (['bench', 'profile', 'episodes', 'play', 'market', 'trade'].includes(initial)) ui.view = initial;
+  if (['bench', 'profile', 'episodes', 'play', 'market', 'trade', 'call', 'phone'].includes(initial)) ui.view = initial;
   render();
 })();

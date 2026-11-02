@@ -459,16 +459,25 @@
         </div>
       </section>
 
-      <section class="hm-mk" aria-labelledby="hm-mk-h">
-        <div class="hm-mk-art" aria-hidden="true"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
-        <div class="hm-mk-board" aria-hidden="true"></div>
+      <section class="hm-mk" aria-labelledby="hm-mk-h" data-part="desk">
+        <div class="hm-mk-art" aria-hidden="true">
+          <div class="hm-mk-bg is-desk"><img src="/img/env/trading-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/trading-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
+          <div class="hm-mk-bg is-call"><img src="/img/env/desk-dusk-bg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"><img src="/img/env/desk-dusk-fg.webp?v=${PP.assetV}" alt="" width="2400" height="1350" loading="lazy"></div>
+        </div>
         <div class="wrap hm-mk-in">
           <p class="hm-mk-k"><span class="ix-node" aria-hidden="true"></span>Playing the Odds · Inspired by Market Wizards</p>
           <h2 id="hm-mk-h">The Trader's Mind</h2>
           <p class="hm-mk-sub">You don't have to predict the future. You have to survive it.</p>
+          <p class="hm-mk-choose">Two ways to play</p>
           <div class="hm-mk-parts" role="tablist" aria-label="The Trader's Mind">
-            <button type="button" role="tab" id="hm-tab-desk" aria-controls="hm-part-desk" aria-selected="true" class="hm-mk-part" data-act="hm-part" data-v="desk"><span>Part I</span>The Desk</button>
-            <button type="button" role="tab" id="hm-tab-call" aria-controls="hm-part-call" aria-selected="false" class="hm-mk-part" data-act="hm-part" data-v="call" tabindex="-1"><span>Part II</span>The Call</button>
+            <button type="button" role="tab" id="hm-tab-desk" aria-controls="hm-part-desk" aria-selected="true" class="hm-mk-part" data-act="hm-part" data-v="desk">
+              <svg class="hm-mk-ico" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="6" width="24" height="15" rx="1.5"/><path d="M12 26h8M16 21v5"/></svg>
+              <span class="hm-mk-pn">Part I</span><span class="hm-mk-pt">The Desk</span><span class="hm-mk-pd">Five challenges at one trading desk.</span><span class="hm-mk-pc">5 challenges</span>
+            </button>
+            <button type="button" role="tab" id="hm-tab-call" aria-controls="hm-part-call" aria-selected="false" class="hm-mk-part" data-act="hm-part" data-v="call" tabindex="-1">
+              <svg class="hm-mk-ico" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 4l4 5-2.5 2.5c1.5 4 5 7.5 9 9L22 18l5 4-2.5 4.5C14 26 6 18 5.5 7.5z"/></svg>
+              <span class="hm-mk-pn">Part II · New</span><span class="hm-mk-pt">The Call</span><span class="hm-mk-pd">Five phone calls. Every caller has an agenda.</span><span class="hm-mk-pc">5 calls</span>
+            </button>
           </div>
           <div class="hm-mk-panel" id="hm-part-desk" role="tabpanel" aria-labelledby="hm-tab-desk">
             <p class="hm-mk-body">A harder board, with fewer people and more noise. Five challenges at one trading desk, with one account and no way to see what's coming. Inspired by <em>Market Wizards</em>, it tests what markets punish: how you size a risk, admit you're wrong, wait, adapt, and stay in the game.</p>
@@ -1406,6 +1415,7 @@
         const sec = act.closest('.hm-mk');
         sec.querySelectorAll('[role="tab"]').forEach(t => { const on = t === act; t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1; });
         sec.querySelectorAll('[role="tabpanel"]').forEach(p => { p.hidden = p.id !== `hm-part-${act.dataset.v}`; });
+        sec.dataset.part = act.dataset.v;
         break;
       }
       case 'rules-edit': rules = null; saveRules(); render(); break;

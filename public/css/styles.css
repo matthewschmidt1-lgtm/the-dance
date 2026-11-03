@@ -1713,3 +1713,6 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .broken { padding: 64px 16px; max-width: 640px; }
 .broken h1 { font-size: clamp(24px, 4vw, 34px); margin: 0 0 12px; }
 .broken p { margin: 0 0 24px; }
+
+/* When the player couldn't tell versions of the other person apart */
+.verdict-fair { display: block; margin-top: 8px; }

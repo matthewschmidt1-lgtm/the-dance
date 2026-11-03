@@ -68,6 +68,14 @@
 
   let history = load();
   let rules = loadRules();
+  const FIRSTS_KEY = 'thedance:firsts:v1';
+  let firsts = (() => {
+    try {
+      const f = JSON.parse(localStorage.getItem(FIRSTS_KEY) || '{}');
+      return f && typeof f === 'object' && !Array.isArray(f) ? Object.fromEntries(Object.entries(f).filter(([, q]) => Number.isInteger(q) && q >= 0 && q <= 4)) : {};
+    } catch (e) { return {}; }
+  })();
+  const saveFirsts = () => { try { localStorage.setItem(FIRSTS_KEY, JSON.stringify(firsts)); } catch (e) { /* storage unavailable */ } };
   let draft = fresh();
   let confirmReset = false;
   let confirmScene = -1; // index of a played scene awaiting a second tap to replay
@@ -197,7 +205,7 @@
     let rating = START_RATING;
     const moves = hist.map((h, i) => {
       const sc = LIST[i];
-      const ctx = { rel: { ...rel }, flags: { ...flags }, type: typeOf(sc, h) };
+      const ctx = { rel: { ...rel }, flags: { ...flags }, type: typeOf(sc, h), known: metBefore(sc, i) };
       const opts = resolve(sc, ctx, h.clues);
       const opt = opts.find(o => o.key === h.key);
       Object.entries(opt.s || {}).forEach(([k, v]) => { totals[k] += v; });
@@ -226,8 +234,9 @@
         if (h.stake) flags.stake = h.stake;
       }
       const before = rating;
-      rating += (opt.q - 2) * 40;
-      return { sc, opt, opts, ctx, type: ctx.type, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating, fx, rep: repDelta, stake: h.stake, push: h.push, said: h.said };
+      // The rating counts your first try at a scene. Replays are practice.
+      rating += ((firsts[sc.id] ?? opt.q) - 2) * 40;
+      return { sc, opt, opts, ctx, type: ctx.type, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating, fx, rep: repDelta, stake: h.stake, push: h.push, said: h.said, replay: !!h.replay };
     });
     return { totals, rel, flags, rating, moves };
   }
@@ -235,7 +244,7 @@
   //   q, outcome p, their, shaped  may be functions of ctx ({ rel, flags, rules })
   //   needs: [clue indexes]        without those clues you can only make the vague version
   const val = (v, ctx) => typeof v === 'function' ? v(ctx) : v;
-  function resolve(sc, ctx = { rel: {}, flags: {} }, clues = []) {
+  function resolveRaw(sc, ctx = { rel: {}, flags: {} }, clues = []) {
     const c = { ...ctx, rules, clues };
     return sc.options.map(o => {
       const needs = val(o.needs, c);
@@ -247,7 +256,31 @@
       return { ...b, _c: c, needs, text: val(b.text, c), rel: relv, flags: val(b.flags, c), cap: val(b.cap, c), concept: val(b.concept, c), q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
     });
   }
-  const optsNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return resolve(sc, { rel: d.rel, flags: d.flags, type: draft.type, cap: isMarket() ? capitals().cap : null }, draft.clues); };
+  // Grades judge what you could know. Versions of the other person that nothing you saw could tell apart
+  // (the scene's opening and the details you read) are graded together, weighted by how likely each was.
+  // A person you've already met this episode is known. The Trader's Mind grades its own way.
+  const MARKET_IDS = new Set(MK.scenarios.map(s => s.id));
+  function worlds(sc, ctx, clues) {
+    if (!sc.types || !ctx.type || ctx.known || MARKET_IDS.has(sc.id)) return null;
+    const seen = t => {
+      const c = { ...ctx, type: t, clues };
+      const intro = ((sc.stage && sc.stage.intro) || []).map(b => b.if ? (b.if(c) ? 1 : 0) : '').join('');
+      return intro + '|' + clues.map(i => sc.clues[i] ? String(val(sc.clues[i].text, c)) : '').join('|');
+    };
+    const mine = seen(ctx.type);
+    const ws = sc.types.filter(t => seen(t.id) === mine);
+    return ws.length > 1 ? ws : null;
+  }
+  function resolve(sc, ctx = { rel: {}, flags: {} }, clues = []) {
+    const opts = resolveRaw(sc, ctx, clues);
+    const ws = worlds(sc, ctx, clues);
+    if (!ws) return opts;
+    const total = ws.reduce((a, t) => a + t.p, 0);
+    const per = ws.map(t => ({ w: t.p / total, opts: t.id === ctx.type ? opts : resolveRaw(sc, { ...ctx, type: t.id }, clues) }));
+    return opts.map((o, k) => ({ ...o, qWorld: o.q, q: Math.round(per.reduce((a, x) => a + x.w * x.opts[k].q, 0)), worlds: ws }));
+  }
+  const metBefore = (sc, i) => !!sc.share && LIST.slice(0, i).some(s => s.share === sc.share);
+  const optsNow = sc => { const i = LIST.indexOf(sc), d = derive(history.slice(0, i)); return resolve(sc, { rel: d.rel, flags: d.flags, type: draft.type, known: metBefore(sc, i), cap: isMarket() ? capitals().cap : null }, draft.clues); };
   const clueText = (c, ctx) => val(c.text, ctx);
   // Staging for the version actually played: a vague option may have its own line and reactions.
   const staged = (sc, opt) => {
@@ -904,6 +937,8 @@
   const whyOf = (opt, outcome) => opt.q >= 3 && outcome.tone !== 'good' ? `A sound decision that didn't fully pay off this time. Keep making it. Over many tries, sound decisions come out ahead.`
     : opt.q <= 1 && outcome.tone === 'good' ? `It worked out, but the reasoning was weak. Be most careful here: a lucky win teaches you to do it again.`
       : `The grade judges the decision. The result includes things you couldn't control.`;
+  // When nothing you saw could tell some versions of the other person apart, say so, and what the move was worth in the one you got.
+  const fairNote = opt => !opt.worlds || opt.qWorld === opt.q ? '' : ` <span class="verdict-fair">From what you'd seen, it could have been any of these: ${opt.worlds.map(t => t.label).join(' / ')}. Your grade weighs the move across all of them. In the version you actually got, it was ${grades[opt.qWorld].name.toLowerCase()}.</span>`;
 
   function panelResultMarket(sc) {
     const idx = history.length - 1;
@@ -991,7 +1026,7 @@
     const last = epEnd(idx);
     const ctxAfter = { rel: all.rel, flags: all.flags, type: move.type, clues: move.clues };
     const ratingDelta = move.ratingAfter - move.ratingBefore;
-    const why = whyOf(opt, outcome);
+    const why = whyOf(opt, outcome) + fairNote(opt);
 
     const tabs = [['outcome', 'Outcome'], ['game', 'The game'], ['people', 'The people'], ['lens', 'The lens']];
     const tabBar = `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" class="tab" data-tab="${k}" aria-selected="${ui.tab === k}" id="tab-${k}" aria-controls="tp-${k}">${l}</button>`).join('')}</div>`;
@@ -1009,7 +1044,7 @@
           <div class="verdict-glyph g${opt.q}" aria-hidden="true">${g.glyph}</div>
           <div class="verdict-copy">
             <p class="eyebrow">You played ${opt.key}</p><h2>${g.name}</h2><p class="verdict-note">${g.note}</p>
-            <div class="verdict-pills"><span class="pill">Decision: ${g.name}</span><span class="pill pill-${outcome.tone}">Result: ${toneLabel[outcome.tone]}</span><span class="pill pill-num">Rating ${move.ratingAfter} <small>(${ratingDelta >= 0 ? '+' : '−'}${Math.abs(ratingDelta)})</small></span></div>
+            <div class="verdict-pills"><span class="pill">Decision: ${g.name}</span><span class="pill pill-${outcome.tone}">Result: ${toneLabel[outcome.tone]}</span><span class="pill pill-num">Rating ${move.ratingAfter} <small>${move.replay ? '(replay · your first try counts)' : `(${ratingDelta >= 0 ? '+' : '−'}${Math.abs(ratingDelta)})`}</small></span></div>
             <p class="verdict-why">${why}</p>
           </div>
         </div>
@@ -1092,7 +1127,7 @@
       ${theirSide(sc, opt, move.type)}
       <details class="cq-judge"><summary><span class="g${opt.q}">${g.glyph}</span> How you played it: ${g.name}</summary>
         <p class="verdict-note">${g.note} ${why}</p>
-        <div class="verdict-pills"><span class="pill">Decision: ${g.name}</span><span class="pill pill-${outcome.tone}">Result: ${toneLabel[outcome.tone]}</span><span class="pill pill-num">Rating ${move.ratingAfter} <small>(${ratingDelta >= 0 ? '+' : '−'}${Math.abs(ratingDelta)})</small></span></div>
+        <div class="verdict-pills"><span class="pill">Decision: ${g.name}</span><span class="pill pill-${outcome.tone}">Result: ${toneLabel[outcome.tone]}</span><span class="pill pill-num">Rating ${move.ratingAfter} <small>${move.replay ? '(replay · your first try counts)' : `(${ratingDelta >= 0 ? '+' : '−'}${Math.abs(ratingDelta)})`}</small></span></div>
         <h3 class="block-h">How it shaped your profile</h3><ul class="deltas">${deltas}</ul>
       </details>`;
   }
@@ -1436,7 +1471,7 @@
 
   document.addEventListener('click', e => {
     if (e.target.closest('[data-act="repair"]')) {
-      try { [TRACKS.main.key, TRACKS.market.key, RULES_KEY, 'thedance:call:v1', 'thedance:call:rules'].forEach(k => localStorage.removeItem(k)); } catch (err) { /* storage unavailable */ }
+      try { [TRACKS.main.key, TRACKS.market.key, RULES_KEY, FIRSTS_KEY, 'thedance:call:v1', 'thedance:call:rules'].forEach(k => localStorage.removeItem(k)); } catch (err) { /* storage unavailable */ }
       location.reload(); return;
     }
     const nav = e.target.closest('[data-nav]');
@@ -1515,9 +1550,13 @@
         break;
       }
       case 'takeback': {
+        const idx = history.length - 1;
+        if (!isMarket() && firsts[LIST[idx].id] == null) { firsts[LIST[idx].id] = derive(history).moves[idx].opt.q; saveFirsts(); }
         const last = history.pop(); save();
-        draft = fresh(last.clues.slice(), last.type || null);
-        if (LIST[history.length].play) { draft.stake = last.stake || null; draft.step = 'choose'; }
+        if (isMarket()) {
+          draft = fresh(last.clues.slice(), last.type || null);
+          if (LIST[history.length].play) { draft.stake = last.stake || null; draft.step = 'choose'; }
+        } else draft = fresh(); // A fresh deal: the other person is drawn again, and the details are unread.
         ui.phase = 'decide';
         app.innerHTML = viewPlay();
         toDecision();
@@ -1538,7 +1577,7 @@
       }
       case 'reset':
         if (!confirmReset) { confirmReset = true; render(); app.querySelector('[data-act="reset"]').focus(); return; }
-        confirmReset = false; history = []; draft = fresh(); save(); ui.phase = 'intro'; go('play');
+        confirmReset = false; history = []; draft = fresh(); save(); firsts = {}; saveFirsts(); ui.phase = 'intro'; go('play');
         break;
     }
   });
@@ -1585,8 +1624,10 @@
   // A move becomes final: record it, then let the room react.
   function commitMove(sc, key, extra = {}) {
     const opt = optsNow(sc).find(o => o.key === key);
-    history.push({ id: sc.id, key, outcome: pickOutcome(opt), clues: draft.clues.slice(), type: draft.type, ...(draft.stake ? { stake: draft.stake } : {}), ...extra });
+    const replay = !isMarket() && firsts[sc.id] != null;
+    history.push({ id: sc.id, key, outcome: pickOutcome(opt), clues: draft.clues.slice(), type: draft.type, ...(draft.stake ? { stake: draft.stake } : {}), ...(replay ? { replay } : {}), ...extra });
     save();
+    if (!isMarket() && !replay) { firsts[sc.id] = opt.q; saveFirsts(); }
     draft = fresh();
     document.querySelector('.play-head').innerHTML = document.querySelector('.play-head').innerHTML.replace(/<ol class="file-strip"[\s\S]*?<\/ol>/, strip(history.length - 1, derive(history)));
     document.getElementById('stage-mount').scrollIntoView({ behavior: 'smooth', block: 'start' });

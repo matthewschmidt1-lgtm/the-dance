@@ -204,6 +204,8 @@
       totals.inf += Math.min(h.clues.length, 2) * 0.5;
       Object.entries(opt.rel || {}).forEach(([k, v]) => { rel[k] = (rel[k] || 0) + v; });
       Object.assign(flags, opt.flags || {});
+      // An outcome can leave a mark too (the salary you actually got), for later scenes to read.
+      Object.assign(flags, val(opt.outcomes[h.outcome].flags, ctx) || {});
       // Some clues cost something to read: asking around gets back to people.
       h.clues.forEach(i => {
         const cost = ((sc.clues || [])[i] || {}).cost;
@@ -246,7 +248,7 @@
     });
   }
   const optsNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return resolve(sc, { rel: d.rel, flags: d.flags, type: draft.type, cap: isMarket() ? capitals().cap : null }, draft.clues); };
-  const clueText = (c, type) => val(c.text, { type });
+  const clueText = (c, ctx) => val(c.text, ctx);
   // Staging for the version actually played: a vague option may have its own line and reactions.
   const staged = (sc, opt) => {
     const so = sc.stage.options[opt.key];
@@ -798,7 +800,7 @@
   function clueList(sc) {
     return sc.clues.map((c, i) => {
       const open = draft.clues.includes(i), shut = !open && (!readsLeft(sc) || !readsOpen(sc));
-      return `<li class="clue ${open ? 'is-open' : ''} ${shut ? 'is-shut' : ''}"><button type="button" class="clue-btn" data-clue="${i}" ${open || shut ? 'disabled' : ''} aria-expanded="${open}"><span class="clue-label">${c.label}${c.cost ? `<span class="clue-cost">Costs something: ${c.cost.note}</span>` : ''}</span><span class="clue-state">${open ? 'Noted' : shut ? 'No reads left' : 'Look'}</span></button>${open ? `<p class="clue-text">${clueText(c, draft.type)}</p>` : ''}</li>`;
+      return `<li class="clue ${open ? 'is-open' : ''} ${shut ? 'is-shut' : ''}"><button type="button" class="clue-btn" data-clue="${i}" ${open || shut ? 'disabled' : ''} aria-expanded="${open}"><span class="clue-label">${c.label}${c.cost ? `<span class="clue-cost">Costs something: ${c.cost.note}</span>` : ''}</span><span class="clue-state">${open ? 'Noted' : shut ? 'No reads left' : 'Look'}</span></button>${open ? `<p class="clue-text">${clueText(c, ctxNow(sc))}</p>` : ''}</li>`;
     }).join('');
   }
 
@@ -854,7 +856,7 @@
       <div class="frozen-grid">
         <section class="fz"><h2 class="block-h">Who wants what</h2><ol class="whos">${cast}</ol></section>
         <section class="fz"><h2 class="block-h">Information</h2>
-          <div class="ku"><div><h3 class="ku-h">You know</h3><ul class="ticks">${sc.known.map(k => `<li>${k}</li>`).join('')}</ul></div>
+          <div class="ku"><div><h3 class="ku-h">You know</h3><ul class="ticks">${val(sc.known, ctxNow(sc)).map(k => `<li>${k}</li>`).join('')}</ul></div>
           <div><h3 class="ku-h">Still uncertain</h3><ul class="ticks ticks-q">${sc.unknown.map(k => `<li>${k}</li>`).join('')}</ul></div></div>
           <h3 class="ku-h ku-gap">Read the room</h3>${readsNote(sc)}<ul class="clues">${clues}</ul></section>
       </div>
@@ -869,10 +871,12 @@
     const t = sc.types && sc.types.find(x => x.id === type);
     const who = t ? `<div><p class="their-k">Who they were this time</p><p><strong>${t.label}.</strong> ${t.tell}</p><p class="their-note">${sc.share ? `${t.who} stays the same for the rest of this episode, so what you learned here still applies later. Replay the episode and that may change.` : `Play it again and ${t.who} may be different.`}</p></div>` : '';
     let knew = '';
-    if (opt.needs) {
-      const labels = opt.needs.map(i => `“${sc.clues[i].label}”`).join(' and ');
+    // needs: [-1] marks a move that has no sharper version for this type, so there is nothing to say.
+    const needed = (opt.needs || []).filter(i => sc.clues[i]);
+    if (needed.length) {
+      const labels = needed.map(i => `“${sc.clues[i].label}”`).join(' and ');
       knew = opt.vague
-        ? `You hadn't checked ${labels}, so you could only make the general version of this move. With it, you could have said: <em>${sc.options.find(o => o.key === opt.key).text}</em>`
+        ? `You hadn't checked ${labels}, so you could only make the general version of this move. With it, you could have said: <em>${val(sc.options.find(o => o.key === opt.key).text, opt._c || {})}</em>`
         : `You checked ${labels}, which let you make the sharper version of this move. Sharper isn't always better: what matters is whether it fits the other side's incentives.`;
     }
     if (!opt.their && !opt.shaped && !knew && !who) return '';
@@ -946,7 +950,7 @@
         <h3 class="viz-h">What each move could cost or earn</h3>${riskChart({ ...sc, options: priorOpts(sc, move.clues) }, opt.key, move.outcomeIdx)}
         <h3 class="viz-h">How often each move goes well</h3>${PP.viz.tree({ ...sc, options: priorOpts(sc, move.clues) }, opt.key, move.outcomeIdx)}
         <h3 class="viz-h">What reading the room would have shown</h3>
-        <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${clueText(c, move.type)}</p></li>`).join('')}</ul>`;
+        <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${clueText(c, move.ctx)}</p></li>`).join('')}</ul>`;
     } else if (ui.tab === 'mind') {
       const v = opt.verdict;
       body = `
@@ -985,7 +989,7 @@
     const g = grades[opt.q];
     const a = sc.analysis;
     const last = epEnd(idx);
-    const ctxAfter = { rel: all.rel, flags: all.flags };
+    const ctxAfter = { rel: all.rel, flags: all.flags, type: move.type, clues: move.clues };
     const ratingDelta = move.ratingAfter - move.ratingBefore;
     const why = whyOf(opt, outcome);
 
@@ -1020,7 +1024,7 @@
         <h3 class="viz-h">Payoff matrix</h3>${PP.viz.matrix(sc.stage.matrix, st.row, sc.stage.matrix && sc.stage.matrix.byType ? sc.types.findIndex(t => t.id === move.type) : st.outcomes[move.outcomeIdx].col)}
         <h3 class="viz-h">Decision tree</h3>${PP.viz.tree({ ...sc, options: move.opts }, opt.key, move.outcomeIdx)}
         <h3 class="viz-h">What reading the room would have shown</h3>
-        <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${clueText(c, move.type)}</p></li>`).join('')}</ul>`;
+        <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${clueText(c, move.ctx)}</p></li>`).join('')}</ul>`;
     } else if (ui.tab === 'people') {
       const nodes = sc.stage.cast.map((c, i) => ({ id: c.id, name: PP.people[c.id].name, short: PP.people[c.id].short, trust: all.rel[c.id] || 0, recurring: RECURRING.includes(c.id), role: (sc.cast[i] || {}).role }));
       const mainThem = PP.people[sc.stage.cast[0].id].name;
@@ -1070,7 +1074,7 @@
     const ratingDelta = move.ratingAfter - move.ratingBefore;
     const c = { ...move.ctx, clues: move.clues };
     const epi = sc.epilogue && val(sc.epilogue, c);
-    const missed = sc.clues.map((k, i) => move.clues.includes(i) ? '' : `<li><strong>${k.label}.</strong> ${clueText(k, move.type)}</li>`).join('');
+    const missed = sc.clues.map((k, i) => move.clues.includes(i) ? '' : `<li><strong>${k.label}.</strong> ${clueText(k, move.ctx)}</li>`).join('');
     return `
       <section class="cq">
         <p class="eyebrow">What changed</p>

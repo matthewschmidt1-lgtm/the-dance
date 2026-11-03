@@ -77,6 +77,7 @@ PP.scenes = {
       { who: 'luis', mood: 'confident', pose: 'gesture', say: `Rot in the subfloor. It's another twenty-six hundred.` },
       { who: 'luis', mood: 'confident', say: `Could be more once we open it up. Hard to say.`, if: ctx => ctx.type === 'padder' },
       { who: 'luis', mood: 'neutral', pose: 'hips', say: `I need to know today. If I can't start this, my crew moves to another job and we're back in three weeks.` },
+      { who: 'luis', mood: 'neutral', pose: 'phone', say: `Sooner is better. Like, this morning.`, if: ctx => ctx.type === 'tight' },
       { cam: 'wide', caption: `Your bid was a fixed $14,000. Your bathroom has no floor.` }
     ],
     options: {
@@ -107,8 +108,10 @@ PP.scenes = {
             { cam: 'wide', caption: `At 4 pm the change order arrives: $1,940, at cost plus 15%. You sign it at 6.` }
           ] },
           { col: 0, beats: [
-            { who: 'luis', mood: 'smile', act: 'nod', say: `Fair enough.` },
-            { cam: 'wide', caption: `The itemized order comes in at $2,550. Expensive, but real. You approve it knowing exactly what you're paying for.` }
+            { who: 'luis', mood: 'smile', act: 'nod', say: `Fair enough.`, if: ctx => ctx.type !== 'tight' },
+            { cam: 'wide', caption: `The itemized order comes in at $2,550. Expensive, but real. You approve it knowing exactly what you're paying for.`, if: ctx => ctx.type !== 'tight' },
+            { who: 'luis', mood: 'frustrated', say: `Tonight's too late. Crew's on the Pruitt job at one.`, if: ctx => ctx.type === 'tight' },
+            { cam: 'wide', caption: `You sign at 6. The crew left at 1. The floor stays open for eleven days.`, if: ctx => ctx.type === 'tight' }
           ] }
         ] },
       D: { line: `I'd like a second opinion from another contractor before I approve anything extra.`, preview: `Real information. It may cost you the crew and weeks.`, row: 0,
@@ -127,6 +130,17 @@ PP.scenes = {
           { col: 0, beats: [
             { who: 'luis', mood: 'frustrated', pose: 'crossed', act: 'shake', say: `Then we'll finish the contracted work only.` },
             { cam: 'rot', caption: `He tiles over the documented rot, with your refusal in writing.` }
+          ] }
+        ] },
+      F: { line: `Under Section 7, go ahead at documented cost plus fifteen percent, not to exceed twenty-six hundred. Itemize it by Friday.`, vague: { line: `Go ahead, up to twenty-six hundred. Send me the breakdown by Friday.` }, preview: `Beats the clock and caps the cost. A cap can also become the price.`, row: 0,
+        outcomes: [
+          { col: 0, beats: [
+            { who: 'luis', mood: 'smile', act: 'nod', say: `Deal. We start at ten.` },
+            { cam: 'wide', caption: `Friday's itemized bill comes in under your cap.` }
+          ] },
+          { col: 1, beats: [
+            { who: 'luis', mood: 'smile', act: 'nod', say: `You got it.` },
+            { cam: 'wide', caption: `Friday's bill lands right at the cap. Every line is "documented."` }
           ] }
         ] }
     },
@@ -176,7 +190,8 @@ PP.scenes = {
           ] },
           { col: 0, beats: [
             { who: 'sam', mood: 'thinking', pose: 'thinking', say: `Let me check.` },
-            { who: 'alicia', mood: 'neutral', say: `We can do a hundred and one.` },
+            { who: 'alicia', mood: 'neutral', say: `We can do a hundred and one.`, if: c => c.type !== 'banded' },
+            { who: 'alicia', mood: 'neutral', say: `Ninety-six. That's the top of the level.`, if: c => c.type === 'banded' },
             { cam: 'wide', caption: `You won. You also started a job with a story you'll have to keep straight.` }
           ] }
         ] },
@@ -184,12 +199,15 @@ PP.scenes = {
         outcomes: [
           { col: 0, beats: [
             { who: 'sam', mood: 'thinking', say: `Let me talk to Alicia.` },
-            { who: 'alicia', mood: 'smile', say: `Ninety-nine, plus a three-thousand signing bonus. And Tuesday's fine.` },
-            { cam: 'wide', caption: `Real numbers, a real alternative, and something they needed. Everyone leaves happy.` }
+            { who: 'alicia', mood: 'smile', say: `Ninety-nine, plus a three-thousand signing bonus. And Tuesday's fine.`, if: c => c.type !== 'banded' },
+            { cam: 'wide', caption: `Real numbers, a real alternative, and something they needed. Everyone leaves happy.`, if: c => c.type !== 'banded' },
+            { who: 'alicia', mood: 'neutral', say: `I took it to my VP. Ninety-eight. Don't make me do that twice.`, if: c => c.type === 'banded' }
           ] },
           { col: 1, beats: [
-            { who: 'sam', mood: 'neutral', say: `Ninety-six is our ceiling this cycle, with a review at six months.` },
-            { cam: 'wide', caption: `Less than you asked for, more than you had. You decide with full information.` }
+            { who: 'sam', mood: 'neutral', say: `Ninety-six is our ceiling this cycle, with a review at six months.`, if: c => c.type !== 'banded' },
+            { cam: 'wide', caption: `Less than you asked for, more than you had. You decide with full information.`, if: c => c.type !== 'banded' },
+            { who: 'sam', mood: 'awkward', say: `Ninety-four. That's as high as this level goes without a VP.`, if: c => c.type === 'banded' },
+            { cam: 'wide', caption: `The posting said 110. The role never did.`, if: c => c.type === 'banded' }
           ] }
         ] },
       D: { line: `You need someone before launch, and I can start right away. To make the move I'd need $115,000.`, vague: { line: `To make the move worthwhile I'd need $115,000. Otherwise I'm happy staying where I am.` }, preview: `A clear number. You have to be ready to walk away.`, row: 2,
@@ -199,7 +217,8 @@ PP.scenes = {
             { who: 'alicia', mood: 'surprised', cam: 'wide', caption: `The offer is gone. Your current employer doesn't know you were looking. Yet.` }
           ] },
           { col: 0, beats: [
-            { who: 'alicia', mood: 'skeptical', say: `We can't go above 110. A hundred and five. I'll be honest, the tone surprised me.` },
+            { who: 'alicia', mood: 'skeptical', say: `We can't go above 110. A hundred and five. I'll be honest, the tone surprised me.`, if: c => c.type !== 'banded' },
+            { who: 'alicia', mood: 'skeptical', say: `This level tops out at ninety-six. I'll be honest, the tone surprised me.`, if: c => c.type === 'banded' },
             { cam: 'wide', caption: `You got more money and a slightly awkward start.` }
           ] }
         ] },
@@ -208,6 +227,18 @@ PP.scenes = {
           { beats: [
             { who: 'sam', mood: 'neutral', say: `We can do Monday.` },
             { cam: 'wide', caption: `More time, same number. The other company doesn't make an offer.` }
+          ] }
+        ] },
+      F: { line: `If Level 2 tops out at ninety-six, could we do ninety-six now, with a written review for Level 3 at six months?`, vague: { line: `Could we do ninety-six, with a written review at six months?` }, preview: `An easy yes with a path to more. Only smart if ninety-six is really the ceiling.`, row: 0,
+        outcomes: [
+          { col: 0, beats: [
+            { who: 'sam', mood: 'happy', say: `I can do that today. I'll put the review in the letter.` },
+            { who: 'alicia', mood: 'smile', act: 'nod', cam: 'wide', caption: `Ninety-six, and a written path to the next level.` }
+          ] },
+          { col: 1, beats: [
+            { who: 'sam', mood: 'happy', act: 'nod', say: `Done. Ninety-six.`, if: c => c.type !== 'banded' },
+            { cam: 'wide', caption: `Sam said yes before you finished. That speed was information.`, if: c => c.type !== 'banded' },
+            { who: 'sam', mood: 'neutral', say: `Ninety-five, and the review in writing.`, if: c => c.type === 'banded' }
           ] }
         ] }
     },

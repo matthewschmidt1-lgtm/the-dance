@@ -890,6 +890,7 @@ window.PP = window.PP || {};
   // The technical truth is hidden: a phased fix works, the modules are coupled, or a patch is enough.
   const coupled = c => c.type === 'coupled';
   const patchOk = c => c.type === 'patch';
+  const phased = c => c.type === 'phased';
   const jordanTilt = c => rel(c, 'jordan') < 0 ? -0.15 : rel(c, 'jordan') > 0 ? 0.1 : 0;
   add({
     id: 'pick-a-side',
@@ -932,13 +933,13 @@ window.PP = window.PP || {};
       },
       {
         key: 'B', text: `"Have Priya and Marcus each write one page against the same three tests: cost before March, tickets cut, risk."`,
-        their: `Ellen got a decision she didn't have to make on loyalty. It cost a week, and in that week the evidence did the arguing.`,
-        q: 3, s: { str: 2, inc: 2, coo: 1, jdg: 2 }, rel: { priya: 0, marcus: 0 },
+        their: c => has(c, 1) && !phased(c) ? `You'd already seen the answer when Priya ${coupled(c) ? 'showed you the diagram' : 'admitted the config file'}. Sending it back for homework handed Ellen a reason to wait, and the tool didn't wait with her.` : `Ellen got a decision she didn't have to make on loyalty. It cost a week, and in that week the evidence did the arguing.`,
+        q: c => has(c, 1) && !phased(c) ? 2 : 3, s: { str: 2, inc: 2, coo: 1, jdg: 2 }, rel: { priya: 0, marcus: 0 },
         outcomes: [
-          { p: 0.7, tone: 'good', text: c => coupled(c) ? `Priya's page includes the diagram. Even Marcus can't argue with it. The rebuild is approved, a week late.` : patchOk(c) ? `Priya's page admits the config file. The patch is approved, a week late, and it works.` : `Both pages point at the same two modules. Ellen approves fixing them first.` },
-          { p: 0.3, tone: 'mixed', text: `Marcus calls it "homework," and Ellen delays the decision a month. The tests are still the right ones.` }
+          { p: c => coupled(c) ? 0.4 : 0.7, tone: 'good', text: c => coupled(c) ? `Priya's page includes the diagram. Even Marcus can't argue with it. The rebuild is approved, a week late.` : patchOk(c) ? `Priya's page admits the config file. The patch is approved, a week late, and it works.` : `Both pages point at the same two modules. Ellen approves fixing them first.` },
+          { p: c => coupled(c) ? 0.6 : 0.3, tone: c => coupled(c) ? 'bad' : 'mixed', text: c => coupled(c) ? `Marcus calls it "homework," and Ellen delays the decision a month. During that month's close the scheduler core fails, and the rebuild starts as an emergency.` : `Marcus calls it "homework," and Ellen delays the decision a month. The tests are still the right ones.` }
         ],
-        later: `When two advocates disagree, make them argue on the same scale.`
+        later: c => has(c, 1) && !phased(c) ? `A process is a way to find the answer. Once you have it, the process is just delay.` : `When two advocates disagree, make them argue on the same scale.`
       },
       {
         key: 'C', text: `"Patch it for twelve thousand before March, and revisit the rebuild with real numbers after."`,
@@ -953,7 +954,7 @@ window.PP = window.PP || {};
       },
       {
         key: 'D', text: `"Rebuild the two modules behind 62% of the tickets now, for under forty thousand, and the rest after March."`,
-        needs: [0, 2], vague: { text: `"What about a middle path? Fix the worst parts now and the rest later."`, q: c => coupled(c) && has(c, 1) ? 0 : 2 },
+        needs: [0, 2], vague: { text: `"What about a middle path? Fix the worst parts now and the rest later."`, q: c => coupled(c) ? (has(c, 1) ? 0 : 1) : 2 },
         their: c => coupled(c) ? `A compromise that fails both sides. The modules were coupled, so fixing two broke them again, and both Priya and Marcus blamed you.` : patchOk(c) ? `Better than a full rebuild, but most of the problem was one file. You spent $40,000 to fix a $12,000 problem.` : `Ellen could approve it without a fight, Priya got her rebuild in phases, and Marcus kept his March budget. It worked because the modules were independent.`,
         q: c => coupled(c) ? (has(c, 1) ? 0 : 1) : patchOk(c) ? 2 : 4, s: { str: 2, inc: 2, coo: 2, neg: 2 }, rel: { priya: 1, marcus: 1 },
         shaped: c => rel(c, 'jordan') > 0 ? `Jordan owes you after The Credit Taker, and backed your plan in front of Marcus.` : null,
@@ -1012,7 +1013,7 @@ window.PP = window.PP || {};
       B: { line: `Have Priya and Marcus each write one page against the same three tests: cost before March, tickets cut, risk.`, preview: `Makes them argue on the same scale. Costs a week.`, row: 0,
         outcomes: [
           { beats: [{ who: 'ellen', mood: 'smile', act: 'nod', say: `I like that. Friday, one page each.` }] },
-          { beats: [{ who: 'marcus', mood: 'skeptical', say: `Homework. Great.` }] }
+          { beats: [{ who: 'marcus', mood: 'skeptical', say: `Homework. Great.` }, { cam: 'wide', caption: `A month later, during close, the scheduler core fails.`, if: c => c.type === 'coupled' }] }
         ] },
       C: { line: `Patch it for twelve thousand before March, and revisit the rebuild with real numbers after.`, vague: { line: `Marcus has seen more of these projects than any of us. I'd go with his call.` }, preview: `Cheap and safe for March. Wrong if the problem runs deeper.`, row: 2,
         outcomes: [

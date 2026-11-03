@@ -22,7 +22,8 @@ PP.insight = {
         B: { buys: ['right', 'win'], verdict: { who: 'luis', line: `Held me to the bid and ignored the contract. I pulled my crew.` } },
         C: { buys: ['info', 'fair'], verdict: { who: 'luis', line: `Read the contract and looked at the floor. Respect.` } },
         D: { buys: ['info'], verdict: { who: 'luis', line: `Wanted a second opinion. Fair, but it cost us both three weeks.` } },
-        E: { buys: ['win'], verdict: { who: 'luis', line: `Threatened a one-star review over rotten plywood. I won't forget it.` } }
+        E: { buys: ['win'], verdict: { who: 'luis', line: `Threatened a one-star review over rotten plywood. I won't forget it.` } },
+        F: { buys: ['fair', 'time'], verdict: { who: 'luis', line: `Approved it on the spot with a cap and the contract clause. Knew what they were doing.` } }
       }
     },
     'the-offer': {
@@ -31,7 +32,8 @@ PP.insight = {
         B: { buys: ['win'], verdict: { who: 'alicia', line: `Mentioned an offer they couldn't show us. That stuck with me.` } },
         C: { buys: ['info', 'fair', 'future'], verdict: { who: 'alicia', line: `Knew our range and our deadline, and was straight with us. Easy yes.` } },
         D: { buys: ['win', 'right'], verdict: { who: 'sam', line: `Gave us an ultimatum above our posted ceiling. Bold.` } },
-        E: { buys: ['time'], verdict: { who: 'sam', line: `Asked for more time. Didn't do much with it.` } }
+        E: { buys: ['time'], verdict: { who: 'sam', line: `Asked for more time. Didn't do much with it.` } },
+        F: { buys: ['info', 'fair', 'future'], verdict: { who: 'sam', line: `Asked for something I could approve on the spot, plus a path to more. Easy yes.` } }
       }
     }
   },

@@ -18,6 +18,10 @@ window.PP = window.PP || {};
   const hot = c => c.type !== 'soft';
   const genuine = c => c.type !== 'stalling';
   const careful = c => c.type !== 'trusting';
+  const grinder = c => c.type === 'grinder';
+  // What Northfield actually pays you, from how The Offer went ($k). Ellen's counter is $98k.
+  const nf = c => (c.flags && c.flags.nf) || 92;
+  const better = c => nf(c) < 98;
   const fourSquare = c => c.type !== 'straight';
 
   const SCENARIOS = [
@@ -135,12 +139,12 @@ window.PP = window.PP || {};
       cast: [
         { name: `Ellen`, role: `Your manager`, archetype: `The Avoider`, power: `Your raise, your title, your reference`, note: `Hates conflict. Hates losing people before a launch even more.` }
       ],
-      known: [`Northfield's offer is signed. You've said yes, starting on the 14th.`, `You just told Ellen you're resigning.`, `You make $85,000 at Brightline.`],
+      known: c => [c.flags && c.flags.nfLapsed ? `After your $115,000 ask, Northfield went quiet for a week, then came back at $92,000 when their other candidate fell through. You signed, starting on the 14th.` : `Northfield's offer is signed: $${nf(c)},000, starting on the 14th.`, `You just told Ellen you're resigning.`, `You make $85,000 at Brightline.`],
       unknown: [`Whether Ellen's counter is a plan or a way to buy time.`, `What staying would mean for how you're seen.`, `How long Northfield will wait.`],
       clues: [
         { label: `Check Brightline's careers page`, text: c => genuine(c) ? `No new postings for your team. The last one closed in March.` : `A new posting went up Tuesday: "Senior Operations Analyst." It reads a lot like your job description.` },
         { label: `Ask Dana what happened to people who stayed`, text: c => genuine(c) ? `"Priya took a counter last year. She was promoted in the spring. Ellen meant it."` : `"Two people took counters last year. Both were gone within six months, after their replacements were trained."` },
-        { label: `Re-read Northfield's offer letter`, text: `"We're excited to have you start on the 14th." It's signed. Alicia said she'd hold the start date for two weeks, not longer.` }
+        { label: `Re-read Northfield's offer letter`, text: c => `"We're excited to have you start on the 14th at $${nf(c)},000." It's signed. Alicia said she'd hold the start date for two weeks, not longer.` }
       ],
       question: `What do you tell Ellen?`,
       options: [
@@ -157,8 +161,8 @@ window.PP = window.PP || {};
               { p: c => genuine(c) ? 0.3 : 0.85, tone: c => genuine(c) ? 'mixed' : 'bad', text: c => genuine(c) ? `The raise is real. The title takes a year. Northfield won't call you again.` : `Five months later, after you've trained the new "senior analyst," your role is eliminated.` }
             ]
           },
-          their: `Ellen had budget for your raise before you resigned. Her counter wasn't a reaction. It was a plan.`,
-          q: 3, s: { inf: 2, jdg: 1, lng: 1, bnd: -1 },
+          their: c => better(c) ? `Ellen had budget for your raise before you resigned, and it beat what Northfield was paying you. Her counter wasn't a reaction. It was a plan, and the better one.` : `Ellen had budget for your raise before you resigned. Her counter wasn't a reaction. It was a plan.`,
+          q: c => better(c) ? 4 : 3, s: { inf: 2, jdg: 1, lng: 1, bnd: -1 },
           outcomes: [
             { p: 0.75, tone: 'good', text: `Ellen follows through. In April you're promoted, and it was real.` },
             { p: 0.25, tone: 'mixed', text: `The raise is real. The title takes a year. Northfield won't call you again.` }
@@ -169,10 +173,11 @@ window.PP = window.PP || {};
           key: 'B', text: `"I saw the senior analyst posting on Tuesday. Thank you, but I'm keeping my word to Northfield."`,
           needs: c => genuine(c) ? [-1] : [0],
           vague: { text: `"Thank you, truly. I've already said yes to Northfield, and I'm going to keep my word."` },
-          their: c => genuine(c) ? `Ellen's counter was real, but so was your word to Northfield. Keeping it cost you a raise here and earned you a reputation everywhere.` : `Ellen was buying time. Keeping your word took the decision out of her hands.`,
-          q: 4, s: { bnd: 2, lng: 2, com: 1, reg: 1 },
+          their: c => !genuine(c) ? `Ellen was buying time. Keeping your word took the decision out of her hands.` : better(c) ? `Ellen's counter was real, and it beat Northfield by $${98 - nf(c)},000 a year. Keeping your word was honorable, and it cost you real money.` : `Ellen's counter was real, but so was your word to Northfield. Keeping it cost you a raise here and earned you a reputation everywhere.`,
+          q: c => genuine(c) && better(c) ? 3 : 4, s: { bnd: 2, lng: 2, com: 1, reg: 1 },
           outcomes: [
-            { p: 1, tone: 'good', text: c => genuine(c) ? `Ellen nods slowly. "I'd have done the same." Her reference opens doors for years.` : `Ellen's smile tightens, then relaxes. "Fair enough." You leave on good terms, and the new posting fills in a month.` }
+            { p: c => genuine(c) ? 0.6 : 1, tone: 'good', text: c => genuine(c) ? `Ellen nods slowly. "I'd have done the same." Her reference opens doors for years.` : `Ellen's smile tightens, then relaxes. "Fair enough." You leave on good terms, and the new posting fills in a month.` },
+            { p: c => genuine(c) ? 0.4 : 0, tone: 'mixed', text: `Ellen takes it gracefully. The raise she'd already budgeted for you goes to Priya in September, and her reference is polite rather than warm.` }
           ],
           later: `You kept a commitment when a better-sounding offer arrived. That's the only kind of commitment that counts.`
         },
@@ -205,6 +210,16 @@ window.PP = window.PP || {};
             { p: c => genuine(c) ? 0.5 : 0.8, tone: 'mixed', text: c => genuine(c) ? `Alicia calls Friday: "We need an answer." You decide on the phone, which isn't how you wanted to.` : `By Monday, Ellen has stopped asking you to stay. Northfield is still waiting, thankfully.` }
           ],
           later: `Time is only useful if you use it to learn something.`
+        },
+        {
+          key: 'F', text: c => `"Northfield is paying me ${nf(c)}. I'd rather stay. Can you beat that in writing by Friday?"`,
+          their: c => genuine(c) ? `You used a real number honestly, and Ellen's counter was real enough to answer it. You were still ready to break your word to Northfield for the right price.` : `An honest number, handed to a manager who was buying time. Now she knew exactly what you were worth to someone else, and how long you'd wait.`,
+          q: c => genuine(c) ? 3 : (has(c, 0) || has(c, 1)) ? 1 : 2, s: { neg: 2, com: 2, inf: 1, lng: -1 },
+          outcomes: [
+            { p: c => genuine(c) ? 0.7 : 0, tone: 'good', text: c => `By Thursday it's in writing: $${Math.max(98, nf(c) + 3)},000 and the senior title. You call Alicia and apologize. She's gracious, and she won't call again.` },
+            { p: c => genuine(c) ? 0.3 : 1, tone: 'mixed', text: c => genuine(c) ? `Ellen can't beat it this cycle. "Take it. I mean that." You leave with her blessing and a story about almost staying.` : `Ellen says yes. Then HR needs "a few weeks." Northfield's start date gets close, and you go, having shown Ellen your hand for nothing.` }
+          ],
+          later: `An honest number is fair leverage. Whether it was worth breaking a promise for is a separate question.`
         }
       ],
       analysis: {
@@ -217,7 +232,7 @@ window.PP = window.PP || {};
         couldnt: `Ellen's plans, and HR's.`,
         concept: { thinker: 'schelling', term: `Commitment device`, name: `A promise only counts if you won't back out of it`, body: `Schelling showed that a commitment's power comes from not being able to back out of it. A promise you'll break for a better offer isn't a commitment, and everyone you deal with afterward learns that.` },
         second: { thinker: 'aumann', term: `Reputation`, name: `How you leave travels ahead of you`, body: `A career is a long repeated game in a small world. How you leave a job is information about you, and it travels.` },
-        better: `B. If Ellen's counter checks out and you'd truly rather stay, C: in writing, before you call Northfield.`,
+        better: `It depends on what Northfield is really paying you. If Ellen's counter checks out and beats it, A or C: stay for a reason, in writing. If not, B: keep your word.`,
         lesson: `Counteroffers are usually about the next three months, not the next three years. Check before you believe one.`
       }
     },
@@ -231,8 +246,9 @@ window.PP = window.PP || {};
       lens: ['aumann', 'duke'],
       setting: `Alder Street · Saturday, 8:15 am · 38 degrees`,
       types: [
-        { id: 'careful', p: 0.5, who: `Kim`, label: `Kim was a careful buyer`, tell: `She brought a code scanner, a flashlight and a notebook of questions. Her brother-in-law is a mechanic.` },
-        { id: 'trusting', p: 0.5, who: `Kim`, label: `Kim was a trusting buyer`, tell: `She brought a coffee and a checkbook, and she needed a truck by Monday for a new job.` }
+        { id: 'careful', p: 0.35, who: `Kim`, label: `Kim was a careful buyer`, tell: `She brought a code scanner, a flashlight and a notebook of questions. Her brother-in-law is a mechanic.` },
+        { id: 'trusting', p: 0.35, who: `Kim`, label: `Kim was a trusting buyer`, tell: `She brought a coffee and a checkbook, and she needed a truck by Monday for a new job.` },
+        { id: 'grinder', p: 0.3, who: `Kim`, label: `Kim was a grinder`, tell: `She brought printouts of six comparable trucks, a borrowed code scanner and a highlighter. Every flaw you named became a line item off the price.` }
       ],
       cast: [
         { name: `Kim`, role: `Buyer`, archetype: `The Unknown`, power: `Her money, and her review`, note: `Found your listing on the neighborhood app.` },
@@ -242,7 +258,7 @@ window.PP = window.PP || {};
       unknown: [`Whether Kim will check.`, `Whether she'd still buy it if she knew.`],
       clues: [
         { label: `Check the temperature`, text: `It's 38 degrees. On cold mornings the transmission slips for the first ten minutes. This is a cold morning.` },
-        { label: `Look at what Kim brought`, text: c => careful(c) ? `A code scanner, a flashlight and a notebook of questions. She mentions her brother-in-law is a mechanic.` : `A coffee and a checkbook. She mentions she needs a truck by Monday for a new job.` },
+        { label: `Look at what Kim brought`, text: c => grinder(c) ? `Printouts of six comparable trucks with the prices circled, a borrowed code scanner, and a highlighter. "I'll make you a fair offer," she says, "once I know everything that's wrong with it."` : careful(c) ? `A code scanner, a flashlight and a notebook of questions. She mentions her brother-in-law is a mechanic.` : `A coffee and a checkbook. She mentions she needs a truck by Monday for a new job.` },
         { label: `Notice who's watching`, text: `Ruth is watering her plant across the street. Kim found your listing on the neighborhood app.` }
       ],
       question: `What do you tell Kim?`,
@@ -250,11 +266,11 @@ window.PP = window.PP || {};
         {
           key: 'A', text: `"Before you drive it: on cold mornings like this one, the transmission slips. It's $1,800 to fix, and I've priced that in."`,
           needs: [0], vague: { text: `"Before you drive it, there's something about the transmission you should know. I've priced it in."`, q: 3, later: `Honest, if a little vague. Saying exactly what's wrong is even easier to believe.` },
-          their: `Kim can't see inside a transmission. Telling her made you the most believable seller she'd meet, and buyers pay for that.`,
+          their: c => grinder(c) ? `Kim was going to price every flaw. Naming the flaw and its cost yourself, already in the price, left her nothing to take off twice.` : `Kim can't see inside a transmission. Telling her made you the most believable seller she'd meet, and buyers pay for that.`,
           q: 4, s: { com: 2, lng: 2, inc: 1, bnd: 1 }, rel: { ruth: 1 },
           outcomes: [
-            { p: 0.75, tone: 'good', text: c => careful(c) ? `Her brother-in-law confirms the quote. Kim buys it at $9,200 and posts that you were honest.` : `Kim thanks you, haggles a little, and buys it at $9,200. She posts that you were honest.` },
-            { p: 0.25, tone: 'mixed', text: `Kim thanks you and keeps looking. Two weeks later you sell it for $9,000 to a friend of hers.` }
+            { p: c => grinder(c) ? 0.6 : 0.75, tone: 'good', text: c => grinder(c) ? `Kim tries for another $1,000 off. "It's already priced in," you say, and show her the quote. She buys at $9,200.` : careful(c) ? `Her brother-in-law confirms the quote. Kim buys it at $9,200 and posts that you were honest.` : `Kim thanks you, haggles a little, and buys it at $9,200. She posts that you were honest.` },
+            { p: c => grinder(c) ? 0.4 : 0.25, tone: 'mixed', text: c => grinder(c) ? `Kim offers $8,400 and won't move. You hold at $9,200, and sell it the next week for $9,000.` : `Kim thanks you and keeps looking. Two weeks later you sell it for $9,000 to a friend of hers.` }
           ],
           later: `You sold a flawed truck honestly at a fair price. On a street where everyone talks, that's worth more than $1,800.`
         },
@@ -297,6 +313,16 @@ window.PP = window.PP || {};
             { p: 1, tone: 'mixed', text: `The dealer pays $8,500 and resells it with a 30-day warranty. You skipped the conversation, and it cost you about $700.` }
           ],
           later: `You avoided the information problem by paying someone else to own it.`
+        },
+        {
+          key: 'F', text: `"There's a transmission issue. Have a look, and make me an offer that reflects it."`,
+          their: c => grinder(c) ? `Kim came to haggle over every flaw. You handed her the biggest one and asked her to set its price.` : `Honest and open. Kim got to decide what the flaw was worth to her, and a fair buyer usually decides fairly.`,
+          q: c => grinder(c) ? (has(c, 1) ? 0 : 1) : 3, s: { com: 2, lng: 2, neg: -1, coo: 1 }, rel: { ruth: 1 },
+          outcomes: [
+            { p: c => grinder(c) ? 0.1 : 0.75, tone: 'good', text: c => grinder(c) ? `Kim takes a long look and offers $8,800. Better than you feared.` : careful(c) ? `Her brother-in-law checks it over the phone. Kim offers $9,000, and you take it.` : `Kim is relieved you told her. She offers $9,500, and you shake on it.` },
+            { p: c => grinder(c) ? 0.9 : 0.25, tone: c => grinder(c) ? 'bad' : 'mixed', text: c => grinder(c) ? `Kim offers $7,200 and won't move. You told her your weakness and let her price it.` : `Kim offers $8,400. Lower than you'd hoped, and fair enough. You take it.` }
+          ],
+          later: c => grinder(c) ? `Being honest about a flaw and letting the other side price it are two different moves. The first was right; the second was a gift.` : `Honest, and it left the number to her. Usually that's fine. Not with everyone.`
         }
       ],
       analysis: {
@@ -309,7 +335,7 @@ window.PP = window.PP || {};
         couldnt: `The weather, and what she brought.`,
         concept: { thinker: 'aumann', term: `Market for lemons`, name: `When one side knows more, honesty has to be believable`, body: `Even a one-time sale sits inside a repeated game: the street, the app, Ruth. Honesty is rational when your reputation is part of what you're selling.` },
         second: { thinker: 'duke', term: `Resulting`, name: `A good outcome doesn't make a decision good`, body: `If hiding it worked, it still wasn't a good decision. If disclosing cost you the sale, it still was.` },
-        better: `A, said specifically. Or D, if you can spare the week.`,
+        better: `A, said specifically, with the price already set. Or D, if you can spare the week. Disclosing and letting her name the number only works with a fair buyer.`,
         lesson: `When you're the one who knows more, make the truth easy to believe. It's also the strategic move.`
       }
     },
@@ -466,14 +492,17 @@ window.PP = window.PP || {};
         { who: 'ellen', mood: 'surprised', say: `Oh. I… wasn't expecting that.` },
         { who: 'ellen', mood: 'thinking', pose: 'thinking', say: `Before you go anywhere: what would it take to keep you? I can do ninety-eight, and a senior title.` },
         { who: 'ellen', mood: 'neutral', say: `When were you thinking your last day would be, exactly?`, if: c => c.type === 'stalling' },
-        { you: `(Ninety-eight. More than I make now. Almost what Northfield offered.)` }
+        { you: `(Ninety-eight. That's more than Northfield is paying me.)`, if: c => better(c) },
+        { you: `(Ninety-eight. Exactly what Northfield is paying me.)`, if: c => nf(c) === 98 },
+        { you: `(Ninety-eight. More than I make now. Less than Northfield.)`, if: c => nf(c) > 98 }
       ],
       options: {
         A: { line: `Priya's counter turned into a promotion. If yours will too, ninety-eight and the title works. I'll stay.`, vague: { line: `Ninety-eight and a senior title? Okay. I'll stay.` }, preview: `Keeps what you know. Breaks your word to Northfield.`, row: 0, outcomes: [{ beats: [{ who: 'ellen', mood: 'happy', act: 'nod', say: `Wonderful. Thank you.` }] }, { beats: [{ who: 'ellen', mood: 'smile', act: 'nod' }] }] },
-        B: { line: `I saw the senior analyst posting on Tuesday. Thank you, but I'm keeping my word to Northfield.`, vague: { line: `Thank you, truly. I've already said yes to Northfield, and I'm going to keep my word.` }, preview: `Keeps your word. Walks away from a raise.`, row: 1, outcomes: [{ beats: [{ who: 'ellen', mood: 'neutral', act: 'nod', say: `Fair enough. I understand.` }] }] },
+        B: { line: `I saw the senior analyst posting on Tuesday. Thank you, but I'm keeping my word to Northfield.`, vague: { line: `Thank you, truly. I've already said yes to Northfield, and I'm going to keep my word.` }, preview: `Keeps your word. Walks away from a raise.`, row: 1, outcomes: [{ beats: [{ who: 'ellen', mood: 'neutral', act: 'nod', say: `Fair enough. I understand.` }] }, { beats: [{ who: 'ellen', mood: 'neutral', act: 'nod', say: `Okay. I hope it's everything you want.` }] }] },
         C: { line: `I'd consider it if it's in writing today, with the title and a review date. Otherwise I'll go.`, preview: `Tests whether the counter is real. Puts Ellen on a clock.`, row: 0, outcomes: [{ beats: [{ who: 'ellen', mood: 'thinking', say: `Let me talk to HR.` }] }, { beats: [{ who: 'ellen', mood: 'awkward', say: `These things take a little time.` }] }] },
         D: { line: `Northfield is at a hundred and ten. If you can match that, I'll stay.`, preview: `Could raise the number. Only if she doesn't check.`, row: 2, outcomes: [{ beats: [{ who: 'ellen', mood: 'skeptical', pose: 'crossed', say: `Then you should take it.` }] }, { beats: [{ who: 'ellen', mood: 'frustrated', say: `I can get you to a hundred and four.` }] }] },
-        E: { line: `Can I have a few days? I want to think about both offers properly.`, preview: `Room to think. Time helps whoever uses it.`, row: 0, outcomes: [{ beats: [{ who: 'ellen', mood: 'neutral', act: 'nod', say: `Of course. Take until Monday.` }] }, { beats: [{ who: 'ellen', mood: 'neutral', say: `Take the time you need.` }] }] }
+        E: { line: `Can I have a few days? I want to think about both offers properly.`, preview: `Room to think. Time helps whoever uses it.`, row: 0, outcomes: [{ beats: [{ who: 'ellen', mood: 'neutral', act: 'nod', say: `Of course. Take until Monday.` }] }, { beats: [{ who: 'ellen', mood: 'neutral', say: `Take the time you need.` }] }] },
+        F: { line: c => `Northfield is paying me ${nf(c)}. I'd rather stay. Can you beat that in writing by Friday?`, preview: `Honest leverage. Only works if her counter is real.`, row: 0, outcomes: [{ beats: [{ who: 'ellen', mood: 'thinking', pose: 'thinking', say: `Let me see what HR can do by Thursday.` }] }, { beats: [{ who: 'ellen', mood: 'awkward', say: `I'll get back to you on that.` }] }] }
       },
       matrix: {
         you: `You`, them: `Ellen`, byType: true,
@@ -498,6 +527,7 @@ window.PP = window.PP || {};
         { who: 'kim', mood: 'happy', say: `Hi! I'm Kim, from the app. Is it okay if I take it around the block?` },
         { who: 'kim', mood: 'neutral', pose: 'phone', say: `My brother-in-law's a mechanic. Mind if I plug in his scanner first?`, if: c => c.type === 'careful' },
         { who: 'kim', mood: 'smile', say: `I really need something by Monday. New job.`, if: c => c.type === 'trusting' },
+        { who: 'kim', mood: 'neutral', pose: 'phone', say: `I printed some comparables. Hope that's okay.`, if: c => c.type === 'grinder' },
         { cam: 'truck', caption: `On cold mornings, the transmission slips for the first ten minutes. You know. She doesn't.` },
         { who: 'ruth', mood: 'neutral', pose: 'can', caption: `Across the street, Ruth waters a plant that does not need watering.` }
       ],
@@ -506,15 +536,16 @@ window.PP = window.PP || {};
         B: { caption: `She needs it by Monday. You warm it up in the driveway and say nothing about the transmission.`, vague: { caption: `You warm it up in the driveway before she arrives, and say nothing about the transmission.` }, preview: `Full price, if no one finds out.`, row: 1, outcomes: [{ beats: [{ who: 'kim', mood: 'happy', act: 'nod', say: `I'll take it.` }] }, { beats: [{ who: 'kim', mood: 'frustrated', pose: 'crossed' }, { who: 'ruth', mood: 'surprised', act: 'glance' }] }] },
         C: { line: `It's been really reliable for me. Ask me anything you like.`, preview: `True, as far as it goes. Depends on what she asks.`, row: 1, outcomes: [{ beats: [{ who: 'kim', mood: 'smile', act: 'nod' }] }, { beats: [{ who: 'kim', mood: 'skeptical', say: `Reliable?` }] }] },
         D: { line: `Actually, give me a week. I'm going to get the transmission fixed first.`, preview: `A clean sale. Costs you a week and the repair.`, row: 0, outcomes: [{ beats: [{ who: 'kim', mood: 'smile', act: 'nod', say: `Sure. Text me.` }] }, { beats: [{ who: 'kim', mood: 'neutral', act: 'nod' }] }] },
-        E: { caption: `You apologize to Kim and sell it to a dealer that afternoon, as-is.`, preview: `No awkward conversation. Less money.`, row: 2, outcomes: [{ beats: [{ who: 'kim', mood: 'awkward', act: 'nod', say: `Oh. Okay.` }] }] }
+        E: { caption: `You apologize to Kim and sell it to a dealer that afternoon, as-is.`, preview: `No awkward conversation. Less money.`, row: 2, outcomes: [{ beats: [{ who: 'kim', mood: 'awkward', act: 'nod', say: `Oh. Okay.` }] }] },
+        F: { line: `There's a transmission issue. Have a look, and make me an offer that reflects it.`, preview: `Honest and open. Lets her set the price.`, row: 3, outcomes: [{ beats: [{ who: 'kim', mood: 'surprised', say: `Huh. Thanks for telling me.` }, { who: 'kim', mood: 'thinking', pose: 'phone', say: `Let me think about a number.` }] }, { beats: [{ who: 'kim', mood: 'thinking', pose: 'phone', say: `Okay. With the transmission, I'm at seventy-two hundred.`, if: c => c.type === 'grinder' }, { who: 'kim', mood: 'neutral', say: `Eighty-four hundred?`, if: c => c.type !== 'grinder' }] }] }
       },
       matrix: {
         you: `You`, them: `Kim`, byType: true,
-        rows: [`Tell her, or fix it first`, `Hide it or shade it`, `Sell to a dealer`],
-        cols: [`Careful buyer`, `Trusting buyer`],
-        cells: [[[3, 3], [3, 3]], [[0, 1], [3, 0]], [[2, 2], [2, 2]]],
+        rows: [`Tell her, priced in, or fix it first`, `Hide it or shade it`, `Sell to a dealer`, `Tell her, and let her name the price`],
+        cols: [`Careful buyer`, `Trusting buyer`, `Grinder`],
+        cells: [[[3, 3], [3, 3], [3, 2]], [[0, 1], [3, 0], [0, 1]], [[2, 2], [2, 2], [2, 2]], [[3, 3], [3, 3], [1, 4]]],
         best: [0, 0],
-        note: `Honesty pays the same whoever shows up. Hiding it only "pays" against a trusting buyer, and that's the payoff that should bother you.`
+        note: `Honesty with the price already set pays whoever shows up. Hiding it only "pays" against a trusting buyer, and that's the payoff that should bother you. Disclosing and letting her name the price is fine with a fair buyer and a gift to a grinder.`
       },
       leverage: { you: [`What you know about the truck`, `Your price`, `Your reputation on the street`], them: [`Her money`, `Her scanner, maybe`, `The neighborhood app`], tilt: 1 },
       links: [['ruth', 'kim', 'watching']]
@@ -565,14 +596,16 @@ window.PP = window.PP || {};
       B: { buys: ['fair', 'future', 'right'], verdict: { who: 'ellen', line: `Kept their word to someone else, even with a raise on the table. I'd hire them again.` } },
       C: { buys: ['info', 'fair'], verdict: { who: 'ellen', line: `Wanted it in writing. Fair. It told us both something.` } },
       D: { buys: ['win'], verdict: { who: 'ellen', line: `Quoted me a number I don't think was real.` } },
-      E: { buys: ['time', 'calm'], verdict: { who: 'ellen', line: `Asked for time. Didn't do much with it.` } }
+      E: { buys: ['time', 'calm'], verdict: { who: 'ellen', line: `Asked for time. Didn't do much with it.` } },
+      F: { buys: ['win', 'info'], verdict: { who: 'ellen', line: `Told me their real number and asked me to beat it. Honest, at least.` } }
     } },
     'used-car': { options: {
       A: { buys: ['fair', 'future', 'right'], verdict: { who: 'kim', line: `Told me what was wrong before I asked. I'd buy from them again.` } },
       B: { buys: ['win'], verdict: { who: 'kim', line: `Sold me a truck they knew was broken.` } },
       C: { buys: ['win', 'calm'], verdict: { who: 'kim', line: `"Reliable." I should have asked better questions.` } },
       D: { buys: ['fair', 'future'], verdict: { who: 'kim', line: `Fixed it before selling it. Who does that?` } },
-      E: { buys: ['calm', 'time'], verdict: { who: 'kim', line: `Changed their mind and sold it to a dealer. Odd, but fine.` } }
+      E: { buys: ['calm', 'time'], verdict: { who: 'kim', line: `Changed their mind and sold it to a dealer. Odd, but fine.` } },
+      F: { buys: ['fair', 'liked'], verdict: { who: 'kim', line: `Told me about the transmission and let me set the price. Nice. Very nice for me.` } }
     } },
     'trade-in': { options: {
       A: { buys: ['calm', 'time'], verdict: { who: 'vince', line: `Told me their payment in the first minute. Easy afternoon.` } },

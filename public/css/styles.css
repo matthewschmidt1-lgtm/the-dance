@@ -1716,3 +1716,17 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 
 /* When the player couldn't tell versions of the other person apart */
 .verdict-fair { display: block; margin-top: 8px; }
+
+/* Skill and luck: each Desk move's average across the worlds you couldn't rule out */
+.evx { margin: 18px 0 6px; }
+.evx-line { font-family: var(--f-read); line-height: 1.5; margin: 0 0 10px; }
+.evx-wrap { overflow-x: auto; }
+.evx-t { width: 100%; border-collapse: collapse; font-family: var(--f-mono); font-size: var(--t-sm); }
+.evx-t th, .evx-t td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.evx-t thead th { font-family: var(--f-display); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.evx-t th[scope="row"], .evx-t thead th:first-child { text-align: left; }
+.evx-t tr.is-mine { background: var(--accent-soft); }
+.evx-t tr.is-mine th .option-key { background: var(--accent); color: var(--accent-ink); }
+.evx-t tr.is-locked { opacity: .45; }
+.evx-note { font-size: var(--t-sm); color: var(--muted); margin: 8px 0 0; line-height: 1.5; }
+@media (max-width: 560px) { .evx-t th, .evx-t td { padding: 6px 6px; } }

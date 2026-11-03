@@ -30,7 +30,7 @@ window.PP = window.PP || {};
   C.callers = {
     michael: { name: `Michael Reeves`, role: `Senior broker, Pryor & Lowe`, voice: 'michael', initials: 'MR' },
     richard: { name: `Richard Cole`, role: `Investor. Knows people.`, voice: 'richard', initials: 'RC' },
-    david: { name: `David Mercer`, role: `Trader. Old colleague.`, voice: 'david', initials: 'DM' },
+    theo: { name: `Theo Brandt`, role: `Senior trader · runs the Wednesday review`, voice: 'theo', initials: 'TB' },
     sarah: { name: `Sarah Bennett`, role: `Portfolio manager, Coldwater Capital`, voice: 'sarah', initials: 'SB' },
     catherine: { name: `Catherine Hale`, role: `Hale Family Office`, voice: 'catherine', initials: 'CH' }
   };
@@ -132,7 +132,7 @@ window.PP = window.PP || {};
         out: {
           A: s => by(s, { honest: { fin: -4.3, tone: 'good', text: `You walk the book down to an average of $34.90. At 1:14 a fund's block prints at $33.20. Halden closes at $31.20. You were already out.` }, book: { fin: -4.3, tone: 'mixed', text: `You walk the book down to an average of $34.90. The selling stops by noon. Halden is back at $37.60 by Monday. Someone bought what you sold.` } }),
           B: s => by(s, { honest: { fin: -4.9, tone: 'mixed', text: `Half out at about $35.00. The block hits at 1:14 and your stop fills the rest at $33.90, below your line, the way stops do in a gap.` }, book: { fin: -2.6, tone: 'mixed', text: `Half out at the day's low. The other half is back near $37.60 by Monday.` } }),
-          C: s => by(s, { honest: { fin: -5.5, tone: 'bad', text: `The block hits at 1:14. Your stop at $34.60 fills at $33.90.` }, book: { fin: -1.1, tone: 'good', text: `The selling stops by noon. Halden is $37.60 by Monday, and you're still in.` } }),
+          C: s => by(s, { honest: { fin: -4.7, tone: 'mixed', text: `The morning selling reaches your stop. It fills at $34.55, forty minutes before a fund's block prints at $33.20. The plan worked; you just never learned why.` }, book: { fin: -1.1, tone: 'good', text: `The selling stops by noon. Halden is $37.60 by Monday, and you're still in.` } }),
           D: s => by(s, { honest: { fin: -13.4, tone: 'bad', text: `You bought from the seller. Halden closes at $31.20 with 2,400 of your shares in it. Nadia calls before the close.` }, book: { fin: 1.9, tone: 'good', text: `The selling stops by noon. Your bigger position is up by Monday. It worked. Nadia still flags it.` } }),
           E: () => ({ fin: -4.4, tone: 'bad', text: `You sold 1,200 shares to Michael's client at $34.80. By Monday Halden is $37.60, and they're up $3,360 on your shares.` }),
           F: s => by(s, { honest: { fin: -4.7, tone: 'good', text: `The tape shows the same seller in every print. Your stop at $34.60 fills at $34.55 while you're still reading, forty minutes before the block prints at $33.20.` }, book: { fin: -1.1, tone: 'good', text: `The tape shows a thin market and one large bid at $34.80. Michael's. No seller. You hold, and Halden is $37.60 by Monday.` } })
@@ -248,7 +248,7 @@ window.PP = window.PP || {};
         // the gain is frozen and you're restricted. Buying ahead of the news without knowing still gets you a call.
         after: (s, key) => !['A', 'B', 'C'].includes(key) ? null
           : f(s, 'inside') ? { zero: true, cap: { soc: -5 }, text: `Monday: surveillance flags your Fenwick buy. You'd been told it came from the deal team. The position is frozen, any gain held pending review, and your account restricted.` }
-            : s.truth === 'early' ? { cap: { soc: -2 }, text: `Monday: compliance calls. Your Fenwick buy is on a list of trades made ahead of the announcement. You never asked where Richard heard it, which is what you tell them.` } : null
+            : s.truth === 'early' ? { zero: true, cap: { soc: -3 }, text: `Monday: compliance calls. Your Fenwick buy is on a list of trades made ahead of the announcement. You never asked where Richard heard it. "Didn't know" isn't a defence when the source was a deal team. The gain is frozen pending review.` } : null
       },
       unsaid: s => by(s, {
         early: {
@@ -293,96 +293,82 @@ window.PP = window.PP || {};
       })
     },
 
-    // ───────────────────────────────────────── 3. The Silence
+    // ───────────────────────────────────────── 3. The Committee
     {
-      id: 'silence', title: `The Silence`, tests: `Can you wait for an edge?`, opponent: `your impatience`,
-      caller: 'david', day: `Wednesday`, clock: `2:30 PM`, env: 'desk-noon',
-      blurb: `A quiet market, and a friend who can't stand quiet.`,
-      setup: [`Eight days without a trade.`, `Nothing has met your criteria.`, `Larkspur Energy broke $61 this morning · $62.30`],
-      chart: 'flat',
-      truths: [{ id: 'real', p: 0.45 }, { id: 'fake', p: 0.55 }],
+      id: 'committee', title: `The Committee`, tests: `Whose opinion should count?`, opponent: `the loudest voice`,
+      caller: 'theo', day: `Wednesday`, clock: `2:30 PM`, env: 'desk-noon',
+      blurb: `Four voices on one line, and a decision that's yours alone.`,
+      setup: [`Kestrel Freight · down 18% on a guidance cut · $31.40`, `You're thinking of adding $20,000`, `On the line: Theo, Priya (quant), Marco`],
+      chart: 'down',
+      truths: [{ id: 'value', p: 0.45 }, { id: 'trap', p: 0.55 }],
       voicemail: [
-        { t: `It's David. [[Larkspur's]] going. You're missing it. Call me.` },
-        { who: 'n', t: `You let it go to voicemail and watch the screen.` }
+        { t: `Theo. Kestrel review at two-thirty, Priya and Marco are on. [[Don't decide before you've heard us.]]` },
+        { who: 'n', t: `You let it ring. Then you decide alone, with the screen.` }
       ],
       nodes: {
         open: { say: s => [
-          { t: `You're alive! I was starting to think you'd retired.` },
-          ...(m(s, 'tip').key === 'A' || m(s, 'tip').key === 'B' ? [{ t: `Heard you got into [[Richard Cole's]] Fenwick thing. Bold.`, note: `Everyone knows everything.`, sketch: 'arrow' }] : []),
-          { t: `Have you seen [[Larkspur]]? It broke sixty-one this morning. Clean.`, sketch: 'up' },
-          { t: `I'm in. I'm [[up four percent]] already.`, note: `He's selling me his own trade.` }
+          { t: `Got Priya and Marco on the line. [[Kestrel Freight]], down eighteen on the guidance cut. You said you wanted to add.` },
+          ...(m(s, 'tip').key === 'E' ? [{ t: `And well done on Richard. [[People noticed.]]` }] : []),
+          { who: 'n', t: `Priya: "My model's flashing [[buy]]. Strongest signal in two years."` },
+          { who: 'n', t: `Marco: "It's down eighteen percent. [[It's obviously cheap.]] I'm in already."`, note: `The loudest voice on the line.`, sketch: 'box' },
+          { t: `I'm a seller. [[The cut isn't the bottom]] until the inventory numbers say so.`, note: `Three say buy. One says wait.`, sketch: 'q' }
         ], to: 'm1' },
-        m1: { moment: 'silence', prompt: `He waits for you to get excited.`, wait: 8, options: [
-          { text: `"I've seen it."`, you: `I've seen it.`, to: 'arg1' },
-          { text: `"Not my kind of setup."`, you: `It's not my kind of setup.`, set: 'namedEdge', to: 'argEdge' }
-        ], silent: { set: 'silent1', to: 'quiet1' } },
-        arg1: { say: [{ t: `So what are you waiting for? [[Everyone can see it.]]`, note: `If everyone sees it, where's my edge?`, sketch: 'q' }], to: 'm2' },
-        argEdge: { say: [{ t: `Your setups don't come anymore. [[That's the point.]]`, note: `Maybe. Or maybe they're just rare.` }], to: 'm2' },
-        quiet1: { say: [{ t: `...Okay, say something.` }, { t: `You've been flat [[eight days]]. You're getting rusty. That's how you lose your feel.`, note: `Is that true, or is it his fear?`, sketch: 'q' }], to: 'm2' },
-        m2: { moment: 'silence', prompt: `He lets it hang there.`, wait: 9, options: [
-          { text: `"Why do you need me in it?"`, you: `Why do you need me in it?`, set: 'askedWhy', to: 'why' },
-          { text: `"Eight days flat isn't a problem."`, you: `Eight days flat isn't a problem.`, to: 'flat' },
-          { text: `"How's the volume?"`, you: `How's the volume on the break?`, set: 'askedVolume', to: 'volume' }
-        ], silent: { set: 'silent2', to: 'quiet2' } },
-        why: { say: s => by(s, {
-          real: [{ t: `I don't need you in it. I just [[hate watching people miss things]].`, note: `That's his problem, not mine.` }],
-          fake: [{ t: `I don't need — (pause) Okay.` }, { t: `[[I've had a bad month.]] It'd be nice to be right with someone.`, note: `There it is.`, sketch: 'box', set: 'confessed' }]
-        }), to: 'close' },
-        flat: { say: [{ t: `It is when you're paid to trade.`, note: `He's paid to trade. I'm paid to be right.` }], to: 'close' },
-        volume: { say: s => by(s, {
-          real: [{ t: `[[Double the average]] on the break. That's real buying.`, note: `Evidence. Checkable.`, set: 'heardVolume' }],
-          fake: [{ t: `(pause) It's the afternoon chop. [[Volume's always thin after two.]]`, note: `Thin volume on a breakout.`, sketch: 'q', set: 'heardThin' }]
-        }), to: 'close' },
-        quiet2: { say: s => by(s, {
-          real: [{ t: `(sighs) Fine. Here's what nobody's saying: volume on the break was [[double the average]]. That's real buying.`, note: `He gave me the evidence because I didn't argue.`, set: 'heardVolume' }],
-          fake: [{ t: `(quietly) I've had a terrible month. [[I need this one.]]`, note: `He's not recommending. He's hoping.`, sketch: 'box', set: 'confessed' }, { t: `Volume's thin, honestly. But it's the afternoon.`, set: 'heardThin' }]
-        }), to: 'close' },
-        close: { say: [{ t: `Anyway. It's not getting any cheaper.` }, { who: 'n', t: `Larkspur ticks to $62.40.` }], to: 'decide' }
+        m1: { moment: 'ask', prompt: `The close is twenty minutes away. Ask what you need to.`, questions: [
+          { q: `"Theo, how have your calls after big drops gone?"`, set: 'askedTheo', a: [{ t: `Thirty-eight of them, across [[two downturns]]. Sixty-four percent right. The sheet's on your desk.`, note: `Two downturns. A real sample.`, sketch: 'box' }] },
+          { q: `"Priya, what's the model's record?"`, set: 'askedPriya', a: [{ who: 'n', t: `Priya: "Seventy-one percent on [[fourteen calls]]."` }, { who: 'n', t: `"...All since the market started rising. On data it hadn't seen, [[fifty-two]]."`, note: `Fourteen calls, one kind of market.`, sketch: 'q' }] },
+          { q: `"Marco, what would prove you wrong?"`, set: 'askedMarco', a: [{ who: 'n', t: `Marco: "(pause) It's down eighteen percent. [[It's cheap.]]"`, note: `That isn't an answer.`, sketch: 'box' }] },
+          { q: `"Theo, what would change your mind?"`, set: 'askedTest', a: [{ t: `Thursday's [[inventory numbers]]. If inventories fell, the cut was the bottom and I'd buy. If they rose, it's a trap.`, note: `He has a test, and a date.`, sketch: 'arrow' }] },
+          { q: `"What's priced in?"`, set: 'askedPrice', a: s => [{ t: `At nine times earnings, the price assumes [[a thirty percent earnings cut]]. Analysts say fifteen.`, note: `Cheap, if the analysts are right.` }, s.truth === 'trap'
+            ? { t: `But the two shippers I know say customers are [[cancelling contracts]], not delaying them.`, note: `Cancelling. Not delaying.`, sketch: 'box', set: 'heardCancel' }
+            : { t: `The two shippers I know say customers are [[delaying, not cancelling]].`, note: `Delayed comes back.`, sketch: 'up', set: 'heardDelay' }] }
+        ], to: 'close' },
+        close: { say: [{ t: `Market closes in ten. [[Your call, not ours.]]` }, { who: 'n', t: `The line goes quiet. Kestrel ticks to $31.20.` }], to: 'decide' }
       },
       decide: {
-        prompt: `Larkspur is $62.40. Nothing on your own list. What do you do?`,
-        note: s => s.cap.str >= 7 ? `Breakouts reward speed. Is that how you make money?` : null,
+        prompt: `Kestrel is $31.20. Three voices say buy, one says wait. What do you do?`,
+        note: s => f(s, 'askedTheo') && f(s, 'askedPriya') ? `Sixty-four percent on thirty-eight calls, or seventy-one on fourteen?` : null,
         options: [
-          { key: 'A', text: `Join him: $25,000 of Larkspur at $62.40.`, did: `Chased a breakout because a friend was in it.`, exposure: 'large', q: 1, breaks: ['nochase'], cap: { psy: -1 } },
-          { key: 'B', text: `A starter: $6,000 with a stop under $61. Risk about $150.`, did: `Took a small, defined starter.`, exposure: 'small', q: 3 },
-          { key: 'C', text: `Wait. Buy only if it pulls back to $61 and holds.`, did: `Set a condition and waited for it.`, exposure: 'small', q: 3 },
-          { key: 'D', text: `Pass. It isn't your setup.`, did: `Waited. Did nothing on purpose.`, exposure: 'none', q: 3 },
-          { key: 'E', text: `Pass, and tell David to cut his size.`, did: `Passed, and told a friend the truth.`, exposure: 'none', q: s => (f(s, 'confessed') ? 4 : 3), cap: { soc: 1 }, set: 'warnedDavid' }
+          { key: 'A', text: `Go with the room. Three of four say buy: add $20,000.`, did: `Went with the majority.`, exposure: 'large', q: s => (f(s, 'heardCancel') ? 0 : 1), breaks: s => f(s, 'heardCancel') ? ['evidence'] : ['walk'] },
+          { key: 'B', text: `Back the most confident voice. Marco's in: add $30,000.`, did: `Followed the loudest voice.`, exposure: 'all', q: 0, breaks: ['verify'], cap: { psy: -1 } },
+          { key: 'C', text: `Weigh them by their records. Wait for Thursday's inventory numbers, then add $5,000 if they confirm.`, did: `Weighted the believable voice and waited for his test.`, exposure: 'small', q: s => f(s, 'heardCancel') ? 3 : f(s, 'askedTest') && (f(s, 'askedTheo') || f(s, 'askedPriya')) ? 4 : 3, cap: { str: 1 } },
+          { key: 'D', text: `Split the difference: add $10,000.`, did: `Split the difference between the voices.`, exposure: 'normal', q: s => (f(s, 'heardCancel') ? 1 : 2) },
+          { key: 'E', text: `Trust your own read: add $20,000 now.`, did: `Bought on your own read.`, exposure: 'large', q: s => (f(s, 'heardDelay') ? 3 : f(s, 'heardCancel') ? 0 : 1) },
+          { key: 'F', text: `Pass. The most believable voice on the line says wait.`, did: `Passed, on the most believable voice.`, exposure: 'none', q: s => (f(s, 'heardCancel') ? 4 : f(s, 'askedTheo') ? 3 : 2) }
         ],
         out: {
-          A: s => by(s, { real: { fin: 3.0, tone: 'good', text: `The breakout holds. Larkspur is $69.80 two weeks later.` }, fake: { fin: -2.1, tone: 'bad', text: `The breakout fails by Friday. Larkspur is back to $57.10.` } }),
-          B: s => by(s, { real: { fin: 0.7, tone: 'good', text: `The breakout holds. Your starter is up 12%.` }, fake: { fin: -0.2, tone: 'good', text: `The breakout fails. Your stop takes you out for $150.` } }),
-          C: s => s.truth === 'fake' ? { fin: 0, tone: 'good', text: `It falls through $61 and never holds. Your condition never triggers.` }
-            : s.roll < 0.5 ? { fin: 0.8, tone: 'good', text: `Two days later it dips to $61.10 and holds. You buy there. It's $69.80 two weeks later.` }
-              : { fin: 0, tone: 'mixed', cap: { time: -1 }, text: `It never comes back. Larkspur is $69.80 two weeks later, without you.` },
-          D: s => by(s, { real: { fin: 0, tone: 'mixed', cap: { time: -1 }, text: `Larkspur is $69.80 two weeks later. Your account didn't move. Neither did your year.` }, fake: { fin: 0, tone: 'good', text: `The breakout fails. Larkspur is back to $57.10 by Friday.` } }),
-          E: s => by(s, { real: { fin: 0, tone: 'mixed', cap: { time: -1 }, text: `David cuts half and grumbles. Larkspur runs to $69.80. He's still glad you said it.` }, fake: { fin: 0, tone: 'good', text: `David cuts half. The breakout fails on Friday. He sends you a bottle of something expensive.` } })
+          A: s => by(s, { value: { fin: 4.0, tone: 'good', text: `Thursday's inventories fall. Kestrel recovers 20% in a month. The room was right this time.` }, trap: { fin: -5.0, tone: 'bad', text: `Thursday's inventories rise. Customers were cancelling. Kestrel falls another 25%.` } }),
+          B: s => by(s, { value: { fin: 6.0, tone: 'good', text: `Kestrel recovers 20% in a month. Marco reminds everyone he called it.` }, trap: { fin: -7.5, tone: 'bad', text: `Kestrel falls another 25%. Marco stops talking about it on Friday.` } }),
+          C: s => by(s, { value: { fin: 1.0, tone: 'good', text: `Thursday's inventories fall. You buy $5,000 at $33 and it climbs from there. Smaller than the room, and on a test you could see.` }, trap: { fin: 0, tone: 'good', text: `Thursday's inventories rise. Your condition never triggers. Kestrel falls another 25% without you.` } }),
+          D: s => by(s, { value: { fin: 2.0, tone: 'mixed', text: `Kestrel recovers 20%. Half the gain of the room, for half the conviction.` }, trap: { fin: -2.5, tone: 'mixed', text: `Kestrel falls another 25%. Half the loss, for a compromise nobody on the line actually held.` } }),
+          E: s => by(s, { value: { fin: 4.0, tone: 'good', text: `Kestrel recovers 20% in a month.` }, trap: { fin: -5.0, tone: 'bad', text: `Kestrel falls another 25%. Your read and the room's turned out to be the same read.` } }),
+          F: s => by(s, { value: { fin: 0, tone: 'mixed', cap: { time: -1 }, text: `Thursday's inventories fall and Kestrel recovers 20% without you. Theo buys on Thursday, as he said he would.` }, trap: { fin: 0, tone: 'good', text: `Thursday's inventories rise. Kestrel falls another 25%. Theo doesn't say anything. He doesn't have to.` } })
         }
       },
       unsaid: s => by(s, {
-        real: {
-          wanted: `Company. He wanted to be right with someone watching.`,
-          knew: `The volume on the break was real. He only said so when you stopped arguing.`,
-          didnt: `That his trade was good, rather than lucky. He couldn't tell either.`,
-          incentive: `Nothing in money. A lot in feeling.`,
-          fact: `Volume on the break was double the 20-day average. The breakout held.`,
-          read: `Waiting wasn't wrong here, and joining wasn't wrong either. The question was whether it was your kind of trade.`,
+        value: {
+          wanted: `Everyone wanted to be right. Only Theo had said in advance how he'd know if he wasn't.`,
+          knew: `Theo knew his record across two downturns. Priya knew hers came from a market that only went up.`,
+          didnt: `That the shippers were delaying, not cancelling. That was the fact that mattered.`,
+          incentive: `Marco was already in. Agreement made his position feel safer.`,
+          fact: `Customers were delaying orders, not cancelling them. Inventories fell on Thursday and Kestrel recovered 20%.`,
+          read: `The room was right, for reasons it couldn't name. A good process can miss a good trade; a bad one can catch it.`,
           signals: [
-            { t: `The volume was real.`, saw: s => f(s, 'heardVolume') },
-            { t: `He didn't need you. He just hated missing things.`, saw: s => f(s, 'askedWhy') }
+            { t: `Theo's record: 64% across two downturns.`, saw: s => f(s, 'askedTheo') },
+            { t: `Priya's record came from one kind of market.`, saw: s => f(s, 'askedPriya') },
+            { t: `Customers were delaying, not cancelling.`, saw: s => f(s, 'heardDelay') }
           ]
         },
-        fake: {
-          wanted: `A partner in a trade he was afraid of. He'd had a terrible month.`,
-          knew: `That the volume was thin.`,
-          didnt: `That he was looking for reassurance, not a second opinion.`,
-          incentive: `To feel normal again. Being right with someone makes losing alone feel less likely.`,
-          fact: `Volume on the break was below average. The breakout failed by Friday.`,
-          read: `Most pressure to act comes from someone else's discomfort with waiting.`,
+        trap: {
+          wanted: `Marco wanted company in a position he already owned.`,
+          knew: `Theo had a test and a date. Nobody else did.`,
+          didnt: `Priya's model had never seen a downturn. Its seventy-one percent was a rising market's number.`,
+          incentive: `Agreement feels like evidence. It's usually just agreement.`,
+          fact: `Customers were cancelling contracts. Inventories rose on Thursday, and Kestrel fell another 25%.`,
+          read: `Three voices weren't three pieces of evidence. One believable voice with a test outweighed them.`,
           signals: [
-            { t: `"I've had a bad month."`, saw: s => f(s, 'confessed') },
-            { t: `The volume was thin.`, saw: s => f(s, 'heardThin') },
-            { t: `He argued from feeling, not evidence.`, saw: s => f(s, 'silent1') || f(s, 'namedEdge') }
+            { t: `Theo's record: 64% across two downturns.`, saw: s => f(s, 'askedTheo') },
+            { t: `Marco couldn't say what would prove him wrong.`, saw: s => f(s, 'askedMarco') },
+            { t: `Customers were cancelling, not delaying.`, saw: s => f(s, 'heardCancel') }
           ]
         }
       })
@@ -403,7 +389,7 @@ window.PP = window.PP || {};
       nodes: {
         open: { say: s => [
           { t: `Sarah Bennett. Sorry it's early.` },
-          ...(m(s, 'silence').key === 'E' ? [{ t: `David Mercer says [[you talked him out of Larkspur]]. He's grateful, which is a first.`, note: `So that's how she knows me.` }] : []),
+          ...(m(s, 'committee').key === 'F' || m(s, 'committee').key === 'C' ? [{ t: `Theo Brandt says [[you actually asked for his record]] before you decided. He's not used to that.`, note: `So that's how she knows me.` }] : []),
           ...(m(s, 'tip').key === 'E' ? [{ t: `And I hear you [[turned Richard Cole in]]. Good. He's been calling everyone.` }] : []),
           { t: `I've been looking at [[dip recoveries]] across the sector. I think something's changed, and I think it matters for how you trade.`, note: `She knows how I trade?`, sketch: 'q' },
           { t: `I'll tell you what I have. You tell me what you think.` }
@@ -437,9 +423,9 @@ window.PP = window.PP || {};
         prompt: `A quality name is down 7% this morning. It's exactly the setup your method buys. What do you do?`,
         options: [
           { key: 'A', text: `Defend the method. Buy the dip at full size.`, did: `Defended the method at full size.`, exposure: 'large', q: s => (s.sortedAway >= 2 ? 0 : 1), breaks: ['evidence'] },
-          { key: 'B', text: `Keep the method at half size until the next dip settles it.`, did: `Halved size until the evidence settled.`, exposure: 'normal', q: 4 },
+          { key: 'B', text: `Keep the method at half size until the next dip settles it.`, did: `Halved size until the evidence settled.`, exposure: 'normal', q: 3 },
           { key: 'C', text: `Stop for two weeks and study it.`, did: `Paused the method to investigate.`, exposure: 'none', q: 3, cap: { time: -1 } },
-          { key: 'D', text: `Adapt: buy dips only where money is still flowing in.`, did: `Adapted the method to the new evidence.`, exposure: 'normal', q: 3, cap: { str: 1 } },
+          { key: 'D', text: `Adapt: buy dips only where money is still flowing in.`, did: `Adapted the method to the new evidence.`, exposure: 'normal', q: 4, cap: { str: 1 } },
           { key: 'E', text: `Abandon the method. Sell everything.`, did: `Threw the method away overnight.`, exposure: 'none', q: 1, cap: { str: -2, psy: -1 } }
         ],
         out: {
@@ -533,15 +519,15 @@ window.PP = window.PP || {};
   // Catherine has heard about you. What she heard depends on what you did.
   function memoryLines(s) {
     const out = [];
-    const w = m(s, 'warning'), t = m(s, 'tip'), d = m(s, 'silence'), sh = m(s, 'shift');
+    const w = m(s, 'warning'), t = m(s, 'tip'), d = m(s, 'committee'), sh = m(s, 'shift');
     if (w.flags && w.flags.revealedSize) out.push({ t: `Michael Reeves told me [[your Halden size]] before you'd put the phone down.`, note: `I told one person.`, sketch: 'arrow' });
     else if (w.key === 'F') out.push({ t: `Michael Reeves says you put him on hold to [[read the tape]]. He was annoyed. I was impressed.` });
     else if (w.key === 'D') out.push({ t: `You bought more Halden [[while a fund was selling]]. People noticed.` });
     if (t.key === 'E') out.push({ t: `You reported Richard Cole. [[Compliance people talk]], too.` });
     else if (t.key === 'A' || t.key === 'B') out.push({ t: `You bought [[Richard Cole's]] Fenwick story.`, note: `She knows that too.` });
     else if (t.flags && (t.flags.askedSource || t.flags.checkedOptions)) out.push({ t: `Richard says you [[made him wait]]. Richard hates waiting.` });
-    if (d.key === 'E') out.push({ t: `David Mercer says you talked him out of a trade. [[He listened]], which is new.` });
-    else if (d.key === 'A') out.push({ t: `You chased [[Larkspur]] with David Mercer.` });
+    if (d.key === 'C' || d.key === 'F') out.push({ t: `Theo Brandt says you weighed the room [[by its record]], not its volume.` });
+    else if (d.key === 'A' || d.key === 'B') out.push({ t: `You went with [[the loudest voices]] on Kestrel.` });
     if (sh.flags && sh.flags.askedTest) out.push({ t: `Sarah Bennett says you asked what would [[prove her wrong]]. Nobody asks that.` });
     return out.slice(0, 3);
   }

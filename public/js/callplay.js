@@ -513,12 +513,27 @@ PP.callGame = (function () {
     const passes = hist.filter(e => ['D', 'E'].includes(e.key) || e.key === 'A' && e.id === 'warning').length;
     const exposure = s.picked === 0 ? 'none' : r.risk <= 1 ? 'small' : r.risk <= 2.5 ? 'normal' : r.risk <= 10 ? 'large' : 'all';
     const asked = s.flags.askedPrice || s.flags.askedDoubt ? ' And you asked the question most people skip.' : '';
-    const verdict = s.picked === 0
-      ? (passes >= 3 ? { q: 2, cap: { soc: 1 }, line: `You've said no a lot this year. Sometimes that's discipline. Sometimes it's being afraid to be wrong in public. Call me when you know which.` } : { q: 3, cap: { soc: 1 }, line: `Fair. I'd rather back someone who can say no than someone who can't.` })
-      : r.ruin || s.picked >= 50 ? { q: 0, cap: { soc: -2 }, line: `You'd have bet the account on someone else's forty percent. I can't give you ours.` }
-        : s.picked >= 25 ? { q: 1, cap: { soc: -1 }, line: `You'd make money Monday or you wouldn't. Either way, that size tells me what I needed to know.` }
-          : s.picked >= 10 ? { q: 3, cap: { soc: 1, time: 1 }, line: `A little rich for a number nobody knows to the decimal. But you'd survive being wrong about me. Let's talk in January.${asked}` }
-            : { q: 4, cap: { soc: 2, time: 3 }, set: 'allocation', line: `That's the answer I was hoping for. Big enough to matter, small enough to survive my being wrong. Monday, win or lose, I'd like to talk about you managing some of our money.${asked}` };
+    // What she said when you asked what the price says tells you how believable her forty percent is.
+    const heard = s.flags.askedPrice ? (a ? 'reason' : 'story') : null;
+    const good = { q: 4, cap: { soc: 2, time: 3 }, set: 'allocation' };
+    const p = s.picked;
+    const verdict = p === 0
+      ? (heard === 'story' ? { q: 3, cap: { soc: 1 }, line: `I gave you a story and you passed. That's fair. I'd have liked you to size it small, but I'd back someone who can say no.` }
+        : passes >= 3 ? { q: 2, cap: { soc: 1 }, line: `You've said no a lot this year. Sometimes that's discipline. Sometimes it's being afraid to be wrong in public. Call me when you know which.` } : { q: 3, cap: { soc: 1 }, line: `Fair. I'd rather back someone who can say no than someone who can't.` })
+      : r.ruin || p >= 50 ? { q: 0, cap: { soc: -2 }, line: `You'd have bet the account on someone else's forty percent. I can't give you ours.` }
+        : heard === 'reason' ? (
+          p >= 25 ? { q: 2, cap: { soc: -1 }, line: `A real reason doesn't make it a sure thing. A quarter of your account on one Monday is still a coin you can't afford to lose.` }
+            : p >= 5 ? { ...good, line: `You heard a reason most people haven't, and sized it like it mattered, without betting the account on our homework. That's the answer I was hoping for. Monday, win or lose, I'd like to talk about you managing some of our money.` }
+              : p >= 2.5 ? { ...good, line: `Sensible. You could have leaned in a little after the endpoints, but you'd survive my being wrong. Monday, I'd like to talk about you managing some of our money.` }
+                : { q: 2, cap: {}, line: `You found a real reason and sized it like a guess. One percent won't matter either way. Ask yourself why.` })
+        : heard === 'story' ? (
+          p >= 10 ? { q: 1, cap: { soc: -1 }, line: `I told you we like the story, and you bet like I'd told you a fact.` }
+            : p >= 5 ? { q: 2, cap: {}, line: `I told you we like the story. That should have made you smaller, not bigger.` }
+              : { ...good, line: `I gave you a story, and you sized it like one: small enough to survive my being wrong. I respect that. Let's talk Monday.` })
+        : p >= 25 ? { q: 1, cap: { soc: -1 }, line: `You'd make money Monday or you wouldn't. Either way, that size tells me what I needed to know.` }
+          : p >= 5 ? { q: 3, cap: { soc: 1, time: 1 }, line: `A little rich for a number nobody knows to the decimal. But you'd survive being wrong about me. Let's talk in January.${asked}` }
+            : p >= 2.5 ? { ...good, line: `That's the answer I was hoping for. Big enough to matter, small enough to survive my being wrong. Monday, win or lose, I'd like to talk about you managing some of our money.${asked}` }
+              : { q: 3, cap: { soc: 1, time: 1 }, line: `Safe. Maybe too small to matter. You never asked what the price thought of my forty percent.${asked}` };
     return {
       opt: { key: `${s.picked}%`, text: s.picked ? `Put ${s.picked}% of the account into Merrin.` : `Said no to Merrin.`, did: s.picked ? (r.inRule ? `Sized the big idea inside the rule: ${s.picked}%.` : `Bet ${s.picked}% of the account on one Monday.`) : `Walked away from the biggest idea of the year.`, exposure, q: verdict.q, breaks: !r.inRule && s.picked ? ['walk'] : [], cap: verdict.cap, set: verdict.set },
       out: { fin: s.picked ? (a ? r.win : -r.lose) : 0, tone: s.picked ? (a ? 'good' : r.inRule ? 'mixed' : 'bad') : (a ? 'mixed' : 'good'), text: a ? `Monday, 7:02 AM: Merrin is approved. The stock is indicated up 200% before the open.` : `Monday, 7:02 AM: Merrin is rejected. The stock is indicated down 60% before the open.` },
@@ -649,7 +664,7 @@ PP.callGame = (function () {
         dim(`Adaptability`, !sh ? 1 : ['B', 'D'].includes(sh.key) ? 3 : sh.key === 'C' ? 2 : 1, !sh ? `You never reached the call that tested it.` : sh.key === 'A' ? `When the evidence turned, you defended the method${sh.sortedAway ? ', and filed the hardest evidence under "doesn\'t change it"' : ''}.` : sh.key === 'E' ? `When the evidence turned, you threw everything out at once. Changing your mind and abandoning your method aren't the same thing.` : `When the evidence turned, you changed how much you bet before you changed what you believe.`),
         dim(`Risk management`, big === 0 ? 3 : big === 1 ? 2 : 1, big === 0 ? `You never put more at risk than you could afford to be wrong about.` : `${big === 1 ? 'Once' : `${NUM[big].charAt(0).toUpperCase() + NUM[big].slice(1)} times`}, you took a position big enough to change your year.`),
         dim(`Information gathering`, gathered >= 8 ? 3 : gathered >= 4 ? 2 : 1, `You asked, checked or tested ${gathered} times before deciding.${listened ? ` You let the silence work ${listened === 1 ? 'once' : NUM[listened] + ' times'}.` : ''}`),
-        dim(`Psychological discipline`, K.cap.psy >= 6 && !H.some(e => e.hungUp) ? 3 : K.cap.psy >= 4 ? 2 : 1, `You finished with Composure ${K.cap.psy}.${H.some(e => e.id === 'silence' && e.key === 'A') ? ' You chased a move because a friend was in it.' : ''}${H.some(e => e.hungUp) ? ' You hung up when a call got uncomfortable.' : ''}`)
+        dim(`Psychological discipline`, K.cap.psy >= 6 && !H.some(e => e.hungUp) ? 3 : K.cap.psy >= 4 ? 2 : 1, `You finished with Composure ${K.cap.psy}.${H.some(e => e.id === 'committee' && ['A', 'B'].includes(e.key)) ? ' You went with the loudest voices on Kestrel.' : ''}${H.some(e => e.hungUp) ? ' You hung up when a call got uncomfortable.' : ''}`)
       ]
     };
   }

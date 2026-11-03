@@ -260,16 +260,24 @@
   // (the scene's opening and the details you read) are graded together, weighted by how likely each was.
   // A person you've already met this episode is known. The Trader's Mind grades its own way.
   const MARKET_IDS = new Set(MK.scenarios.map(s => s.id));
-  function worlds(sc, ctx, clues) {
-    if (!sc.types || !ctx.type || ctx.known || MARKET_IDS.has(sc.id)) return null;
+  // The versions of the other side the player couldn't rule out, with their odds renormalized.
+  function posterior(sc, ctx, clues) {
+    if (!sc.types || !ctx.type) return null;
+    const mineT = sc.types.find(t => t.id === ctx.type);
+    if (ctx.known) return [{ t: mineT, w: 1 }];
     const seen = t => {
       const c = { ...ctx, type: t, clues };
       const intro = ((sc.stage && sc.stage.intro) || []).map(b => b.if ? (b.if(c) ? 1 : 0) : '').join('');
       return intro + '|' + clues.map(i => sc.clues[i] ? String(val(sc.clues[i].text, c)) : '').join('|');
     };
     const mine = seen(ctx.type);
-    const ws = sc.types.filter(t => seen(t.id) === mine);
-    return ws.length > 1 ? ws : null;
+    const ws = sc.types.filter(t => seen(t.id) === mine), total = ws.reduce((a, t) => a + t.p, 0);
+    return ws.map(t => ({ t, w: t.p / total }));
+  }
+  function worlds(sc, ctx, clues) {
+    if (MARKET_IDS.has(sc.id)) return null;
+    const post = posterior(sc, ctx, clues);
+    return post && post.length > 1 ? post.map(x => x.t) : null;
   }
   function resolve(sc, ctx = { rel: {}, flags: {} }, clues = []) {
     const opts = resolveRaw(sc, ctx, clues);
@@ -940,6 +948,35 @@
   // When nothing you saw could tell some versions of the other person apart, say so, and what the move was worth in the one you got.
   const fairNote = opt => !opt.worlds || opt.qWorld === opt.q ? '' : ` <span class="verdict-fair">From what you'd seen, it could have been any of these: ${opt.worlds.map(t => t.label).join(' / ')}. Your grade weighs the move across all of them. In the version you actually got, it was ${grades[opt.qWorld].name.toLowerCase()}.</span>`;
 
+  // Skill and luck: what each move was worth on average, given what you'd seen, and what this roll added.
+  function skillLuck(sc, idx, move) {
+    const capBefore = capitals(history.slice(0, idx)).cap;
+    const ctx = { ...move.ctx, ...marketMemory(idx), cap: capBefore };
+    const post = posterior(sc, ctx, move.clues) || [{ t: null, w: 1 }];
+    const per = post.map(({ t, w }) => ({ w, opts: resolveRaw(sc, t ? { ...ctx, type: t.id } : ctx, move.clues) }));
+    const rows = move.opts.map((o, k) => {
+      let ev = 0, ruin = 0, worst = Infinity;
+      per.forEach(({ w, opts }) => opts[k].outcomes.forEach(x => {
+        if (!x.p) return;
+        const f = x.ruin ? -capBefore.fin : x.fin;
+        ev += w * x.p * f; if (x.ruin) ruin += w * x.p; worst = Math.min(worst, f);
+      }));
+      return { o, ev, ruin, worst: isFinite(worst) ? worst : 0, locked: !!MK.lockReason(capBefore, o.exposure, o) };
+    });
+    const mine = rows.find(r => r.o.key === move.opt.key);
+    const got = move.outcome.ruin ? -capBefore.fin : move.outcome.fin;
+    const luck = Math.round((got - mine.ev) * 10) / 10;
+    const k$ = v => `${v < 0 ? '−' : v > 0 ? '+' : ''}$${Math.abs(Math.round(v * 10) / 10)}k`;
+    const table = rows.map(r => `<tr class="${r.o.key === move.opt.key ? 'is-mine' : ''} ${r.locked ? 'is-locked' : ''}">
+        <th scope="row"><span class="option-key">${r.o.key}</span></th>
+        <td>${k$(r.ev)}</td><td>${k$(r.worst)}</td><td>${r.ruin ? `${Math.round(r.ruin * 100)}%` : '—'}</td>
+        <td><span class="g${r.o.q}" title="${grades[r.o.q].name}">${grades[r.o.q].glyph}</span></td></tr>`).join('');
+    return `<section class="evx"><h3 class="block-h">Skill and luck</h3>
+      <p class="evx-line">On what you'd seen, your move was worth <strong>${k$(mine.ev)}</strong> on average. This time it came out <strong>${move.outcome.ruin ? 'at the whole account' : k$(got)}</strong>, so luck ${Math.abs(luck) < 0.1 ? 'didn\'t move it much' : luck > 0 ? `added <strong>${k$(luck).slice(1)}</strong>` : `cost you <strong>${k$(luck).slice(1)}</strong>`}.</p>
+      <div class="evx-wrap"><table class="evx-t"><thead><tr><th scope="col">Move</th><th scope="col">Average</th><th scope="col">Worst case</th><th scope="col">Ends your game</th><th scope="col">Grade</th></tr></thead><tbody>${table}</tbody></table></div>
+      <p class="evx-note">Averages use the odds of every world you couldn't rule out. The highest average isn't always the best move: one that can end your game, or breaks your rule, has to clear a much higher bar.${rows.some(r => r.locked) ? ' Faded moves were locked for you.' : ''}</p></section>`;
+  }
+
   function panelResultMarket(sc) {
     const idx = history.length - 1;
     const move = derive(history).moves[idx];
@@ -978,6 +1015,7 @@
           <li><span class="tl-k">Right now</span><p>${outcome.text}</p></li>
           <li><span class="tl-k">What it means</span><p>${opt.later}</p></li>
         </ol>
+        ${skillLuck(sc, idx, move)}
         <h3 class="block-h">Your capital after this decision</h3><ul class="capds">${caps}</ul>
         ${ruleLine ? `<p class="rule-line ${breaks(opt) ? 'is-broke' : ''}">${ruleLine}</p>` : ''}`;
     } else if (ui.tab === 'game') {

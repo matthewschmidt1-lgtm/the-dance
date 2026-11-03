@@ -11,9 +11,18 @@ PP.callGame = (function () {
     get(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } },
     set(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
   };
-  let hist = (store.get(KEY) || []).filter((h, i) => C.calls[i] && C.calls[i].id === h.id);
+  // Keep calls up to the first saved one that doesn't fit this version; each call reads the ones before it.
+  const isObj = o => !!o && typeof o === 'object' && !Array.isArray(o);
+  const fits = (h, i) => isObj(h) && C.calls[i] && C.calls[i].id === h.id && typeof h.key === 'string' && isObj(h.flags)
+    && isObj(h.delta) && Object.values(h.delta).every(Number.isFinite) && Array.isArray(h.breaks) && isObj(h.out)
+    && Number.isInteger(h.q) && !!PP.grades[h.q];
+  let hist = store.get(KEY);
+  hist = Array.isArray(hist) ? hist : [];
+  const firstBad = hist.findIndex((h, i) => !fits(h, i));
+  if (firstBad >= 0) hist = hist.slice(0, firstBad);
   let rules = store.get(RULES_KEY);
-  if (!rules || !rules.risk || !Array.isArray(rules.pledges)) rules = null;
+  if (!isObj(rules) || !MK.rules.risk.options.some(o => o.v === rules.risk) || !Array.isArray(rules.pledges)
+    || rules.pledges.length !== 2 || !rules.pledges.every(v => C.pledges.some(p => p.v === v))) rules = null;
   const save = () => store.set(KEY, hist);
   let confirmReset = false;
 
@@ -743,7 +752,7 @@ PP.callGame = (function () {
     document.querySelector('.cl-incoming')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
   document.addEventListener('keydown', e => {
-    if (!s || !document.querySelector('.cl') || e.target.closest('input, textarea, button')) return;
+    if (!s || !document.querySelector('.cl') || e.target.closest('a, input, textarea, select, button, label, [role="button"]')) return;
     if (e.key === ' ' && skipNow) { e.preventDefault(); skipNow(); }
   });
   let rz = null;

@@ -31,7 +31,7 @@ function send(res, status, body, type, extra = {}) {
   res.end(body);
 }
 
-const server = http.createServer((req, res) => {
+function handle(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     return send(res, 405, 'Method not allowed', 'text/plain; charset=utf-8', { Allow: 'GET, HEAD' });
   }
@@ -40,6 +40,8 @@ const server = http.createServer((req, res) => {
   let pathname;
   try { pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
   catch (e) { return send(res, 400, 'Bad request', 'text/plain; charset=utf-8'); }
+  // fs throws synchronously on a NUL byte, which would take the whole process down.
+  if (pathname.includes('\0')) return send(res, 400, 'Bad request', 'text/plain; charset=utf-8');
 
   const filePath = path.normalize(path.join(ROOT, pathname === '/' ? 'index.html' : pathname));
   if (!filePath.startsWith(ROOT + path.sep) && filePath !== ROOT) {
@@ -62,6 +64,16 @@ const server = http.createServer((req, res) => {
       send(res, 200, req.method === 'HEAD' ? '' : data, TYPES[ext] || 'application/octet-stream', headers);
     });
   });
+}
+
+// A bad request should cost one reply, never the process.
+const server = http.createServer((req, res) => {
+  try { handle(req, res); }
+  catch (e) {
+    console.error(e);
+    if (!res.headersSent) send(res, 500, 'Server error', 'text/plain; charset=utf-8');
+    else res.end();
+  }
 });
 
 server.listen(PORT, () => console.log(`The Dance running on port ${PORT}`));

@@ -1708,3 +1708,8 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
   .hm .bench-badge, .hm-tm-qs .hm-tm-a small { font-size: 12px; }
   .hm .bench-more, .ix-meta .ix-label, .ix-ch-forces .ix-label { font-size: 13px; }
 }
+
+/* Shown when saved progress can't be read */
+.broken { padding: 64px 16px; max-width: 640px; }
+.broken h1 { font-size: clamp(24px, 4vw, 34px); margin: 0 0 12px; }
+.broken p { margin: 0 0 24px; }

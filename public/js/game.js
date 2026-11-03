@@ -77,17 +77,39 @@
   function load() {
     try {
       const parsed = JSON.parse(localStorage.getItem(TRACKS[track].key) || '[]');
-      return Array.isArray(parsed) ? parsed.filter((h, i) => LIST[i] && LIST[i].id === h.id) : [];
+      if (!Array.isArray(parsed)) return [];
+      // Keep moves up to the first one that no longer fits the scenes; later moves depend on it.
+      const ok = (h, i) => h && LIST[i] && LIST[i].id === h.id && typeof h.key === 'string' && Number.isInteger(h.outcome) && h.outcome >= 0 && Array.isArray(h.clues) && h.clues.every(Number.isInteger);
+      const bad = parsed.findIndex((h, i) => !ok(h, i));
+      return bad < 0 ? parsed : parsed.slice(0, bad);
     } catch (e) { return []; }
   }
   function save() { try { localStorage.setItem(TRACKS[track].key, JSON.stringify(history)); } catch (e) { /* storage unavailable */ } }
   function loadRules() {
-    try { const r = JSON.parse(localStorage.getItem(RULES_KEY) || 'null'); return r && r.risk && r.edge ? r : null; } catch (e) { return null; }
+    try {
+      const r = JSON.parse(localStorage.getItem(RULES_KEY) || 'null');
+      const known = k => r && MK.rules[k].options.some(o => o.v === r[k]);
+      return known('risk') && known('edge') ? r : null;
+    } catch (e) { return null; }
   }
   function saveRules() { try { rules ? localStorage.setItem(RULES_KEY, JSON.stringify(rules)) : localStorage.removeItem(RULES_KEY); } catch (e) { /* storage unavailable */ } }
   function useTrack(t) {
     if (t === track) return;
-    track = t; LIST = TRACKS[t].list; history = load(); draft = fresh(); ui.phase = 'intro'; confirmScene = -1;
+    track = t; LIST = TRACKS[t].list; history = playable(load()); draft = fresh(); ui.phase = 'intro'; confirmScene = -1;
+  }
+  // A save from an older version can name an option or outcome that no longer exists. Drop moves from there on.
+  function playable(hist) {
+    const fits = h => {
+      try {
+        const d = derive(h);
+        if (!d.moves.every(m => m.opt && m.outcome)) return false;
+        if (track === 'market') capitals(h);
+        return true;
+      } catch (e) { return false; }
+    };
+    let n = hist.length;
+    while (n && !fits(hist.slice(0, n))) n--;
+    return n === hist.length ? hist : hist.slice(0, n);
   }
 
   // ───────────────────────── The Trader's Mind: capital, rules, risk
@@ -1378,8 +1400,16 @@
     if (ui.view === 'trade' && settled && (!rules || marketOver())) ui.view = 'market';
     if (ui.view === 'phone' && !PP.callGame.ready) ui.view = 'call';
     const views = { home: viewHome, bench: viewBench, episodes: viewEpisodes, play: viewPlay, trade: viewPlay, profile: viewProfile, market: viewMarket, call: viewCall, phone: PP.callGame.playHTML };
-    app.innerHTML = views[ui.view]();
-    if (ui.view === 'phone') PP.callGame.mount();
+    try {
+      app.innerHTML = views[ui.view]();
+      if (ui.view === 'phone') PP.callGame.mount();
+    } catch (err) {
+      console.error(err);
+      app.innerHTML = `<section class="wrap broken"><h1>Something in your saved progress couldn't be read.</h1>
+        <p>This can happen after an update. Resetting clears the progress saved in this browser and starts you fresh.</p>
+        <button type="button" class="btn btn-primary" data-act="repair">Reset saved progress</button></section>`;
+      return;
+    }
     document.querySelectorAll('[data-nav]').forEach(a => a.setAttribute('aria-current', a.dataset.nav === (NAV_OF[ui.view] || ui.view) ? 'page' : 'false'));
     // The home page opens on a dark image, so its nav bar and the phone's browser bar go dark to match.
     document.body.classList.toggle('on-home', ui.view === 'home');
@@ -1401,6 +1431,10 @@
   }
 
   document.addEventListener('click', e => {
+    if (e.target.closest('[data-act="repair"]')) {
+      try { [TRACKS.main.key, TRACKS.market.key, RULES_KEY, 'thedance:call:v1', 'thedance:call:rules'].forEach(k => localStorage.removeItem(k)); } catch (err) { /* storage unavailable */ }
+      location.reload(); return;
+    }
     const nav = e.target.closest('[data-nav]');
     if (nav) { e.preventDefault(); go(nav.dataset.nav === 'play' ? 'episodes' : nav.dataset.nav); return; }
 
@@ -1507,7 +1541,8 @@
 
   document.addEventListener('keydown', e => {
     if ((ui.view !== 'play' && ui.view !== 'trade') || !stage) return;
-    if (e.target.closest('input, textarea, button')) return;
+    // Keys on links, form controls and buttons keep their normal meaning.
+    if (e.target.closest('a, input, textarea, select, button, label, [role="button"]')) return;
     if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!stage.paused) stage.skip(); }
     if (e.key === 'p' || e.key === 'P') stage.paused ? stage.resume() : stage.freeze();
   });
@@ -1567,6 +1602,7 @@
   PP.ui = { hud, marketRules: () => rules };
   PP.nav = go;
 
+  history = playable(history);
   const initial = location.hash.replace('#', '');
   if (['bench', 'profile', 'episodes', 'play', 'market', 'trade', 'call', 'phone'].includes(initial)) ui.view = initial;
   render();

@@ -21,7 +21,7 @@ window.PP = window.PP || {};
   M.ep = {
     id: 'market', title: `The Trader's Mind`,
     places: [
-      { key: 'night', name: `The desk, 8:47 pm`, scenes: ['losing-position'] },
+      { key: 'week', name: `The desk, one week in March`, scenes: ['round-trip-1', 'round-trip-2', 'round-trip-3'] },
       { key: 'april', name: `The desk, April`, scenes: ['the-peg'] },
       { key: 'june', name: `The desk, June`, scenes: ['the-book'] },
       { key: 'january', name: `The desk, January`, scenes: ['the-turn'] },
@@ -104,116 +104,358 @@ window.PP = window.PP || {};
     cash: `You own nothing. You're watching.`
   };
 
+  // The Round Trip: one Halcyon position across three days. What you did on Monday decides Wednesday's choices.
+  const rtGroup = c => (c.flags && c.flags.rt1) || 'out';
+  const rtSizeOf = c => (c.flags && typeof c.flags.rtSize === 'number' ? c.flags.rtSize : 0);
+  M.rtPosition = f => { const z = f && typeof f.rtSize === 'number' ? f.rtSize : null; return z === null ? `625 shares of Halcyon` : z === 0 ? `none. You're out of Halcyon` : `${Math.round(z / 25 * 625).toLocaleString('en-US')} shares of Halcyon, about $${z}k`; };
+  const rtShort = ctx => { const z = rtSizeOf(ctx || {}); return z ? `${Math.round(z / 25 * 625).toLocaleString('en-US')} shares` : `Out`; };
+
+  // Your journal: rules you write after a bad decision, in your own words, that later decisions are held to.
+  // An option lists the rules it would break (defies). Breaking one you wrote costs a grade, and the desk says so.
+  M.journalRules = {
+    stops: { line: `My exits are orders, not intentions.` },
+    size: { line: `No single idea above a quarter of the account.` },
+    leverage: { line: `No borrowed money without a stop.` },
+    together: { line: `I count bets by what moves them, not by their names.` },
+    smaller: { line: `After a loss, my next bet gets smaller, not bigger.` }
+  };
+  const JKEY = 'thedance:journal:v1';
+  M.journal = {
+    load() {
+      try { const j = JSON.parse(localStorage.getItem(JKEY) || '[]'); return Array.isArray(j) ? j.filter(e => e && M.journalRules[e.rule] && typeof e.id === 'string') : []; } catch (e) { return []; }
+    },
+    save(list) { try { localStorage.setItem(JKEY, JSON.stringify(list)); } catch (e) { /* storage unavailable */ } },
+    add(entry) { this.save([...this.load().filter(e => !(e.src === entry.src && e.id === entry.id)), entry]); },
+    // Drop Desk rules written at or after decision n (a replay rewrote that decision).
+    trim(n) { this.save(this.load().filter(e => e.src !== 'desk' || e.at < n)); },
+    clear(src) { this.save(this.load().filter(e => e.src !== src)); },
+    stored(key) { try { const h = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(h) ? h : []; } catch (e) { return []; } },
+    // Rules still backed by the decision they were written after.
+    valid(deskHist, callHist) {
+      return this.load().filter(e => e.src === 'call' ? callHist.some(h => h && h.id === e.id) : !!deskHist[e.at] && deskHist[e.at].id === e.id);
+    },
+    from(e) { return e.src === 'call' ? `The Debrief` : ((M.scenarios.find(x => x.id === e.id) || {}).title || `a decision`); }
+  };
+
   // The code is never shown up front. It's revealed at the end, scored from what you did.
   M.principles = [
-    { k: 'downside', name: `Protect your downside`, line: `Never risk so much that one decision ends your ability to play.`, scenes: ['losing-position', 'final-bet'] },
+    { k: 'downside', name: `Protect your downside`, line: `Never risk so much that one decision ends your ability to play.`, scenes: ['round-trip-1', 'final-bet'] },
     { k: 'edge', name: `Find your edge`, line: `Don't play because you want to win. Play because you have a reason to believe you can.`, scenes: ['the-book', 'the-peg'] },
-    { k: 'evidence', name: `Follow the evidence`, line: `Don't confuse your predictions, beliefs or ego with reality.`, scenes: ['the-turn', 'losing-position'] },
-    { k: 'self', name: `Master yourself`, line: `Your impulses are often a more dangerous opponent than the person across from you.`, scenes: ['the-peg', 'the-book'] },
+    { k: 'evidence', name: `Follow the evidence`, line: `Don't confuse your predictions, beliefs or ego with reality.`, scenes: ['the-turn', 'round-trip-2'] },
+    { k: 'self', name: `Master yourself`, line: `Your impulses are often a more dangerous opponent than the person across from you.`, scenes: ['the-peg', 'round-trip-3'] },
     { k: 'stay', name: `Stay in the game`, line: `Preserve the resources, relationships and opportunities that let you keep playing.`, scenes: ['final-bet', 'the-turn'] }
   ];
 
   M.scenarios = [
-    // ───────────────────────────────────────── 1. A broken thesis, or noise?
+    // ───────────────────────────────────────── 1–3. One position, three days
     {
-      id: 'losing-position',
-      opponent: `your ego`,
-      tests: `Can you accept being wrong?`,
-      level: `Sunk cost`,
-      title: `The Losing Position`,
+      id: 'round-trip-1',
+      share: 'halcyon',
+      opponent: `your attachment`,
+      tests: `Can you get out when you said you would?`,
+      level: `Honoring the stop`,
+      title: `The Round Trip · Monday`,
       lens: ['seykota', 'duke'],
-      setting: `The desk · 8:47 pm · Down $9,150`,
-      cycle: { t: 3, read: `Middling. Cloud software is off its highs; nobody's euphoric and nobody's selling everything.` },
+      setting: `The desk · Monday · A hot jobs report`,
+      cycle: { t: 3, read: `Middling. Everyone is waiting on the March rate decision, and every data release moves it.` },
       types: [
-        { id: 'broken', p: 0.6, who: `the news`, label: `The thesis was broken`, tell: `Halvorsen really was moving its workloads in-house. It had been hiring AI platform engineers for a month.` },
-        { id: 'noise', p: 0.4, who: `the news`, label: `The news was noise`, tell: `Halvorsen denied the report the next morning. Its CEO had praised Corvane the week before.` }
+        { id: 'pivot', p: 0.55, who: `the central bank`, label: `The central bank cut in March`, tell: `Inflation kept cooling where the central bank was watching. It cut in March, and Halcyon ran to $50.` },
+        { id: 'nopivot', p: 0.45, who: `the central bank`, label: `The central bank held in March`, tell: `The soft prints were energy prices. Core inflation didn't cool, the March cut never came, and Halcyon slid to $33.` }
       ],
       facts: [
-        `You <strong>own</strong> 880 shares of Corvane Cloud. You bought in three steps: $56, $51 and $49. Average: <strong>$52.02</strong>.`,
-        `That's about $46,000 at cost, 46% of your account. You make money only if the price rises.`,
-        `It closed at $41.62: <strong>down $9,150</strong>, already marked against your $100,000. After hours it's quoted $38.90 to sell, $39.40 to buy, and few shares are trading.`,
-        `Your written exit was $47.80, an 8% loss. You passed it nine days ago. Nadia's report flags it.`,
-        `20:41 news: Corvane's biggest customer, Halvorsen Retail, may move its workloads to an in-house AI system.`,
-        `The after-hours book is thin: 300 bid at $38.90, 400 at $38.75, 1,000 at $38.50. Selling all 880 now averages about <strong>$38.71</strong>.`
+        `You own <strong>625 shares of Halcyon Homes</strong> at $40: $25,000, a quarter of the account.`,
+        `Your thesis: the central bank cuts rates in March and homebuilders rerate. Your written stop: <strong>$37</strong>.`,
+        `8:30 am: the jobs report runs hot. Halcyon opens at <strong>$36.40</strong>, straight through your stop.`,
+        `The book is deep: 2,000 shares bid at $36.40. You can sell all 625 at once.`
       ],
       cast: [
-        { name: `Theo`, role: `Senior trader, 31 years on the desk`, archetype: `The Survivor`, power: `Experience`, note: `Has seen this exact night many times.` }
+        { name: `Theo`, role: `Senior trader`, archetype: `The Survivor`, power: `Experience`, note: `Has watched a lot of stops get "reconsidered".` },
+        { name: `Nadia`, role: `Head of risk`, archetype: `The Guardian`, power: `Your limits`, note: `Reads every stop you write. Notices which ones you keep.` }
       ],
-      known: [`You own 880 Corvane at an average of $52.02.`, `Your written exit was $47.80.`, `After hours, you can sell near $39.`],
-      unknown: [`Whether Halvorsen is really leaving.`, `Where the stock opens tomorrow.`],
+      known: [`You own 625 Halcyon at $40.`, `Your written stop was $37.`, `It opened at $36.40.`],
+      unknown: [`Whether the March cut is still coming.`, `Where Halcyon will be on Wednesday.`],
       clues: [
-        { label: `Read your own note`, text: `"Thesis: retention is strong. The drop is market-wide, not Corvane." Tonight's headline is about Corvane's biggest customer. The thesis was about something that's no longer the problem.` },
-        { label: `Read Nadia's risk report`, text: `"STOP BREACH 47.80 · 9 days · unacknowledged. 46% of account in one name, 3.7% through your stop. Added twice below entry. Acknowledge tonight. Under 20% by ten, or I flatten it at the open." Seeing it in her words is worse.` },
-        { label: `Look for anything that cuts the other way`, text: c => c.type === 'noise' ? `Last week, Halvorsen's CEO praised Corvane on an earnings call: "a partner for years to come." The report tonight cites one unnamed source.` : `Halvorsen has posted fourteen job listings for "in-house AI platform engineers" this month. The report cites three sources.` },
-        { label: `What's priced in?`, text: `At $38.90 after hours, Corvane already trades below the analysts' bear case of $40. The question isn't whether the news is bad. It's whether it's worse than $38.90 says.` }
+        { label: `Your written plan`, text: `"Stop: $37. If the jobs data runs hot, the March cut is in doubt and so is the trade." You wrote it three weeks ago, calmly.` },
+        { label: `Ask Theo`, text: `"A gap through your stop isn't a reason to ignore it. It's the stop working late. The question is never 'will it come back'. It's 'would I buy it here'."` },
+        { label: `What's priced in?`, text: `Futures priced two rate cuts by March before the report. Now they price one. Halcyon still prices most of the second.` }
       ],
-      question: `Are you managing your position, or your ego?`,
+      edgeNote: {
+        research: `You know Halcyon's order book better than anyone. The trade wasn't about Halcyon. It was about March, and that's what the report just changed.`,
+        speed: `A gap through your level is exactly the signal your method says to respect. It's also exactly when respecting it hurts most.`,
+        patience: `Patience is waiting for the setup. It isn't waiting for a broken one to fix itself.`
+      },
+      question: `It gapped through your stop. What do you do?`,
       options: [
         {
-          key: 'A', text: `Sell all 880 now into the thin after-hours book, about $38.71 average. Take the loss: $11,700 below what you paid.`, did: `Sold the whole position and took the loss.`, exposure: 'none',
-          q: c => saw(c, 2) && c.type === 'noise' ? 3 : 4, s: { jdg: 2, reg: 2, bnd: 1, inf: 1 }, cap: { str: 1, soc: 1 },
-          outcomes: [
-            { p: when('broken'), tone: 'good', fin: -2.6, text: `Out at an average of $38.71, $2,600 below tonight's close. At 6:30 am Halvorsen confirms the move, and Corvane opens at $33.10. Waiting would have cost another $4,900.` },
-            { p: when('noise'), tone: 'mixed', fin: -2.6, text: `Out at an average of $38.71, $2,600 below tonight's close. At 7 am Halvorsen denies the report, and Corvane opens at $44. It stings. Maybe the thesis was fine. At 46% of the account, you couldn't afford to find out.` }
-          ],
-          later: `Your account is smaller, and all of it is still yours to use tomorrow.`,
-          verdict: { who: 'theo', line: `Took the loss without a speech. That's rarer than a good call.` }
+          key: 'A', text: `Sell all 625 at $36.40. The stop was the plan.`, did: `Sold at the stop, through the gap.`, exposure: 'none', flags: { rt1: 'out', rtSize: 0 },
+          q: 4, s: { jdg: 2, reg: 2, bnd: 2 }, cap: { psy: 1, soc: 1 },
+          outcomes: [{ p: 1, tone: 'mixed', fin: -2.3, text: `You sell all 625 at $36.40: −$2,250, a little worse than the stop you wrote. By Wednesday Halcyon is back to $39.50. It stings. It was still the right decision.` }],
+          later: `You did what you said you'd do, at a worse price than you planned. That's what a stop is for. Wednesday's bounce is a new decision, not a verdict on Monday's.`,
+          verdict: { who: 'nadia', line: `Gapped through the stop and sold anyway. I initialed it. "Clean."` }
         },
         {
-          key: 'B', text: `Hold all 880. It's one unnamed report, and the company is still sound.`, did: `Held a position whose thesis had broken.`, exposure: 'all',
-          q: c => saw(c, 2) ? (c.type === 'noise' ? 2 : 0) : 1, s: { jdg: -2, reg: -1, inf: -1 }, cap: { psy: -1, soc: -2 },
-          outcomes: [
-            { p: when('broken'), tone: 'bad', fin: -10.3, text: `Halvorsen confirms. Corvane opens at $33.10 and slides to $29.90 by Friday, when you finally sell: another $10,300 gone, $19,500 below what you paid.` },
-            { p: when('noise'), tone: 'good', fin: 3.9, text: `Halvorsen denies it. Corvane climbs back to $46 over two weeks: $3,900 back, and your loss shrinks to $5,300. It worked. It also taught you that waiting fixes things.` }
-          ],
-          later: `Hope isn't a risk limit. Whether or not it worked, you held a position your own rule told you to leave nine days ago.`,
-          verdict: { who: 'theo', line: `Said it would come back. Some do. That's what makes the habit so expensive.` }
+          key: 'B', text: `Hold. One hot report. It'll come back.`, did: `Held through the stop.`, exposure: 'large', flags: { rt1: 'in', rtSize: 25 }, defies: ['stops'],
+          q: 1, s: { jdg: -1, reg: -1, bnd: -2 }, cap: { soc: -1 },
+          outcomes: [{ p: 1, tone: 'good', fin: -0.3, text: `By Wednesday Halcyon is back to $39.50, down only $300 on the position. It came back. That's the worst thing that could have taught you.` }],
+          later: `It came back, which makes holding through the next stop feel smart. A stop you ignore when it's inconvenient isn't a stop.`,
+          verdict: { who: 'theo', line: `Moved the stop to wherever the price was. Got away with it. That's how the habit starts.` }
         },
         {
-          key: 'C', text: `Buy 880 more at $39.40. It lowers your average to about $45.71.`, did: `Doubled down on a losing position.`, exposure: 'all',
-          q: 0, s: { reg: -3, jdg: -3, bnd: -2 }, cap: { psy: -2, soc: -1 },
-          outcomes: [
-            { p: when('broken'), tone: 'bad', fin: -18.7, text: `Halvorsen confirms. You sell all 1,760 shares at $29.90 on Friday: another $18,700 gone, $27,800 below what you paid. Nadia cuts you to small trades only that afternoon.` },
-            { p: when('noise'), tone: 'good', fin: 9.7, text: `Halvorsen denies it and Corvane climbs to $46. You're back to even on the position, up $500. It worked, and you'll remember that it worked.` }
-          ],
-          later: `Averaging down is a plan only when your estimate of value hasn't moved. Tonight it may have, and you were already at 46% of the account.`,
-          verdict: { who: 'nadia', line: `Doubled a position that had blown through its stop nine days earlier. I flagged the account that night.` }
+          key: 'C', text: `Average down: buy 625 more at $36.40. Same thesis, better price.`, did: `Doubled down through the stop.`, exposure: 'all', flags: { rt1: 'in', rtSize: 50 }, defies: ['stops', 'size', 'smaller'],
+          q: 0, s: { jdg: -3, reg: -2, bnd: -2 }, cap: { soc: -2, psy: -1 },
+          outcomes: [{ p: 1, tone: 'good', fin: 1.6, text: `By Wednesday Halcyon is $39.50 and the doubled position is up $1,600. You feel brilliant. Half the account is now on one thesis about March.` }],
+          later: `It worked, and now half the account depends on one rate decision. Doubling down through a broken stop is the losing position again, wearing a winning coat.`,
+          verdict: { who: 'nadia', line: `Bought more through their own stop. It's up. I'm more worried than if it were down.` }
         },
         {
-          key: 'D', text: `Sell 440 now, about $38.85 in the thin book. Sell the rest at the open if it's below $36.`, did: `Cut half, and drew a line for the rest.`, exposure: 'small',
-          q: c => saw(c, 2) && c.type === 'noise' ? 4 : 3, s: { jdg: 1, reg: 1, bnd: 1 }, cap: { psy: 1 },
-          outcomes: [
-            { p: when('broken'), tone: 'mixed', fin: -5, text: `Half out at about $38.85. Corvane opens at $33.10, below your line, and the rest goes there: another $5,000 gone. A gap goes straight through any line you draw.` },
-            { p: when('noise'), tone: 'good', fin: 0.7, text: `Half out at about $38.85. Halvorsen denies it, and the half you kept recovers to $46. Up $700 from tonight's close.` }
-          ],
-          later: `You cut the risk in half and set a line for the rest. Lines don't protect you from gaps. Only size does.`,
-          verdict: { who: 'theo', line: `Cut it in half instead of all the way. Halfway honest. Still better than most.` }
-        },
-        {
-          key: 'E', text: `Wait for the 9:30 open. Decide when there's real volume, not a thin after-hours quote.`, did: `Waited for the open with a broken thesis.`, exposure: 'large',
-          q: c => saw(c, 2) ? (c.type === 'noise' ? 3 : 1) : 2, s: { reg: 1, jdg: -1 }, cap: { soc: -1 },
-          outcomes: [
-            { p: when('broken'), tone: 'bad', fin: -7.5, text: `Halvorsen confirms at 6:30. Corvane opens at $33.10, and that's where you sell: another $7,500 gone. The patient fill cost $4,900 more than selling tonight.` },
-            { p: when('noise'), tone: 'good', fin: 2.1, text: `Halvorsen denies it at 7. Corvane opens at $44, and you sell into the bounce: $2,100 back from tonight's close.` }
-          ],
-          later: `Waiting for a fair price is sensible when the news is a rumor. When the news is real, the open is where the bill arrives.`,
-          verdict: { who: 'nadia', line: `Left a broken position open overnight to get a better fill. Sometimes that works. It's still in the report.` }
+          key: 'D', text: `Sell half now, and keep a stop at $35 on the rest.`, did: `Sold half and reset the stop.`, exposure: 'normal', flags: { rt1: 'half', rtSize: 12.5 },
+          q: 3, s: { jdg: 1, reg: 1, bnd: 1 }, cap: { psy: 1 },
+          outcomes: [{ p: 1, tone: 'mixed', fin: -1.3, text: `Half out at $36.40. By Wednesday the rest is back to $39.50. −$1,300 so far: half the plan, half a hope.` }],
+          later: `A compromise with your own rule. Better than ignoring it. Ask whether you'd have bought the half you kept.`,
+          verdict: { who: 'nadia', line: `Kept half the promise. I'll take it. I'd rather have all of it.` }
         }
       ],
       analysis: {
-        game: `A decision against an opponent with no feelings. The market doesn't know your entry price. The only question is whether you'd buy this position tonight, at this price, knowing what you know.`,
-        incentives: `You want to be right. The account needs to survive. Tonight those point in opposite directions.`,
-        leverage: `One real advantage: a rule you wrote before you had anything to defend, and broke nine days ago.`,
-        missing: `Whether Halvorsen is really leaving. The third clue tilted it, but nobody knew for sure. That's why your size decided how bad it could get.`,
-        assumptions: `That a lower price makes it a better deal. That a line on a chart protects you from a gap. That buying more on the way down was a plan.`,
-        controlled: `Size, and whether you kept your own rule.`,
-        couldnt: `Halvorsen, the gap, the open.`,
-        concept: { thinker: 'seykota', term: `Stop-loss discipline`, name: `Exit when the reason you entered is gone`, body: `Seykota's rules begin with the losing trade: get out when the reason you got in is gone, not when the pain becomes unbearable. The market doesn't know your position, and it won't help you get even.` },
-        second: { thinker: 'duke', term: `Sunk cost fallacy`, name: `What you paid is history`, body: `What you paid is history. Duke's test: if you didn't own this position, would you buy it right now? If not, holding it is buying it again, every minute.` },
-        better: `A. Then write down why the thesis broke, so the next exit line is easier to obey.`,
-        lesson: `Bruce Kovner's rule fits on a sticky note: know where you'll get out before you get in. Then get out there.`
+        game: `A trade against your own written plan. The market didn't change your thesis; one report did, and your stop was the plan for exactly that report.`,
+        incentives: `Selling makes the loss real. Holding keeps the hope, and the hope feels like information.`,
+        leverage: `A deep book: you could sell all 625 at once. Liquidity meant the stop was always available.`,
+        missing: `Whether March was still coming. Nobody knew on Monday.`,
+        assumptions: `That a stop is a suggestion. That if it comes back, holding was right.`,
+        controlled: `Whether you kept the promise you made three weeks ago.`,
+        couldnt: `The jobs report, and Wednesday's bounce.`,
+        concept: { thinker: 'seykota', term: `Honoring the stop`, name: `Know where you'll get out before you get in. Then get out there.`, body: `Seykota's rules are short because they're hard: cut losses, ride winners, keep bets small. A stop decided calmly is better information than a decision made at the open with the loss on the screen.` },
+        second: { thinker: 'duke', term: `Resulting`, name: `Wednesday's price doesn't grade Monday's decision`, body: `Holding came back and selling cost money, this time. Duke's test: if you replayed Monday a hundred times, which choice leaves you better off across all of them?` },
+        better: `A. Sell where you said you would, even through the gap. D if you can't: half out, a real stop on the rest.`,
+        lesson: `A stop you only keep when it's convenient isn't a stop. It's a mood.`
       },
-      life: { title: `The partnership`, text: `Two years ago you went into business with a friend. The reasons were good. The last three quarters say they aren't anymore. You can leave now at a cost you can absorb, keep going and hope, or put in more money to save it. Same decision. Same ego.` }
+      life: { title: `The line you drew`, text: `You promised yourself you'd leave if the promotion didn't come by spring. Spring came and went. Staying is easier, and this week it even looks fine.` }
+    },
+    {
+      id: 'round-trip-2',
+      share: 'halcyon',
+      freeTime: true,
+      opponent: `your anchor`,
+      tests: `Can you buy back higher than you sold?`,
+      level: `Anchoring`,
+      title: `The Round Trip · Wednesday`,
+      lens: ['duke', 'seykota'],
+      setting: `The desk · Wednesday · A soft inflation print`,
+      cycle: { t: 3, read: `Middling. Monday's panic is gone. Nobody remembers it but the people who sold.` },
+      types: [
+        { id: 'pivot', p: 0.55, who: `the central bank`, label: `The central bank cut in March`, tell: `Core services inflation kept cooling. The central bank cut in March, and Halcyon ran to $50.` },
+        { id: 'nopivot', p: 0.45, who: `the central bank`, label: `The central bank held in March`, tell: `The soft print was energy prices. Core inflation didn't cool, and the March cut never came.` }
+      ],
+      facts: [
+        `This morning's inflation print came in soft. Halcyon is <strong>$39.50</strong>, back above Monday's stop.`,
+        `Your position: <strong>{halcyon}</strong>.`,
+        `Your thesis hasn't changed: a rate cut in March.`
+      ],
+      cast: [
+        { name: `Theo`, role: `Senior trader`, archetype: `The Survivor`, power: `Experience`, note: `Has bought back higher than he sold more times than he can count.` }
+      ],
+      known: [`Halcyon is $39.50.`, `The inflation print was soft.`, `You sold, held or halved on Monday.`],
+      unknown: [`Whether the soft print is the kind the central bank cares about.`],
+      clues: [
+        { label: `Read the inflation details`, text: c => c.type === 'pivot' ? `Core services inflation cooled for a second month: the number the central bank says it watches.` : `The headline was soft because of energy prices. Core services inflation re-accelerated.` },
+        { label: `What's priced in?`, text: `Futures price one cut by March. Your thesis says two or three. If you're right, most of the move is still ahead.` },
+        { label: `Ask Theo`, text: `"Buying back higher than you sold feels like admitting the sale was wrong. It wasn't. That was Monday's decision. This is Wednesday's."` }
+      ],
+      question: `The price is back. What do you do now?`,
+      options: [
+        {
+          key: 'A', when: c => rtGroup(c) === 'out', text: `Buy back in: $25,000, stop at $37.`, did: `Bought back in at the same size.`, exposure: 'normal', flags: { rtSize: 25 },
+          q: c => saw(c, 0) ? (c.type === 'pivot' ? 3 : 1) : 3, s: { jdg: 2, reg: 1 }, cap: { str: 1 },
+          outcomes: [{ p: 1, tone: 'good', fin: 1.1, text: `Back in at $39.50 with a stop at $37. By Friday it's $41.20: +$1,100.` }],
+          later: `You paid $3 more than you sold for, and it was the right price to pay if the thesis was alive.`,
+          verdict: { who: 'theo', line: `Sold at the stop, bought back higher. That's not indecision. That's two good decisions.` }
+        },
+        {
+          key: 'B', when: c => rtGroup(c) === 'out', text: `Buy back bigger: $50,000, stop at $37.80. Risk about $2,150.`, did: `Bought back bigger on new evidence.`, exposure: 'normal', flags: { rtSize: 50 },
+          q: c => saw(c, 0) ? (c.type === 'pivot' ? 4 : 0) : 2, s: { jdg: 2, str: 2 }, cap: { str: 2 },
+          outcomes: [{ p: 1, tone: 'good', fin: 2.2, text: `Back in at twice the size with a tight stop. By Friday it's $41.20: +$2,150.` }],
+          later: c => c.type === 'pivot' && saw(c, 0) ? `The evidence got better, so you got bigger, with a stop that kept the risk where it was. That's sizing to the evidence.` : `Bigger is only right when the evidence got better. Did you check?`,
+          verdict: { who: 'nadia', line: `Came back in at twice the size, with a stop I could see. Fine by me, if they read the details.` }
+        },
+        {
+          key: 'C', when: c => rtGroup(c) === 'out', text: `Not paying $3 more than you sold for. Stay out.`, did: `Refused to pay more than they sold for.`, exposure: 'none', flags: { rtSize: 0 },
+          q: c => saw(c, 0) && c.type === 'nopivot' ? 3 : 1, s: { jdg: -1 }, cap: {},
+          outcomes: [{ p: 1, tone: 'mixed', fin: 0, text: `Halcyon is $41.20 by Friday. You're out, waiting for a price that may not come.` }],
+          later: c => saw(c, 0) && c.type === 'nopivot' ? `You read the details and the soft print wasn't the right kind. Staying out was evidence, not ego.` : `"I sold lower" is a fact about you, not about Halcyon. Anchoring on your own exit is the sunk cost fallacy in reverse.`,
+          verdict: { who: 'theo', line: `Wouldn't pay more than they sold for. The market doesn't know what you sold for.` }
+        },
+        {
+          key: 'D', when: c => rtGroup(c) === 'out', text: `Put in an order to buy back at $37.50, and wait.`, did: `Waited for a cheaper price.`, exposure: 'none', flags: { rtSize: 0 },
+          q: 2, s: { reg: 1 }, cap: {},
+          outcomes: [{ p: 1, tone: 'mixed', fin: 0, text: `Your order at $37.50 never fills. Halcyon is $41.20 by Friday.` }],
+          later: `A limit order is a plan. Make sure it's a plan for the trade, not for the feeling of having sold too low.`,
+          verdict: { who: 'theo', line: `Wanted it cheaper. Most people do.` }
+        },
+        {
+          key: 'E', when: c => rtGroup(c) === 'half', text: `Add back to full size, stop at $37.`, did: `Added back to full size.`, exposure: 'normal', flags: { rtSize: 25 },
+          q: c => saw(c, 0) ? (c.type === 'pivot' ? 4 : 1) : 3, s: { jdg: 2 }, cap: { str: 1 },
+          outcomes: [{ p: 1, tone: 'good', fin: 1.1, text: `Back to full size at $39.50. By Friday it's $41.20: +$1,100.` }],
+          later: `You treated the half you sold as Monday's decision and sized Wednesday's on Wednesday's evidence.`,
+          verdict: { who: 'theo', line: `Added back on new evidence. Good. That's how a position should grow.` }
+        },
+        {
+          key: 'F', when: c => rtGroup(c) === 'half', text: `Keep the half you have.`, did: `Kept the half.`, exposure: 'small', flags: { rtSize: 12.5 },
+          q: 3, s: { reg: 1 }, cap: {},
+          outcomes: [{ p: 1, tone: 'mixed', fin: 0.5, text: `Half a position, up $500 by Friday.` }],
+          later: `Steady. Neither more right nor more wrong than Monday.`,
+          verdict: { who: 'nadia', line: `Kept the half. Nothing to see. I like nothing to see.` }
+        },
+        {
+          key: 'G', when: c => rtGroup(c) === 'half', text: `Sell the rest at $39.50, glad to be out near break-even.`, did: `Sold the rest near break-even.`, exposure: 'none', flags: { rtSize: 0 },
+          q: c => saw(c, 0) ? (c.type === 'pivot' ? 1 : 4) : 2, s: { reg: 1 }, cap: {},
+          outcomes: [{ p: 1, tone: 'mixed', fin: 0, text: `Out at $39.50. By Friday Halcyon is $41.20.` }],
+          later: `Getting out "near break-even" is about your purchase price, not the trade. Sell because of the evidence, not the number.`,
+          verdict: { who: 'theo', line: `Sold to get back to even. The market doesn't care about even.` }
+        },
+        {
+          key: 'H', when: c => rtGroup(c) === 'in', text: `Put the stop back at $37 and keep holding.`, did: `Reset the stop and held.`, exposure: 'normal', flags: {},
+          q: c => saw(c, 0) && c.type === 'nopivot' ? 2 : 3, s: { reg: 1, bnd: 1 }, cap: {},
+          outcomes: [{ p: 1, tone: 'good', fin: c => r1(rtSizeOf(c) * 0.043), text: c => `You put the stop back. By Friday Halcyon is $41.20: ${k$(rtSizeOf(c) * 0.043)}.` }],
+          later: `A stop again, at last. The question is whether you'd keep this one.`,
+          verdict: { who: 'nadia', line: `Put the stop back. I'll believe it when I see it filled.` }
+        },
+        {
+          key: 'I', when: c => rtGroup(c) === 'in', text: `Sell at $39.50, near break-even, and start clean.`, did: `Sold near break-even to start clean.`, exposure: 'none', flags: { rtSize: 0 },
+          q: c => saw(c, 0) ? (c.type === 'pivot' ? 2 : 4) : 3, s: { jdg: 1, reg: 1 }, cap: { psy: 1 },
+          outcomes: [{ p: 1, tone: 'mixed', fin: 0, text: `Out at $39.50. Whatever happens Friday happens without the position you held through a stop.` }],
+          later: `You got out of a position you shouldn't still have had. Whether to get back in is a new decision.`,
+          verdict: { who: 'theo', line: `Took the bounce as a second chance to do Monday's job. Smart.` }
+        },
+        {
+          key: 'J', when: c => rtGroup(c) === 'in', text: `Add $25,000 more. It's working.`, did: `Added more to a position held through its stop.`, exposure: 'all', flags: c => ({ rtSize: rtSizeOf(c) + 25 }), defies: ['size'],
+          q: 0, s: { jdg: -2, reg: -2 }, cap: { soc: -1 },
+          outcomes: [{ p: 1, tone: 'good', fin: c => r1((rtSizeOf(c) + 25) * 0.043), text: c => `By Friday Halcyon is $41.20: ${k$((rtSizeOf(c) + 25) * 0.043)}. Most of your account now rides on March.` }],
+          later: `You were rewarded for breaking a rule, and responded by betting more. That's the pattern that ends careers.`,
+          verdict: { who: 'nadia', line: `Held through the stop, then added. I've started a file.` }
+        }
+      ],
+      analysis: {
+        game: `The same position, two days later, with new evidence. The hardest part isn't the market. It's the price you sold at, sitting in your head.`,
+        incentives: `Buying back higher feels like admitting Monday was wrong. Selling near even feels like escaping. Neither is about the trade.`,
+        leverage: `The inflation details, which said whether the soft print was the kind the central bank watches.`,
+        missing: `Whether this was the right kind of soft.`,
+        assumptions: `That the price you sold at matters to the market. That a bounce proves holding was right.`,
+        controlled: `Whether you judged Wednesday on Wednesday's evidence.`,
+        couldnt: `The print, and March.`,
+        concept: { thinker: 'duke', term: `Anchoring`, name: `The price you sold at is a fact about you, not about the market`, body: `Refusing to pay more than you sold for is the sunk cost fallacy run backwards. Duke's question is the same one as Monday's: if you'd never owned it, would you buy it here?` },
+        second: { thinker: 'seykota', term: `No attachment`, name: `Get out without regret, get back in without shame`, body: `Getting out at the stop and back in higher are the same skill: acting on the evidence instead of on your history with the position.` },
+        better: `Read the details. If core inflation is cooling, buy back in, bigger if the evidence got better, with a stop. If it's only energy, stay out or get out.`,
+        lesson: `The market doesn't know what you sold for. Neither should your next decision.`
+      },
+      life: { title: `The apartment`, text: `You passed on an apartment at $2,400 a month. Two months later it's back on the market at $2,550, and it's still the best one you've seen. Paying more than you could have is not a reason to live somewhere worse.` }
+    },
+    {
+      id: 'round-trip-3',
+      share: 'halcyon',
+      freeTime: true,
+      opponent: `your pride`,
+      tests: `Can you take an order you disagree with?`,
+      level: `Authority`,
+      title: `The Round Trip · Friday`,
+      lens: ['aumann', 'seykota'],
+      setting: `The desk · Friday · Victor's order`,
+      cycle: { t: 3, read: `Middling, and nervous. Another desk's loss has everyone checking their own.` },
+      types: [
+        { id: 'pivot', p: 0.55, who: `the central bank`, label: `The central bank cut in March`, tell: `It cut in March. Halcyon ran to $50, and the March calls paid about four times.` },
+        { id: 'nopivot', p: 0.45, who: `the central bank`, label: `The central bank held in March`, tell: `No cut in March. Halcyon slid to $33, and stops at $37 filled on the way down.` }
+      ],
+      facts: [
+        `Halcyon is <strong>$41.20</strong>. Your position: <strong>{halcyon}</strong>.`,
+        `Another desk lost $4 million overnight. Victor Ames, who runs the floor, orders every trader to <strong>halve their positions by the close</strong>.`,
+        `March calls on Halcyon, which pay off above $45, cost about $600 for a meaningful amount.`
+      ],
+      cast: [
+        { name: `Nadia`, role: `Head of risk`, archetype: `The Guardian`, power: `Victor's order`, note: `Relays the order. Enforces it.` },
+        { name: `Theo`, role: `Senior trader`, archetype: `The Survivor`, power: `Experience`, note: `Has been ordered to cut his best trade before.` }
+      ],
+      known: [`Victor wants every position halved by the close.`, `Halcyon is $41.20.`, `March calls cost about $600.`],
+      unknown: [`Whether March brings a cut.`],
+      clues: [
+        { label: `Futures this morning`, text: c => c.type === 'pivot' ? `Futures price two cuts by March again. The market is coming around to your thesis.` : `Futures now price no cuts by March. The market has given up on your thesis.` },
+        { label: `Ask Nadia if the order applies to you`, text: `"It applies to everyone. Victor doesn't do exceptions on a Friday, and I don't argue his on his behalf."` },
+        { label: `What's priced in?`, text: `March calls are cheap because the market thinks a cut is a coin flip. If you're right, they pay about four times. If you're wrong, you lose the $600.` }
+      ],
+      question: `Victor says halve it. Do you?`,
+      options: [
+        {
+          key: 'A', when: c => rtSizeOf(c) > 0, text: `Cut half, as ordered.`, did: `Cut half, as ordered.`, exposure: 'small',
+          q: 3, s: { coo: 2, bnd: 1 }, cap: { soc: 1 },
+          outcomes: [
+            { p: when('pivot'), tone: 'good', fin: c => r1(rtSizeOf(c) * 0.5 * 0.21), text: c => `The cut comes in March. Your remaining half runs to $50: ${k$(rtSizeOf(c) * 0.5 * 0.21)}.` },
+            { p: when('nopivot'), tone: 'mixed', fin: c => r1(rtSizeOf(c) * 0.5 * -0.1), text: c => `No cut. Your stop catches the remaining half on the way down: ${k$(rtSizeOf(c) * 0.5 * -0.1)}.` }
+          ],
+          later: `You followed an order you disagreed with and kept half your thesis. That's how you stay on a desk long enough to be right big.`,
+          verdict: { who: 'nadia', line: `Cut half when Victor asked. Didn't argue. That buys more trust than any P&L.` }
+        },
+        {
+          key: 'B', when: c => rtSizeOf(c) > 0, text: `Refuse. You're right about March, and the order is for other desks' mistakes.`, did: `Refused the order.`, defies: ['size'], exposure: c => rtSizeOf(c) >= 50 ? 'large' : 'normal',
+          q: 1, s: { coo: -2, bnd: 1, jdg: -1 }, cap: { soc: -2 },
+          outcomes: [
+            { p: when('pivot'), tone: 'good', fin: c => r1(rtSizeOf(c) * 0.21), text: c => `You were right about March: ${k$(rtSizeOf(c) * 0.21)}. Victor remembers the refusal longer than the profit.` },
+            { p: when('nopivot'), tone: 'bad', fin: c => r1(rtSizeOf(c) * -0.1), text: c => `No cut. Your stop fills on the way down: ${k$(rtSizeOf(c) * -0.1)}, the full size Victor told you to halve.` }
+          ],
+          later: `Being right doesn't make refusing a risk order right. On a desk, your limits are borrowed trust.`,
+          verdict: { who: 'nadia', line: `Refused a floor-wide order because they were sure. I don't care if they were right.` }
+        },
+        {
+          key: 'C', when: c => rtSizeOf(c) > 0, text: `Cut half, and buy $600 of March calls to keep the upside.`, did: `Cut half and kept the upside with calls.`, exposure: 'small',
+          q: 4, s: { coo: 2, jdg: 2, str: 2 }, cap: { soc: 1, str: 1 },
+          outcomes: [
+            { p: when('pivot'), tone: 'good', fin: c => r1(rtSizeOf(c) * 0.5 * 0.21 + 2.4), text: c => `The cut comes. Your half runs to $50 and the calls pay four times: ${k$(rtSizeOf(c) * 0.5 * 0.21 + 2.4)}.` },
+            { p: when('nopivot'), tone: 'mixed', fin: c => r1(rtSizeOf(c) * 0.5 * -0.1 - 0.6), text: c => `No cut. Your stop catches the half and the calls expire: ${k$(rtSizeOf(c) * 0.5 * -0.1 - 0.6)}. A capped loss on a thesis you kept.` }
+          ],
+          later: `You obeyed the order and kept the bet, for a cost you could name in advance. Following the rules and staying aggressive aren't opposites.`,
+          verdict: { who: 'nadia', line: `Halved the position and bought the upside back for six hundred dollars. That's what I'd want Victor to see.` }
+        },
+        {
+          key: 'D', when: c => rtSizeOf(c) > 0, text: `Sell all of it. If the floor is nervous, so are you.`, did: `Sold all of it.`, exposure: 'none',
+          q: c => saw(c, 0) ? (c.type === 'nopivot' ? 4 : 1) : 2, s: { reg: 1 }, cap: {},
+          outcomes: [
+            { p: when('pivot'), tone: 'mixed', fin: 0, text: `The cut comes in March and Halcyon runs to $50 without you.` },
+            { p: when('nopivot'), tone: 'good', fin: 0, text: `No cut. Halcyon slides to $33. You're out.` }
+          ],
+          later: c => saw(c, 0) && c.type === 'nopivot' ? `The futures had given up on March. You sold because of that, not because of the floor's nerves.` : `Selling everything because others are scared is borrowing their fear. Was it your evidence?`,
+          verdict: { who: 'theo', line: `Sold the lot. Sometimes that's wisdom. Sometimes it's the floor's nerves.` }
+        },
+        {
+          key: 'E', when: c => rtSizeOf(c) === 0, text: `Nothing to cut. Stay out.`, did: `Stayed out.`, exposure: 'none',
+          q: c => saw(c, 0) ? (c.type === 'pivot' ? 2 : 4) : 3, s: { reg: 1 }, cap: {},
+          outcomes: [
+            { p: when('pivot'), tone: 'mixed', fin: 0, text: `The cut comes in March. Halcyon runs to $50 without you.` },
+            { p: when('nopivot'), tone: 'good', fin: 0, text: `No cut. Halcyon slides to $33. You watched.` }
+          ],
+          later: `Nothing to cut, nothing to lose. Was it a decision, or Monday's sale still deciding for you?`,
+          verdict: { who: 'theo', line: `Out since Monday. Fine, if it's the evidence talking.` }
+        },
+        {
+          key: 'F', when: c => rtSizeOf(c) === 0, text: `Buy $600 of March calls: a small, capped way back into the thesis.`, did: `Bought a capped way back into the thesis.`, exposure: 'small',
+          q: c => saw(c, 0) ? (c.type === 'pivot' ? 4 : 1) : 3, s: { jdg: 2, str: 1 }, cap: { str: 1 },
+          outcomes: [
+            { p: when('pivot'), tone: 'good', fin: 2.4, text: `The cut comes. Your calls pay about four times: +$2,400.` },
+            { p: when('nopivot'), tone: 'mixed', fin: -0.6, text: `No cut. The calls expire: −$600, exactly what you could lose.` }
+          ],
+          later: `A small, capped bet on a thesis you still believed. You kept your exit discipline and your conviction.`,
+          verdict: { who: 'nadia', line: `Six hundred dollars of upside, no position to cut. Tidy.` }
+        }
+      ],
+      analysis: {
+        game: `Your conviction against the desk's rules. Victor's order isn't about Halcyon. It's about a floor that just learned what one bad night costs.`,
+        incentives: `You want to be right about March. Victor wants no more $4 million nights. Nadia wants both of you to still trust each other on Monday.`,
+        leverage: `Options: a way to keep the upside for a cost you can name, while still cutting the risk you were told to cut.`,
+        missing: `Whether March brings a cut. The futures were the best evidence.`,
+        assumptions: `That obeying means giving up the thesis. That being right justifies refusing.`,
+        controlled: `How you followed the order, not whether.`,
+        couldnt: `Victor, and the central bank.`,
+        concept: { thinker: 'aumann', term: `Repeated games`, name: `Your limits are borrowed trust`, body: `A desk is a repeated game. Refusing an order once, even when you're right, changes how much room you're given every day after. Aumann's insight: the shadow of the future changes the best move today.` },
+        second: { thinker: 'seykota', term: `Risk, not conviction`, name: `Keep the bet, cap the cost`, body: `When you're told to cut risk but still believe, look for the version of the bet that risks less: smaller size, a defined-loss option, a later entry.` },
+        better: `C. Cut half as ordered, and keep the upside for $600 of calls. If you were already out, F. If the futures had given up on March, D or E.`,
+        lesson: `You can follow the rules and stay aggressive. The skill is finding the version of the bet that fits inside them.`
+      },
+      life: { title: `The reorg`, text: `Your manager tells the team to freeze hiring after another team blew its budget. You have the perfect candidate. You can argue, quietly hire anyway, or find a contractor who can start now and convert later.` }
     },
 
     // ───────────────────────────────────────── 2. A capped downside, and a large upside
@@ -297,7 +539,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Bought a currency for its interest rate, the week its central bank was running out of money. I'd like to talk about how that looked.` }
         },
         {
-          key: 'E', text: `Ask Nadia for an exception: short $400,000 at 4×, no stop, and add on the next hike.`, did: `Asked for 4× with no stop.`, exposure: 'all', asks: true,
+          key: 'E', text: `Ask Nadia for an exception: short $400,000 at 4×, no stop, and add on the next hike.`, did: `Asked for 4× with no stop.`, exposure: 'all', asks: true, defies: ['leverage', 'stops'],
           q: c => saw(c, 2) ? 0 : 1, s: { reg: -3, jdg: -3, lng: -2, bnd: -2 }, cap: { psy: -2, soc: -2 },
           outcomes: [
             { p: c => refuses(c) ? 0 : when('breaks')(c), tone: 'good', fin: 48, text: `The peg breaks. At 4×, a 12% fall is $48,000. You'll spend years trying to feel this again.` },
@@ -375,7 +617,7 @@ window.PP = window.PP || {};
       question: `Five strong ideas. How many bets is that?`,
       options: [
         {
-          key: 'A', text: `Your five best ideas, $12,000 each. Five sectors: you're diversified.`, did: `Built five positions on one bet.`, exposure: 'large', flags: { book: 'oneBet' },
+          key: 'A', text: `Your five best ideas, $12,000 each. Five sectors: you're diversified.`, did: `Built five positions on one bet.`, exposure: 'large', flags: { book: 'oneBet' }, defies: ['together'],
           q: c => saw(c, 1) || saw(c, 2) ? 0 : 1, s: { jdg: -1, inf: -1 }, cap: { psy: 1 },
           outcomes: [
             { p: when('melt'), tone: 'good', fin: 4.2, text: `Rates drift lower all summer and all five rise together. Up $4,200. It feels like five good decisions.` },
@@ -405,7 +647,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Built a book I could explain on the worst day of the year. That's the whole job.` }
         },
         {
-          key: 'D', text: `Put $40,000 into Quillfeather, your single best idea.`, did: `Concentrated the summer in one name.`, exposure: 'all', flags: { book: 'concentrated' },
+          key: 'D', text: `Put $40,000 into Quillfeather, your single best idea.`, did: `Concentrated the summer in one name.`, exposure: 'all', flags: { book: 'concentrated' }, defies: ['size'],
           q: 1, s: { jdg: -1, bnd: -1, reg: -1 }, cap: { psy: -1 },
           outcomes: [
             { p: when('melt'), tone: 'good', fin: 5.5, text: `Quillfeather rises 14% with the market. Up $5,500, the best summer on the desk.` },
@@ -482,7 +724,7 @@ window.PP = window.PP || {};
       question: `The cycle may have turned, with your book in it. What do you do?`,
       options: [
         {
-          key: 'A', text: c => bookOf(c) === 'cash' ? `Buy the dip: put $10,000 into the rate names that fell hardest.` : `Buy the dip: add $10,000 to the names that fell hardest.`, did: `Bought the dip.`, exposure: 'normal',
+          key: 'A', text: c => bookOf(c) === 'cash' ? `Buy the dip: put $10,000 into the rate names that fell hardest.` : `Buy the dip: add $10,000 to the names that fell hardest.`, did: `Bought the dip.`, exposure: 'normal', defies: ['smaller'],
           q: c => know(c) ? (delev(c) ? 0 : (['balanced', 'cash'].includes(bookOf(c)) ? 4 : 3)) : 1, s: { reg: -1, jdg: -1 }, cap: {},
           outcomes: [
             { p: when('deleveraging'), tone: 'bad', fin: c => r1(L(c) - 3), text: c => `The borrowed money keeps leaving. Your book loses ${k$(-L(c))}, and the dip you bought loses $3,000 more.` },
@@ -512,7 +754,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Cut exactly what was moving together. That's reading the book, not the headlines.` }
         },
         {
-          key: 'D', text: c => bookOf(c) === 'cash' ? `Borrow to buy big: $40,000 of the rate names, at 2×.` : `Lever up: borrow to buy more of everything, at 2×.`, did: `Levered up into the drop.`, exposure: 'all',
+          key: 'D', text: c => bookOf(c) === 'cash' ? `Borrow to buy big: $40,000 of the rate names, at 2×.` : `Lever up: borrow to buy more of everything, at 2×.`, did: `Levered up into the drop.`, exposure: 'all', defies: ['leverage', 'smaller'],
           q: 0, s: { reg: -3, jdg: -3, bnd: -2 }, cap: { psy: -2, soc: -1 },
           outcomes: [
             { p: when('deleveraging'), tone: 'bad', fin: c => r1(bookOf(c) === 'cash' ? -9 : 2 * L(c) - 3), text: `You borrowed into a market that was being forced to stop borrowing. The selling feeds on itself, and your leverage feeds it too.` },
@@ -542,7 +784,7 @@ window.PP = window.PP || {};
           verdict: { who: 'theo', line: `Turned around in one morning. With the right evidence that's the best trade of the year. Without it, it's a guess.` }
         },
         {
-          key: 'G', text: c => bookOf(c) === 'cash' ? `Stay in cash and watch.` : `Hold. The book was built to take a morning like this.`, did: c => bookOf(c) === 'cash' ? `Stayed in cash.` : `Held the book through it.`,
+          key: 'G', text: c => bookOf(c) === 'cash' ? `Stay in cash and watch.` : `Hold. The book was built to take a morning like this.`, did: c => bookOf(c) === 'cash' ? `Stayed in cash.` : `Held the book through it.`, defies: c => bookOf(c) === 'oneBet' ? ['together'] : [],
           exposure: c => ({ oneBet: 'large', concentrated: 'all', hedged: 'normal', balanced: 'normal', cash: 'none' })[bookOf(c)],
           q: c => ({
             balanced: 4,
@@ -618,7 +860,7 @@ window.PP = window.PP || {};
       question: `How much are you willing to risk to win?`,
       options: [
         {
-          key: 'A', text: `Ask Nadia for an exception: 4× leverage, the whole account. This is the one.`, did: `Asked for 4× on the whole account.`, exposure: 'all', asks: true,
+          key: 'A', text: `Ask Nadia for an exception: 4× leverage, the whole account. This is the one.`, did: `Asked for 4× on the whole account.`, exposure: 'all', asks: true, defies: ['leverage', 'size'],
           q: 0, s: { reg: -3, jdg: -3, lng: -3, bnd: -2 }, cap: { psy: -2, soc: -2 },
           outcomes: [
             { p: c => refuses(c) ? 0 : when('works')(c), tone: 'good', fin: 120, text: `It works. With 4× leverage, a 30% move more than doubles your account. You're the best performer on the floor, and you'll spend years trying to feel this again.` },
@@ -631,7 +873,7 @@ window.PP = window.PP || {};
           verdict: { who: 'nadia', line: `Asked me for an exception to bet the whole account. That's how good traders leave.` }
         },
         {
-          key: 'B', text: `Buy $25,000 with no exit planned. You're sure about this one.`, did: `Bet big with no exit.`, exposure: 'large',
+          key: 'B', text: `Buy $25,000 with no exit planned. You're sure about this one.`, did: `Bet big with no exit.`, exposure: 'large', defies: ['stops'],
           q: 1, s: { jdg: -1, reg: -1, bnd: -1 }, cap: { psy: -1 },
           outcomes: [
             { p: when('works'), tone: 'good', fin: 7.5, text: `It works. A $7,500 gain to close the year.` },
@@ -770,14 +1012,32 @@ window.PP = window.PP || {};
   };
 
   const SCREENS = {
-    'losing-position': {
+    'round-trip-1': {
       center: () => {
-        const b = [36, 182, 640, 536], closes = path(54, [[0, 55], [0.3, 58.5], [0.55, 50], [0.8, 46], [1, 41.62]], 4), Y = scaler(b, 37, 61);
-        return header('CORVANE', 'Cloud data platform', '41.62', 'AH 38.90 / 39.40', C.red) + frame(b) + candles(b, closes, Y, 9) +
-          dash(b, Y(52.02), C.dim, 'YOUR AVERAGE 52.02') + dash(b, Y(47.8), C.amber, 'YOUR LINE 47.80') +
-          panel(668, 182, 300, 354, [['YOU OWN', { size: 17, fill: C.dim }], ['880 shares', { size: 28, sans: true, weight: 600 }], ['Average $52.02', { size: 18, fill: C.dim, gap: 30 }], ['46% of account', { size: 18, fill: C.amber, gap: 54 }], ['−$9,150', { size: 46, fill: C.red, sans: true, weight: 600, gap: 40 }], ['at the close', { size: 18, fill: C.red }]], '#3c2220');
+        const b = [36, 182, 640, 536], closes = path(40, [[0, 37.5], [0.5, 40.5], [0.95, 40.2], [1, 36.4]], 31, 0.35), Y = scaler(b, 34, 43);
+        return header('HALCYON', 'Homebuilder', '36.40', 'gapped −9% on jobs', C.red) + frame(b) + candles(b, closes, Y, 7) +
+          dash(b, Y(40), C.dim, 'YOU PAID 40.00') + dash(b, Y(37), C.amber, 'YOUR STOP 37.00') +
+          panel(668, 182, 300, 354, [['YOU OWN', { size: 17, fill: C.dim }], ['625 shares', { size: 28, sans: true, weight: 600 }], ['$25,000 at cost', { size: 18, fill: C.dim, gap: 54 }], ['THROUGH YOUR STOP', { size: 17, fill: C.amber }], ['−$2,250', { size: 40, fill: C.red, sans: true, weight: 600 }]], '#3c2220');
       },
-      right: () => feed('NEWS · CORVANE', [['20:41', `Corvane's biggest customer may move to in-house AI`, C.amber], ['20:12', 'Cloud software stocks slip after hours'], ['19:30', 'Analyst trims Corvane target'], ['RISK', 'STOP BREACH 47.80 · 9 days · unacknowledged', C.red], ['AH', 'Corvane 38.90 / 39.40 · 4,200 shares traded', C.dim]])
+      right: () => feed('NEWS · 08:30', [['08:30', 'Jobs report runs hot', C.amber], ['08:34', 'Futures now price one March cut, not two'], ['09:30', 'Halcyon opens 36.40 · 2,000 bid'], ['RISK', 'STOP 37.00 · gapped through', C.red]])
+    },
+    'round-trip-2': {
+      center: ctx => {
+        const b = [36, 182, 640, 536], closes = path(40, [[0, 40.2], [0.3, 36.4], [0.7, 38.2], [1, 39.5]], 32, 0.3), Y = scaler(b, 34, 43);
+        return header('HALCYON', 'Homebuilder', '39.50', 'soft inflation print', C.teal) + frame(b) + candles(b, closes, Y, 8) +
+          dash(b, Y(36.4), C.dim, 'MONDAY 36.40') + dash(b, Y(37), C.amber, 'OLD STOP 37.00') +
+          panel(668, 182, 300, 354, [['YOUR POSITION', { size: 17, fill: C.dim }], [rtShort(ctx), { size: 26, sans: true, weight: 600, gap: 60 }], ['THESIS', { size: 17, fill: C.dim }], ['Cut in March', { size: 24, sans: true }]]);
+      },
+      right: () => feed('NEWS · WEDNESDAY', [['08:30', 'Inflation comes in soft', C.teal], ['08:40', 'Futures: one March cut'], ['09:30', 'Homebuilders lead the open'], ['DESK', 'Theo: "This is Wednesday\'s decision."', C.dim]])
+    },
+    'round-trip-3': {
+      center: ctx => {
+        const b = [36, 182, 640, 536], closes = path(40, [[0, 39.5], [0.5, 40.1], [1, 41.2]], 33, 0.3), Y = scaler(b, 34, 46);
+        return header('HALCYON', 'Homebuilder', '41.20', 'Friday', C.teal) + frame(b) + candles(b, closes, Y, 9) +
+          dash(b, Y(45), C.dim, 'MARCH CALLS PAY ABOVE 45') + dash(b, Y(37), C.amber, 'STOP 37.00') +
+          panel(668, 182, 300, 354, [['YOUR POSITION', { size: 17, fill: C.dim }], [rtShort(ctx), { size: 26, sans: true, weight: 600, gap: 60 }], ['VICTOR AMES', { size: 17, fill: C.red }], ['Halve it by the close', { size: 22, sans: true }]], '#3c2220');
+      },
+      right: () => feed('FLOOR · FRIDAY', [['07:10', 'Another desk loses $4m overnight', C.red], ['07:45', 'Victor Ames: halve all positions by the close', C.amber], ['09:30', 'Halcyon 41.20'], ['OPTIONS', 'March calls · ~$600', C.dim]])
     },
     'the-peg': {
       center: () => {
@@ -826,8 +1086,10 @@ window.PP = window.PP || {};
   const hand = (x, y, t, o = {}) => `<text x="${x}" y="${y}" font-family="${SERIF}" font-style="italic" font-size="${o.size || 40}" fill="${o.fill || INK}"${o.strike ? ' text-decoration="line-through"' : ''}${o.anchor ? ` text-anchor="${o.anchor}"` : ''}${o.weight ? ` font-weight="${o.weight}"` : ''}>${String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</text>`;
   const clip = (t, n) => t.length > n ? t.slice(0, n - 1) + '…' : t;
   const DAYS = [
-    { clock: '8:47 PM', month: 'MARCH', day: '11', wd: 'TUESDAY', msg: ['Sam', 'Dinner is in the oven. Coming home?'] },
-    { clock: '9:14 AM', month: 'APRIL', day: '22', wd: 'MONDAY', msg: ['Mom', 'Saw the markets are up! So proud of you.'] },
+    { clock: '9:31 AM', month: 'MARCH', day: '3', wd: 'MONDAY', msg: ['Sam', 'Good luck today. Dinner at 7?'] },
+    { clock: '8:42 AM', month: 'MARCH', day: '5', wd: 'WEDNESDAY', msg: ['Mom', 'Saw the markets are up! So proud of you.'] },
+    { clock: '7:50 AM', month: 'MARCH', day: '7', wd: 'FRIDAY', msg: ['Sam', 'You were up at 4 again. Talk tonight?'] },
+    { clock: '9:14 AM', month: 'APRIL', day: '22', wd: 'MONDAY', msg: ['Theo', 'Valdor is at the floor. Seen it?'] },
     { clock: '1:40 PM', month: 'JUNE', day: '12', wd: 'THURSDAY', msg: ['Sam', "Don't forget Mia's recital at 6."] },
     { clock: '6:15 AM', month: 'JANUARY', day: '14', wd: 'WEDNESDAY', msg: ['Sam', 'You were up at 4 again. Talk tonight?'] },
     { clock: '10:05 PM', month: 'DECEMBER', day: '18', wd: 'FRIDAY', msg: ['Mia', 'Are you coming to the party?'] }
@@ -835,9 +1097,9 @@ window.PP = window.PP || {};
   // What the phone shows: your life, unless the desk has something to say first.
   const phoneMsg = (i, ctx) => {
     const past = ctx.past || {}, steps = ctx.steps || [], cap = ctx.cap || {};
-    if (i === 2 && past['the-peg'] === 'E') return ['Nadia', 'About Valdor. My office, 8:30.'];
-    if (i === 3 && steps.filter(x => x.broke).length >= 2) return ['Nadia', "Let's talk about your sizing. 8:30?"];
-    if (i === 4 && cap.soc < 5) return ['Nadia', "I've read your file. Don't ask for an exception."];
+    if (i === 4 && past['the-peg'] === 'E') return ['Nadia', 'About Valdor. My office, 8:30.'];
+    if (i === 5 && steps.filter(x => x.broke).length >= 2) return ['Nadia', "Let's talk about your sizing. 8:30?"];
+    if (i === 6 && cap.soc < 5) return ['Nadia', "I've read your file. Don't ask for an exception."];
     return DAYS[i].msg;
   };
   const desk = i => ({
@@ -856,7 +1118,7 @@ window.PP = window.PP || {};
     },
     journal: ctx => {
       const steps = ctx.steps || [];
-      const lines = i === 0 ? [{ t: 'Corvane 880 @ 52.02.' }, { t: 'Thesis: retention is strong.' }, { t: 'The drop is market-wide,' }, { t: 'not Corvane.' }]
+      const lines = i === 0 ? [{ t: 'Halcyon 625 @ 40.00.' }, { t: 'Thesis: a cut in March.' }, { t: 'Stop: 37.' }, { t: 'Hot jobs = thesis in doubt.' }]
         : steps.map(x => ({ t: `${x.title}: ${x.did}`, strike: x.broke }));
       const today = i === 0 ? [] : [{ t: `${DAYS[i].month.charAt(0) + DAYS[i].month.slice(1).toLowerCase()} ${DAYS[i].day}: ?`, today: true }];
       return hand(30, 60, 'Journal', { size: 44, weight: 600 }) + [...lines, ...today].slice(-6).map((l, k) =>
@@ -871,54 +1133,87 @@ window.PP = window.PP || {};
         `<text x="135" y="90" font-family="system-ui, sans-serif" font-size="44" fill="#eef2f4" text-anchor="middle">${DAYS[i].clock.replace(/ (AM|PM)/, '')}</text></g>`;
     }
   });
-  const ENV = { 'losing-position': 'desk-dusk', 'the-peg': 'desk-morning', 'the-book': 'desk-noon', 'the-turn': 'desk-rain', 'final-bet': 'desk-night' };
-  const ORDER = ['losing-position', 'the-peg', 'the-book', 'the-turn', 'final-bet'];
+  const ENV = { 'round-trip-1': 'desk-morning', 'round-trip-2': 'desk-noon', 'round-trip-3': 'desk-dusk', 'the-peg': 'desk-morning', 'the-book': 'desk-noon', 'the-turn': 'desk-rain', 'final-bet': 'desk-night' };
+  const ORDER = ['round-trip-1', 'round-trip-2', 'round-trip-3', 'the-peg', 'the-book', 'the-turn', 'final-bet'];
   const screensFor = id => ({ ...SCREENS[id], ...desk(ORDER.indexOf(id)) });
   M.scenes = {
-    'losing-position': {
-      env: ENV['losing-position'],
-      screens: screensFor('losing-position'),
-      cast: [{ id: 'theo', spot: 'theo', mood: 'neutral', pose: 'pocket', wants: `Nothing from you. He's watched this night happen to a lot of people.` }],
+    'round-trip-1': {
+      env: ENV['round-trip-1'],
+      screens: screensFor('round-trip-1'),
+      cast: [
+        { id: 'theo', spot: 'theo', mood: 'neutral', pose: 'pocket', wants: `To see whether your stops are real.` },
+        { id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `For the stop you wrote to be the stop you keep.` }
+      ],
       intro: [
-        { cam: 'wide', caption: `8:47 pm. The trading floor is nearly empty.` },
-        { cam: 'screens', caption: `On the center screen: the Corvane shares you bought at $56, then $51, then $49. They closed at $41.62.` },
-        { cam: 'note', caption: `Beside the keyboard, in your handwriting: "Thesis: retention is strong. The drop is market-wide, not Corvane."` },
-        { cam: 'screens', ...alert(`20:41 · Corvane's biggest customer may move to in-house AI`), caption: `The news isn't about the market anymore. It's about Corvane.` },
-        { cam: 'screens', ...alert(`RISK · STOP BREACH 47.80 · 9 days · unacknowledged`) },
-        { cam: 'wide', caption: `Theo, thirty-one years on this desk, is packing up to go home.` },
-        { who: 'theo', mood: 'neutral', say: `Long night?` },
-        { you: `(It'll come back. It always comes back.)` },
-        { who: 'theo', mood: 'thinking', pose: 'pocket', say: `The market doesn't know what you paid, you know. It's just you and the number.` },
-        { cam: 'screens', ...alert(`After hours: 38.90 to sell · 39.40 to buy · thin`), caption: `Regular trading opens at 9:30 tomorrow. Tonight, you can still sell, at a worse price.` }
+        { cam: 'wide', caption: `Monday, 8:29. You own 625 Halcyon Homes at $40, on a bet that rates get cut in March.` },
+        { cam: 'note', caption: `Beside the keyboard, in your handwriting: "Stop $37. Hot jobs data = thesis in doubt."` },
+        { cam: 'screens', ...alert(`08:30 · Jobs report runs hot`), caption: `The number everyone was waiting for.` },
+        { cam: 'screens', ...alert(`09:30 · HALCYON OPENS 36.40 · through your stop`) },
+        { who: 'theo', mood: 'neutral', pose: 'pocket', say: `Gapped through your line?` },
+        { you: `(It'll come back. One report.)` },
+        { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `Two thousand bid at thirty-six forty. You can be out in one print.` }
       ],
       options: {
-        A: { line: `(Sell all of it. Now.)`, preview: `Ends the damage at a bad price. Admits you were wrong.`,
-          outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`SOLD 880 CORVANE · AVG 38.71 · Loss −11,713`) }, { who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`PRE-MARKET · CORVANE 33.10 · customer confirms move`) }] },
-            { beats: [{ cam: 'screens', ...alert(`SOLD 880 CORVANE · AVG 38.71 · Loss −11,713`) }, { who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', ...alert(`PRE-MARKET · CORVANE 44.00 · customer denies report`), caption: `Wrong about the news. Right about the decision.` }] }
-          ] },
-        B: { line: `(Hold. One unnamed source. The company's still sound.)`, preview: `Keeps the hope, and all the risk.`,
-          outcomes: [
-            { beats: [{ who: 'theo', mood: 'skeptical', act: 'shake' }, { cam: 'screens', ...alert(`PRE-MARKET · CORVANE 33.10 · customer confirms move`) }] },
-            { beats: [{ who: 'theo', mood: 'neutral', pose: 'shrug' }, { cam: 'screens', ...alert(`PRE-MARKET · CORVANE 44.00 · customer denies report`), caption: `It comes back. This time.` }] }
-          ] },
-        C: { line: `(Buy 880 more. At this price it's a bargain.)`, preview: `Doubles the bet on a thesis that may be breaking.`,
-          outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`BOUGHT 880 CORVANE @ 39.40 · now 1,760 shares`) }, { who: 'theo', mood: 'surprised', act: 'glance' }, { cam: 'screens', ...alert(`CORVANE 29.90 · Loss −27,800`) }] },
-            { beats: [{ cam: 'screens', ...alert(`BOUGHT 880 CORVANE @ 39.40 · now 1,760 shares`) }, { who: 'theo', mood: 'skeptical' }, { cam: 'screens', ...alert(`CORVANE 46.00 · customer denies report`), caption: `It works, and you'll remember that it worked.` }] }
-          ] },
-        D: { line: `(Sell half now. The rest goes at the open if it's under $36.)`, preview: `Cuts the risk. Keeps a foot in.`,
-          outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`SOLD 440 CORVANE · AVG 38.85`) }, { cam: 'screens', ...alert(`OPEN 33.10 · rest sold below your line`), caption: `A gap goes straight through any line you draw.` }] },
-            { beats: [{ cam: 'screens', ...alert(`SOLD 440 CORVANE · AVG 38.85`) }, { who: 'theo', mood: 'neutral', act: 'nod' }, { cam: 'wide', caption: `The customer denies it. The half you kept recovers.` }] }
-          ] },
-        E: { line: `(Not in a thin market. I'll decide at the open.)`, preview: `A fairer price, if the news turns out to be wrong.`,
-          outcomes: [
-            { beats: [{ who: 'theo', mood: 'neutral', pose: 'shrug' }, { cam: 'screens', ...alert(`PRE-MARKET · CORVANE 33.10 · customer confirms move`), caption: `The fairer price got a lot worse overnight.` }] },
-            { beats: [{ cam: 'screens', ...alert(`PRE-MARKET · CORVANE 44.00 · customer denies report`), caption: `You sell into the bounce.` }] }
-          ] }
+        A: { line: `Sell all six twenty-five. That was the plan.`, preview: `Keeps the promise, at a worse price.`,
+          outcomes: [{ beats: [{ cam: 'screens', ...alert(`SOLD 625 · 36.40 · −2,250`) }, { who: 'nadia', mood: 'smile', act: 'nod', caption: `She initials it. "Clean."` }, { cam: 'screens', ...alert(`WEDNESDAY · HALCYON 39.50`), caption: `It stings. It was still right.` }] }] },
+        B: { line: `(Hold. One report.)`, preview: `Keeps the hope, and all the risk.`,
+          outcomes: [{ beats: [{ who: 'theo', mood: 'skeptical', act: 'shake' }, { cam: 'screens', ...alert(`WEDNESDAY · HALCYON 39.50`), caption: `It came back. That's the worst thing that could have taught you.` }] }] },
+        C: { line: `(Buy six twenty-five more. Better price.)`, preview: `Same thesis, twice the size, no stop.`,
+          outcomes: [{ beats: [{ who: 'nadia', mood: 'surprised' }, { cam: 'screens', ...alert(`WEDNESDAY · HALCYON 39.50 · +1,600`), caption: `Half the account now rides on March.` }] }] },
+        D: { line: `Selling half. New stop at thirty-five on the rest.`, preview: `Half the promise kept.`,
+          outcomes: [{ beats: [{ who: 'nadia', mood: 'neutral', act: 'nod' }, { cam: 'screens', ...alert(`WEDNESDAY · HALCYON 39.50`) }] }] }
       },
+      links: [['nadia', 'theo', 'trusts']]
+    },
+    'round-trip-2': {
+      env: ENV['round-trip-2'],
+      screens: screensFor('round-trip-2'),
+      cast: [{ id: 'theo', spot: 'theo', mood: 'neutral', pose: 'pocket', wants: `To see whether you can judge Wednesday on Wednesday.` }],
+      intro: [
+        { cam: 'wide', caption: `Wednesday. Halcyon is back to $39.50.` },
+        { if: c => rtGroup(c) === 'out', cam: 'journal', caption: `Your journal: "Sold 625 at 36.40." It's three dollars lower than the screen.` },
+        { if: c => rtGroup(c) === 'in', cam: 'journal', caption: `Your journal still says "Stop $37." The position is still on.` },
+        { cam: 'screens', ...alert(`08:30 · Inflation comes in soft`) },
+        { who: 'theo', mood: 'thinking', pose: 'pocket', say: `Same stock, new information. What would you do if you'd never owned it?` }
+      ],
+      options: Object.fromEntries([
+        ['A', `Buying back in. Twenty-five thousand, stop at thirty-seven.`, `Pays $3 more than you sold for.`],
+        ['B', `Back in at fifty thousand, stop at thirty-seven eighty.`, `Bigger, with a tighter stop. Right only if the evidence got better.`],
+        ['C', `(Not paying three dollars more than I sold for.)`, `Anchored to your own exit.`],
+        ['D', `(Bid thirty-seven fifty and wait.)`, `Cheaper, if it ever comes back.`],
+        ['E', `Adding back to full size, stop at thirty-seven.`, `Sizes Wednesday on Wednesday.`],
+        ['F', `(Keep the half.)`, `Nothing new.`],
+        ['G', `(Sell the rest. Glad to be even.)`, `Out at break-even, for break-even's sake.`],
+        ['H', `Stop back at thirty-seven. Holding.`, `A stop again. Will you keep this one?`],
+        ['I', `Selling at thirty-nine fifty. Starting clean.`, `Uses the bounce to do Monday's job.`],
+        ['J', `(Add twenty-five thousand more. It's working.)`, `More size on a position held through its stop.`]
+      ].map(([k, line, preview]) => [k, { line, preview, outcomes: [{ beats: [{ cam: 'screens', ...alert(`FRIDAY · HALCYON 41.20`) }, { who: 'theo', mood: 'neutral', act: 'nod' }] }] }])),
       links: []
+    },
+    'round-trip-3': {
+      env: ENV['round-trip-3'],
+      screens: screensFor('round-trip-3'),
+      cast: [
+        { id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `For Victor's order to be followed, by everyone.` },
+        { id: 'theo', spot: 'theo', mood: 'thinking', pose: 'thinking', wants: `To see whether you can follow an order and keep a bet.` }
+      ],
+      intro: [
+        { cam: 'wide', caption: `Friday morning. The floor is quieter than usual.` },
+        { cam: 'screens', ...alert(`07:10 · Another desk lost $4 million overnight`) },
+        { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `Victor wants every position on the floor halved by the close. Every position.` },
+        { if: c => rtSizeOf(c) > 0, you: `(But I'm right about March.)` },
+        { if: c => rtSizeOf(c) === 0, you: `(I'm out. Should I be?)` },
+        { who: 'theo', mood: 'thinking', pose: 'thinking', say: `I got that order once on the best trade I ever had. Following it was the second-best trade.` }
+      ],
+      options: {
+        A: { line: `Cutting half, as ordered.`, preview: `Keeps half the thesis, and Victor's trust.`, outcomes: [{ beats: [{ cam: 'screens', ...alert(`MARCH · CUT · HALCYON 50`) }, { who: 'nadia', mood: 'smile', act: 'nod' }] }, { beats: [{ cam: 'screens', ...alert(`MARCH · NO CUT · STOP FILLED`) }, { who: 'nadia', mood: 'neutral', act: 'nod' }] }] },
+        B: { line: `(No. I'm right about March.)`, preview: `Full size, and a refusal on your file.`, outcomes: [{ beats: [{ cam: 'screens', ...alert(`MARCH · CUT · HALCYON 50`) }, { who: 'nadia', mood: 'skeptical', pose: 'crossed', caption: `Victor remembers the refusal longer than the profit.` }] }, { beats: [{ cam: 'screens', ...alert(`MARCH · NO CUT · FULL SIZE STOPPED`) }, { who: 'nadia', mood: 'frustrated', pose: 'crossed' }] }] },
+        C: { line: `Cutting half, and buying six hundred dollars of March calls.`, preview: `Obeys the order. Keeps the upside, for a cost you can name.`, outcomes: [{ beats: [{ cam: 'screens', ...alert(`MARCH · CUT · HALCYON 50 · CALLS ×4`) }, { who: 'theo', mood: 'smile', act: 'nod' }] }, { beats: [{ cam: 'screens', ...alert(`MARCH · NO CUT · CALLS EXPIRE · −600`) }, { who: 'nadia', mood: 'neutral', act: 'nod', caption: `A capped loss on a thesis you kept.` }] }] },
+        D: { line: `(Sell it all.)`, preview: `Out, whatever March brings.`, outcomes: [{ beats: [{ cam: 'screens', ...alert(`MARCH · CUT · HALCYON 50`), caption: `Without you.` }] }, { beats: [{ cam: 'screens', ...alert(`MARCH · NO CUT · HALCYON 33`), caption: `You're out.` }] }] },
+        E: { line: `(Nothing to cut. Stay out.)`, preview: `No position, no decision.`, outcomes: [{ beats: [{ cam: 'screens', ...alert(`MARCH · CUT · HALCYON 50`), caption: `Without you.` }] }, { beats: [{ cam: 'screens', ...alert(`MARCH · NO CUT · HALCYON 33`), caption: `You watched.` }] }] },
+        F: { line: `Six hundred dollars of March calls.`, preview: `A small, capped way back in.`, outcomes: [{ beats: [{ cam: 'screens', ...alert(`MARCH · CUT · CALLS ×4 · +2,400`) }, { who: 'theo', mood: 'smile', act: 'nod' }] }, { beats: [{ cam: 'screens', ...alert(`MARCH · NO CUT · CALLS EXPIRE · −600`) }] }] }
+      },
+      links: [['nadia', 'theo', 'trusts']]
     },
 
     'the-peg': {
@@ -930,8 +1225,8 @@ window.PP = window.PP || {};
       ],
       intro: [
         { cam: 'wide', caption: `April. The equity screens are quiet. The currency screen isn't.` },
-        { if: c => /^[AD]$/.test((c.past || {})['losing-position'] || ''), cam: 'rules', caption: `Nadia initialed your Corvane exit back in March. "Clean," she wrote. It's still on your card.` },
-        { if: c => /^[BCE]$/.test((c.past || {})['losing-position'] || ''), cam: 'journal', caption: `Corvane is still in your journal. So is the night you didn't sell.` },
+        { if: c => /^[AD]$/.test((c.past || {})['round-trip-1'] || ''), cam: 'rules', caption: `Nadia initialed your Halcyon exit back in March. "Clean," she wrote. It's still on your card.` },
+        { if: c => /^[BC]$/.test((c.past || {})['round-trip-1'] || ''), cam: 'journal', caption: `Halcyon is still in your journal. So is the Monday you didn't sell.` },
         { cam: 'screens', caption: `The Valdor crown is pegged to the Bloc mark, inside a 1% band. This morning it's sitting on the floor.` },
         { cam: 'screens', ...alert(`VALDOR RAISES RATES 2 POINTS · unemployment 11%`) },
         { who: 'theo', mood: 'thinking', pose: 'pocket', say: `I was on a desk the weekend one of these broke. Nobody believed it on Friday.` },

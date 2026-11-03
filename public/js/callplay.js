@@ -49,7 +49,7 @@ PP.callGame = (function () {
     return { cap, steps, ruinedAt };
   }
   const over = () => { const K = capitals(); return hist.length >= C.calls.length || K.ruinedAt !== null; };
-  const memory = (h = hist) => Object.fromEntries(h.map(e => [e.id, { key: e.key, flags: e.flags, truth: e.truth, picked: e.picked }]));
+  const memory = (h = hist) => Object.fromEntries(h.map(e => [e.id, { key: e.key, flags: e.flags, truth: e.truth, picked: e.picked, q: e.q, did: e.did, fin: e.out && e.out.fin, defies: e.defies || [] }]));
   const readsFor = psy => psy >= 7 ? 3 : psy >= 4 ? 2 : 1;
   const ruleMax = () => rules ? ruleOf(rules.risk).max : 4;
   const breaksRisk = exposure => MK.exposure[exposure] > ruleMax();
@@ -556,11 +556,16 @@ PP.callGame = (function () {
     set(opt.set);
     const breaks = [...(val(opt.breaks, s) || [])];
     if (s.flags.revealedSize) breaks.push('private');
-    if (s.call.id === 'shift' && s.sortedAway && key === 'A') breaks.push('evidence');
+    // Your journal: rules from the Desk bind every call; a rule from the Debrief binds the calls after it.
+    const defies = s.call.sized ? (s.picked >= 25 ? ['size'] : []) : (val(opt.defies, s) || []);
+    const journal = MK.journal.valid(MK.journal.stored('thedance:market:v1'), hist).filter(e => e.src === 'desk' || e.id !== s.call.id);
+    const brokeRule = journal.find(e => defies.includes(e.rule));
+    if (brokeRule) { opt = { ...opt, q: Math.max(0, opt.q - 1) }; breaks.push('learned'); }
+    if (opt.rule) MK.journal.add({ rule: opt.rule, id: s.call.id, src: 'call' });
     const delta = { fin: out.fin, time: -1 };
     [opt.cap, out.cap, after && after.cap].forEach(c => Object.entries(c || {}).forEach(([k, v]) => { delta[k] = (delta[k] || 0) + v; }));
     const before = capitals().cap;
-    hist.push({ id: s.call.id, truth: s.truth, key: opt.key, picked: s.picked, flags: { ...s.flags }, sorted: s.sorted, sortedAway: s.sortedAway, asked: s.asked, used: s.used, declined: s.declined, hungUp: s.hungUp, q: opt.q, exposure: opt.exposure, did: opt.did, text: opt.text, riskBroke: breaksRisk(opt.exposure), breaks: [...new Set(breaks)], out, after: after && after.text, verdict, delta });
+    hist.push({ id: s.call.id, defies, brokeRule: brokeRule ? brokeRule.rule : null, truth: s.truth, key: opt.key, picked: s.picked, flags: { ...s.flags }, sorted: s.sorted, sortedAway: s.sortedAway, asked: s.asked, used: s.used, declined: s.declined, hungUp: s.hungUp, q: opt.q, exposure: opt.exposure, did: opt.did, text: opt.text, riskBroke: breaksRisk(opt.exposure), breaks: [...new Set(breaks)], out, after: after && after.text, verdict, delta });
     save();
     act('');
     if (!s.call.sized && !await write({ who: 'y', t: opt.text })) return;
@@ -568,6 +573,7 @@ PP.callGame = (function () {
     if (!await write({ who: 'n', t: out.text })) return;
     if (after && !await write({ who: 'n', t: after.text })) return;
     if (verdict && !await write({ who: 'c', t: verdict })) return;
+    if (brokeRule && !await write({ who: 'n', t: `After ${MK.journal.from(brokeRule)} you wrote: “${MK.journalRules[brokeRule.rule].line}” This broke it.` })) return;
     const end = over();
     act(`<p class="cl-prompt">${out.tone === 'good' ? 'It went your way.' : out.tone === 'bad' ? 'It went against you.' : 'It went both ways.'} ${money(out.fin)} on the account.</p>
       <div class="cl-row"><button type="button" class="btn btn-primary" data-cact="unsaid">What wasn't said</button></div>`);
@@ -655,13 +661,13 @@ PP.callGame = (function () {
     const gathered = H.reduce((a, e) => a + e.asked + Object.keys(e.flags).filter(k => /^(asked|checked|read)/.test(k)).length, 0);
     const passes = H.filter(e => e.exposure === 'none').length;
     const big = H.filter(e => MK.exposure[e.exposure] >= 3).length;
-    const sh = H.find(e => e.id === 'shift');
+    const db = H.find(e => e.id === 'debrief');
     const dim = (k, lvl, t) => ({ k, lvl, t });
     return {
       kept, listened, passes, big,
       dims: [
         dim(`Consistency`, kept >= H.length - 1 ? 3 : kept >= H.length / 2 ? 2 : 1, `You kept your rules in ${NUM[kept] || kept} of ${NUM[H.length] || H.length} calls.`),
-        dim(`Adaptability`, !sh ? 1 : ['B', 'D'].includes(sh.key) ? 3 : sh.key === 'C' ? 2 : 1, !sh ? `You never reached the call that tested it.` : sh.key === 'A' ? `When the evidence turned, you defended the method${sh.sortedAway ? ', and filed the hardest evidence under "doesn\'t change it"' : ''}.` : sh.key === 'E' ? `When the evidence turned, you threw everything out at once. Changing your mind and abandoning your method aren't the same thing.` : `When the evidence turned, you changed how much you bet before you changed what you believe.`),
+        dim(`Self-honesty`, !db ? 1 : db.key === 'F' ? 1 : db.key === 'A' ? (db.q >= 3 ? 3 : 1) : db.q >= 4 ? 3 : 2, !db ? `You never reached the debrief.` : db.key === 'F' ? `At the debrief you blamed someone else's note.` : db.key === 'A' ? (db.q >= 3 ? `At the debrief you called it luck, and the file agreed.` : `At the debrief you called it luck. The grade didn't.`) : `At the debrief you wrote a rule${db.q >= 4 ? ' that named exactly what went wrong' : ''}${db.brokeRule ? '' : ''}.`),
         dim(`Risk management`, big === 0 ? 3 : big === 1 ? 2 : 1, big === 0 ? `You never put more at risk than you could afford to be wrong about.` : `${big === 1 ? 'Once' : `${NUM[big].charAt(0).toUpperCase() + NUM[big].slice(1)} times`}, you took a position big enough to change your year.`),
         dim(`Information gathering`, gathered >= 8 ? 3 : gathered >= 4 ? 2 : 1, `You asked, checked or tested ${gathered} times before deciding.${listened ? ` You let the silence work ${listened === 1 ? 'once' : NUM[listened] + ' times'}.` : ''}`),
         dim(`Psychological discipline`, K.cap.psy >= 6 && !H.some(e => e.hungUp) ? 3 : K.cap.psy >= 4 ? 2 : 1, `You finished with Composure ${K.cap.psy}.${H.some(e => e.id === 'committee' && ['A', 'B'].includes(e.key)) ? ' You went with the loudest voices on Kestrel.' : ''}${H.some(e => e.hungUp) ? ' You hung up when a call got uncomfortable.' : ''}`)
@@ -676,7 +682,8 @@ PP.callGame = (function () {
     if (T.passes >= 3) out.push(`You pass often. Some of those were patience. Look at the ones where the evidence was good and you passed anyway: that's the version of caution that costs money slowly.`);
     if (T.big >= 2) out.push(`When an idea excites you, your size grows with your excitement rather than your evidence.`);
     if (H.some(e => e.id === 'tip' && e.flags.committed)) out.push(`You said yes to Richard before you'd checked anything. A deadline you didn't set made the decision for you.`);
-    if (H.some(e => e.id === 'shift' && ['B', 'D'].includes(e.key))) out.push(`When your method stopped working, you made the next bet smaller before deciding what to believe. That's what intellectual humility looks like with money on it.`);
+    if (H.some(e => e.brokeRule)) out.push(`You broke a rule you'd written yourself. That's the most useful thing in this review: the rule was right, and the moment it was tested, it lost to the feeling. Next time, read it before you decide.`);
+    else if (H.some(e => e.id === 'debrief' && ['B', 'C', 'D', 'E'].includes(e.key))) out.push(`You turned your worst decision into a written rule. Pain plus reflection is how a mistake becomes a principle.`);
     if (!out.length) out.push(`You played an even game: no habit that cost you badly, none that carried you. The calls you'll learn most from are the ones where you were certain.`);
     return out.slice(0, 3);
   }

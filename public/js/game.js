@@ -130,6 +130,7 @@
     .replace(/\{rule\}/g, rules ? ruleOf('risk', rules.risk).label : 'your')
     .replace(/\{edge\}/g, rules ? ruleOf('edge', rules.edge).label.toLowerCase() : 'your edge')
     .replace(/\{account\}/g, `$${capitals().cap.fin}k`)
+    .replace(/\{halcyon\}/g, () => MK.rtPosition(derive(history).flags))
     .replace(/\{book\}/g, () => { const b = MK.books && MK.books[derive(history).flags.book]; return b ? b.name : `the book you built in June`; });
   function capitals(hist = history) {
     const cap = Object.fromEntries(MK.capitals.map(c => [c.k, c.start]));
@@ -139,7 +140,7 @@
       const sc = TRACKS.market.list[i], opt = resolve(sc, { rel: {}, flags: { ...flags }, type: typeOf(sc, h), cap: { ...cap } }, h.clues).find(o => o.key === h.key), oc = opt.outcomes[h.outcome];
       Object.assign(flags, opt.flags || {});
       const before = { ...cap };
-      cap.time -= 1;
+      if (!sc.freeTime) cap.time -= 1; // the later days of one trade share a single turn
       Object.entries(opt.cap || {}).forEach(([k, v]) => { cap[k] += v; });
       cap.fin = oc.ruin ? 0 : cap.fin + oc.fin;
       MK.capitals.forEach(c => { if (c.k !== 'fin') cap[c.k] = Math.max(0, Math.min(c.max, cap[c.k])); });
@@ -283,7 +284,23 @@
     const post = posterior(sc, ctx, clues);
     return post && post.length > 1 ? post.map(x => x.t) : null;
   }
+  // Rules from your journal that bind Desk decision i: written after an earlier decision that's still in the saves.
+  const deskHist = () => track === 'market' ? history : MK.journal.stored(TRACKS.market.key);
+  function rulesAt(i) {
+    const out = {};
+    MK.journal.valid(deskHist(), MK.journal.stored('thedance:call:v1')).filter(e => e.src === 'desk' && e.at < i).forEach(e => { out[e.rule] = e; });
+    return out;
+  }
+  function withJournal(sc, opts) {
+    const i = TRACKS.market.list.indexOf(sc), active = rulesAt(i);
+    if (!Object.keys(active).length) return opts;
+    return opts.map(o => {
+      const broke = (val(o.defies, o._c) || []).filter(r => active[r]);
+      return broke.length ? { ...o, q: Math.max(0, o.q - 1), brokeRules: broke.map(r => active[r]) } : o;
+    });
+  }
   function resolve(sc, ctx = { rel: {}, flags: {} }, clues = []) {
+    if (MARKET_IDS.has(sc.id)) return withJournal(sc, resolveRaw(sc, ctx, clues));
     const opts = resolveRaw(sc, ctx, clues);
     const ws = worlds(sc, ctx, clues);
     if (!ws) return opts;
@@ -795,7 +812,7 @@
     const press = sc.play && sc.press ? val(sc.press, ctxNow(sc)) : null;
     const options = optsNow(sc).map(o => `<li>
       <input type="radio" name="move" id="move-${sc.id}-${o.key}" value="${o.key}" ${draft.selected === o.key ? 'checked' : ''} ${trustLocked(o) ? 'disabled' : ''}>
-      <label for="move-${sc.id}-${o.key}" class="option ${trustLocked(o) ? 'is-locked' : ''}"><span class="option-key">${o.key}</span><span class="option-text">${fill(o.text)}${o.exposure ? `<span class="exp exp-${o.exposure} ${breaks(o) ? 'is-over' : ''}">${MK.exposureLabel[o.exposure]}${breaks(o) ? ' · over your limit' : ''}${trustLocked(o) ? ` · ${lockReason(o)}` : ''}</span>` : ''}</span></label>
+      <label for="move-${sc.id}-${o.key}" class="option ${trustLocked(o) ? 'is-locked' : ''}"><span class="option-key">${o.key}</span><span class="option-text">${fill(o.text)}${o.exposure ? `<span class="exp exp-${o.exposure} ${breaks(o) ? 'is-over' : ''}">${MK.exposureLabel[o.exposure]}${breaks(o) ? ' · over your limit' : ''}${o.brokeRules ? ' · breaks a rule in your journal' : ''}${trustLocked(o) ? ` · ${lockReason(o)}` : ''}</span>` : ''}</span></label>
     </li>`).join('');
     return `<form id="decide-form" class="decide">
       <div class="decide-top">
@@ -981,6 +998,19 @@
       <p class="evx-note">Averages use the odds of every world you couldn't rule out. The highest average isn't always the best move: one that can end your game, or breaks your rule, has to clear a much higher bar.${rows.some(r => r.locked) ? ' Faded moves were locked for you.' : ''}</p></section>`;
   }
 
+  // After a weak decision or a loss bigger than planned, the desk asks you to write a rule. Later decisions are held to it.
+  function journalBox(sc, idx, move) {
+    const mine = MK.journal.load().find(e => e.src === 'desk' && e.id === sc.id && e.at === idx);
+    if (mine) return `<section class="jbox is-set"><p class="jbox-k">In your journal</p><p class="jbox-rule">“${MK.journalRules[mine.rule].line}”</p><p class="jbox-note">Every decision after this one is held to it.</p></section>`;
+    const plan = MK.plannedRisk[move.opt.exposure] || 0, lost = move.outcome.ruin ? Infinity : -move.outcome.fin;
+    if (move.opt.q > 2 || (move.opt.q === 2 && lost <= plan + 0.05)) return '';
+    if (idx >= LIST.length - 1) return '';
+    const first = val(move.opt.defies, move.opt._c) || [];
+    const order = [...first, ...Object.keys(MK.journalRules).filter(k => !first.includes(k))].slice(0, 3);
+    return `<section class="jbox"><p class="jbox-k">Write it down</p><p class="jbox-note">${move.opt.q <= 1 ? `That decision graded ${grades[move.opt.q].name.toLowerCase()}.` : `That cost more than you planned to risk.`} Pick a rule for your journal. Every decision after this one will be held to it.</p>
+      <div class="jbox-opts">${order.map(k => `<button type="button" class="btn btn-ghost jbox-opt" data-act="rule" data-r="${k}">“${MK.journalRules[k].line}”</button>`).join('')}</div></section>`;
+  }
+
   function panelResultMarket(sc) {
     const idx = history.length - 1;
     const move = derive(history).moves[idx];
@@ -1021,7 +1051,9 @@
         </ol>
         ${skillLuck(sc, idx, move)}
         <h3 class="block-h">Your capital after this decision</h3><ul class="capds">${caps}</ul>
-        ${ruleLine ? `<p class="rule-line ${breaks(opt) ? 'is-broke' : ''}">${ruleLine}</p>` : ''}`;
+        ${ruleLine ? `<p class="rule-line ${breaks(opt) ? 'is-broke' : ''}">${ruleLine}</p>` : ''}
+        ${(opt.brokeRules || []).map(e => `<p class="rule-line is-broke">After ${MK.journal.from(e)} you wrote: <em>“${MK.journalRules[e.rule].line}”</em> This move broke it, and the grade counts that.</p>`).join('')}
+        ${journalBox(sc, idx, move)}`;
     } else if (ui.tab === 'game') {
       body = `
         <h3 class="viz-h">What each move could cost or earn</h3>${riskChart({ ...sc, options: priorOpts(sc, move.clues) }, opt.key, move.outcomeIdx)}
@@ -1372,13 +1404,28 @@
         <ul class="cap-notes">${MK.capitals.map(c => `<li><strong>${c.name}</strong> <span>${c.kind}.</span> ${c.note}</li>`).join('')}</ul>
       </section>
       <section class="wrap mk-list">
-        <div class="section-head"><p class="eyebrow">Five challenges</p><h2>Each one asks a single question about you.</h2></div>
+        <div class="section-head"><p class="eyebrow">Five challenges, seven decisions</p><h2>Each one asks a single question about you.</h2></div>
         <ol class="mkcs">${list}</ol>
       </section>
       ${rules ? '' : `<section class="wrap">${ruleForm}</section>`}`;
   }
 
   // The Mirror: the rules you set before the first trade, beside what you did under pressure.
+  // Your principles: the rules you wrote this year, and whether you kept them when they were tested.
+  function principlesHTML(C) {
+    const J = MK.journal.valid(history, MK.journal.stored('thedance:call:v1')).filter(e => e.src === 'desk');
+    if (!J.length) return '';
+    const rows = J.map(e => {
+      const later = C.steps.filter((x, i) => i > e.at);
+      const tested = later.filter(x => x.sc.options.some(o => (val(o.defies, x.opt._c) || []).includes(e.rule)));
+      const broke = later.filter(x => (val(x.opt.defies, x.opt._c) || []).includes(e.rule));
+      return `<li class="pr-row ${broke.length ? 'is-broke' : ''}"><p class="pr-rule">“${MK.journalRules[e.rule].line}”</p>
+        <p class="pr-meta">Written after ${MK.journal.from(e)} · ${!tested.length ? 'not tested again this year' : broke.length ? `broken ${broke.length === 1 ? 'once' : `${NUM[broke.length]} times`}, in ${broke.map(x => x.sc.title).join(' and ')}` : `kept ${tested.length === 1 ? 'the one time' : `all ${NUM[tested.length]} times`} it was tested`}</p></li>`;
+    }).join('');
+    return `<section class="wrap principles-own"><div class="section-head"><p class="eyebrow">Your principles</p><h2>The rules you wrote down, and what you did with them.</h2></div><ol class="pr-list">${rows}</ol>
+      <p class="mind-p">Pain plus reflection is how a mistake becomes a principle. Keeping it the next time is how a principle becomes yours.</p></section>`;
+  }
+
   function mirror(C, edgeSummary) {
     const rr = ruleOf('risk', rules.risk), ed = ruleOf('edge', rules.edge);
     const kept = C.steps.filter(x => !x.broke).length, n = C.steps.length;
@@ -1459,6 +1506,7 @@
         </div>
         <section class="block card"><h2 class="block-h">Five kinds of capital <span class="block-hint">the tick marks where you started</span></h2><ul class="caprs">${capRows}</ul></section>
         ${rules ? mirror(C, edgeSummary) : ''}
+        ${principlesHTML(C)}
         <section class="block"><h2 class="block-h">Decision review</h2><p class="small">What you knew, what you chose, what happened, and whether the reasoning was sound. Annie Duke's distinction: a good decision can lose, and a bad one can win.</p><ol class="drs">${review}</ol></section>
         ${ledger}
         ${said ? `<section class="block"><h2 class="block-h">What the desk saw</h2><svg width="0" height="0" class="defs-only" aria-hidden="true">${PP.art.DEFS}</svg><ul class="said-list">${said}</ul></section>` : ''}
@@ -1511,7 +1559,7 @@
 
   document.addEventListener('click', e => {
     if (e.target.closest('[data-act="repair"]')) {
-      try { [TRACKS.main.key, TRACKS.market.key, RULES_KEY, FIRSTS_KEY, 'thedance:call:v1', 'thedance:call:rules'].forEach(k => localStorage.removeItem(k)); } catch (err) { /* storage unavailable */ }
+      try { [TRACKS.main.key, TRACKS.market.key, RULES_KEY, FIRSTS_KEY, 'thedance:call:v1', 'thedance:call:rules', 'thedance:journal:v1'].forEach(k => localStorage.removeItem(k)); } catch (err) { /* storage unavailable */ }
       location.reload(); return;
     }
     const nav = e.target.closest('[data-nav]');
@@ -1563,7 +1611,7 @@
       case 'rules-edit': rules = null; saveRules(); render(); break;
       case 'market-reset':
         if (!confirmReset) { confirmReset = true; render(); app.querySelector('[data-act="market-reset"]').focus(); return; }
-        confirmReset = false; history = []; save(); rules = null; saveRules(); draft = fresh(); go('market');
+        confirmReset = false; history = []; save(); rules = null; saveRules(); MK.journal.clear('desk'); draft = fresh(); go('market');
         break;
       case 'bench': go('bench'); break;
       case 'episodes': go('episodes'); break;
@@ -1589,8 +1637,14 @@
         commitMove(sc, key, { push: v, said: p[v].line });
         break;
       }
+      case 'rule': {
+        const idx = history.length - 1;
+        if (isMarket() && MK.journalRules[act.dataset.r]) MK.journal.add({ rule: act.dataset.r, id: LIST[idx].id, at: idx, src: 'desk' });
+        renderPanel(); break;
+      }
       case 'takeback': {
         const idx = history.length - 1;
+        if (isMarket()) MK.journal.trim(idx);
         if (!isMarket() && firsts[LIST[idx].id] == null) { firsts[LIST[idx].id] = derive(history).moves[idx].opt.q; saveFirsts(); }
         const last = history.pop(); save();
         if (isMarket()) {
@@ -1611,7 +1665,7 @@
           return;
         }
         confirmScene = -1;
-        if (i < history.length) { history = history.slice(0, i); save(); }
+        if (i < history.length) { history = history.slice(0, i); save(); if (isMarket()) MK.journal.trim(i); }
         draft = fresh(); ui.phase = 'intro'; go(isMarket() ? 'trade' : 'play');
         break;
       }
@@ -1684,7 +1738,15 @@
     if (['bench', 'profile', 'episodes', 'play', 'market', 'trade', 'call', 'phone'].includes(h) && h !== ui.view) { ui.phase = 'intro'; go(h); }
   });
 
-  PP.ui = { hud, marketRules: () => rules };
+  // The Debrief call reads the Desk's decisions, whichever track is open.
+  const deskSteps = () => {
+    try {
+      const h = MK.journal.stored(TRACKS.market.key), bad = h.findIndex((x, i) => !x || !TRACKS.market.list[i] || TRACKS.market.list[i].id !== x.id);
+      return capitals(bad < 0 ? h : h.slice(0, bad)).steps
+        .map(x => ({ id: x.sc.id, title: x.sc.title, did: x.opt.did || x.opt.text, q: x.opt.q, fin: x.oc.ruin ? -x.before.fin : x.oc.fin, defies: val(x.opt.defies, x.opt._c) || [] }));
+    } catch (e) { return []; }
+  };
+  PP.ui = { hud, marketRules: () => rules, deskSteps };
   PP.nav = go;
 
   history = playable(history);

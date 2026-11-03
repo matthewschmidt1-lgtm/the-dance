@@ -17,6 +17,19 @@ window.PP = window.PP || {};
   const f = (s, k) => !!s.flags[k];
   const m = (s, id) => s.mem[id] || {};
   const verified = s => f(s, 'askedPrints') || f(s, 'askedEdge') || f(s, 'silent') || f(s, 'askedFirm');
+  const money = k => `${k < 0 ? '−' : '+'}$${Math.abs(Math.round(k * 10) / 10)}k`;
+  // The Debrief's subject: the lowest-graded decision of the year, from the Desk and the calls so far.
+  const RULE_KEYS = ['stops', 'size', 'leverage', 'together', 'smaller'];
+  function worst(s) {
+    const desk = (PP.ui && PP.ui.deskSteps ? PP.ui.deskSteps() : []).map(x => ({ ...x }));
+    const calls = Object.entries(s.mem).filter(([id]) => C.byId[id] && id !== 'debrief').map(([id, e]) => ({ id, title: C.byId[id].title, did: e.did || '', q: e.q, fin: e.fin || 0, defies: e.defies || [] }));
+    const all = [...desk, ...calls].filter(x => Number.isInteger(x.q) && x.q <= 2 && x.did);
+    if (!all.length) return null;
+    const w = all.sort((a, b) => a.q - b.q || a.fin - b.fin)[0];
+    return { ...w, kind: (w.defies || []).find(r => RULE_KEYS.includes(r)) || null };
+  }
+  const kindOf = s => { const w = worst(s); return w ? w.kind : null; };
+  const isLuck = s => { const w = worst(s); return !w || (w.q >= 2 && !w.kind); };
 
   // Two promises the player makes before the first call, beside the risk rule from Part I.
   C.pledges = [
@@ -31,7 +44,7 @@ window.PP = window.PP || {};
     michael: { name: `Michael Reeves`, role: `Senior broker, Pryor & Lowe`, voice: 'michael', initials: 'MR' },
     richard: { name: `Richard Cole`, role: `Investor. Knows people.`, voice: 'richard', initials: 'RC' },
     theo: { name: `Theo Brandt`, role: `Senior trader · runs the Wednesday review`, voice: 'theo', initials: 'TB' },
-    sarah: { name: `Sarah Bennett`, role: `Portfolio manager, Coldwater Capital`, voice: 'sarah', initials: 'SB' },
+    nadia: { name: `Nadia Okafor`, role: `Head of risk`, voice: 'nadia', initials: 'NO' },
     catherine: { name: `Catherine Hale`, role: `Hale Family Office`, voice: 'catherine', initials: 'CH' }
   };
 
@@ -374,96 +387,76 @@ window.PP = window.PP || {};
       })
     },
 
-    // ───────────────────────────────────────── 4. The Changing Market
+    // ───────────────────────────────────────── 4. The Debrief
     {
-      id: 'shift', title: `The Changing Market`, tests: `Can you abandon your assumptions?`, opponent: `your assumptions`,
-      caller: 'sarah', day: `Thursday`, clock: `9:05 AM`, env: 'desk-rain',
-      blurb: `A respected fund manager says your method has stopped working.`,
-      setup: [`Your method: buy quality stocks after sharp dips.`, `It has worked for fourteen months.`, `Last three dips: −2%, −3%, +0.5%`],
-      chart: 'turn',
-      truths: [{ id: 'regime', p: 0.6 }, { id: 'blip', p: 0.4 }],
+      id: 'debrief', title: `The Debrief`, tests: `Can you diagnose your own mistake?`, opponent: `your story about yourself`,
+      caller: 'nadia', day: `Friday`, clock: `6:05 PM`, env: 'desk-dusk',
+      blurb: `Nadia has pulled your worst decision of the year, and she reads the answer to the whole desk.`,
+      setup: [`Friday, 6:05 pm · The weekly debrief`, `Nadia pulls one decision from everyone's year`, `What you write gets read to the desk`],
+      chart: 'flat',
+      truths: [{ id: 'debrief', p: 1 }],
       voicemail: [
-        { t: `Sarah Bennett, Coldwater Capital. I think [[dip-buying has stopped working]] in your sector. I'd like to be wrong. Call me.` },
-        { who: 'n', t: `You don't. The rain keeps on.` }
+        { t: `Nadia. Debrief's at six. [[I'll pick the decision if you don't.]]` },
+        { who: 'n', t: `You let it ring. She picks it anyway, and writes the report herself.` }
       ],
       nodes: {
-        open: { say: s => [
-          { t: `Sarah Bennett. Sorry it's early.` },
-          ...(m(s, 'committee').key === 'F' || m(s, 'committee').key === 'C' ? [{ t: `Theo Brandt says [[you actually asked for his record]] before you decided. He's not used to that.`, note: `So that's how she knows me.` }] : []),
-          ...(m(s, 'tip').key === 'E' ? [{ t: `And I hear you [[turned Richard Cole in]]. Good. He's been calling everyone.` }] : []),
-          { t: `I've been looking at [[dip recoveries]] across the sector. I think something's changed, and I think it matters for how you trade.`, note: `She knows how I trade?`, sketch: 'q' },
-          { t: `I'll tell you what I have. You tell me what you think.` }
-        ], to: 'm1' },
-        m1: { moment: 'sort', prompt: `Sort what she tells you.`, bins: [{ v: 'change', label: `Changes my view` }, { v: 'same', label: `Doesn't change it` }, { v: 'unsure', label: `Can't tell yet` }], items: [
-          { id: 'recovery', t: `The last six sector dips took three times longer to recover than a year ago.`, against: true },
-          { id: 'earnings', t: `Your three biggest holdings beat earnings last quarter.`, against: false },
-          { id: 'flows', t: `Money has left the sector five weeks in a row, the longest run in four years.`, against: null },
-          { id: 'calm', t: `Volatility is low. The market is calm.`, against: true }
-        ], to: 'react' },
-        react: { say: s => s.sortedAway >= 1
-          ? [{ t: `You put [[the recovery data]] under "doesn't change it". Can I ask why?`, note: `Can she?`, sketch: 'q' }, { t: `I'm not saying you're wrong. I'm saying that's the one I'd lose sleep over.` }]
-          : [{ t: `That's more honest than most people manage [[before nine]].`, note: `It doesn't feel honest. It feels expensive.` }], to: 'm2' },
-        m2: { moment: 'choose', prompt: `What do you say?`, options: [
-          { text: `"What are you positioned for, Sarah?"`, you: `What are you positioned for?`, set: 'askedBook', to: 'book' },
-          { text: `"What would prove you wrong?"`, you: `What would prove you wrong?`, set: 'askedTest', to: 'test' },
-          { text: `"My method has worked for fourteen months."`, you: `My method has worked for fourteen months.`, set: 'defended', to: 'defend' }
+        open: { say: s => {
+          const w = worst(s);
+          return w ? [
+            { t: `Friday debrief. I pulled [[your worst decision]] this year.` },
+            { t: `${w.title}. You ${w.did.charAt(0).toLowerCase() + w.did.slice(1)}`, note: w.fin < 0 ? `I remember what it cost.` : `It made money. That's not the same as being right.`, sketch: 'box' },
+            { t: `It graded [[${PP.grades[w.q].name.toLowerCase()}]]. ${w.fin < 0 ? `It cost you ${money(w.fin)}.` : w.fin > 0 ? `It happened to make ${money(w.fin)}.` : ``}` },
+            { t: `I'm going to read what you write [[to the whole desk]]. So. What went wrong?` }
+          ] : [
+            { t: `Friday debrief. I went looking for your worst decision and [[couldn't find a bad one]].` },
+            { t: `So I'll ask the harder question. Which one are you [[least proud of]], and why?`, note: `She wants the one I'd hide.` }
+          ];
+        }, to: 'm1' },
+        m1: { moment: 'choose', prompt: `What went wrong?`, options: [
+          { text: `"Bad luck. Nobody saw it coming."`, you: `Bad luck. Nobody saw it coming.`, set: 'saidLuck', to: 'luck' },
+          { text: `"I didn't have the information I needed."`, you: `I didn't have the information I needed.`, set: 'saidInfo', to: 'info' },
+          { text: `"I knew the risk, and I took it anyway."`, you: `I knew the risk, and I took it anyway.`, set: 'saidOwned', to: 'owned' }
         ] },
-        book: { say: [{ t: `Underweight the sector. I'll say it plainly: [[I'd like someone who trades it to tell me I'm wrong.]]`, note: `She's talking her book. Her data's still real.`, sketch: 'box' }, { t: `And the outflows? Record outflows end two ways. [[Which one is in the price?]]`, note: `Capitulation, or the start.`, sketch: 'q' }], to: 'm3' },
-        test: { say: s => [{ t: `If the next dip recovers in under two weeks, I'm wrong. [[That's my test.]]`, note: `She has a test. Do I?`, sketch: 'box' }, ...(s.truth === 'blip' ? [{ t: `Honestly, it could be [[one bad quarter]].` }] : [])], to: 'm3' },
-        defend: { say: [{ t: `It has. [[That's what worries me.]]`, note: `Loyal because it works, or because it's mine?`, sketch: 'q' }], to: 'm3' },
-        m3: { moment: 'silence', prompt: `Rain on the window. She waits.`, wait: 8, options: [
-          { text: `"Send me the data."`, you: `Send me the data.`, set: 'askedData', to: 'data' },
-          { text: `"I'll think about it."`, you: `I'll think about it.`, to: 'bye' }
-        ], silent: { set: 'silent', to: 'quiet' } },
-        data: { say: [{ t: `It's in your inbox. Look at [[the flows chart]] first.` }], to: 'bye' },
-        quiet: { say: [{ t: `(after a while) The worst thing that happened to me in 2019 was [[being right for three years first]].`, note: `Being right for a long time is its own risk.`, sketch: 'arrow' }], to: 'bye' },
-        bye: { say: [{ t: `Good luck. I mean it.` }, { who: 'n', t: `She hangs up. The futures are down half a percent. Your next dip is forming.` }], to: 'decide' }
+        luck: { say: s => isLuck(s) ? [{ t: `Honestly? [[I agree.]] The decision was sound. The result wasn't. That happens.`, note: `She checked before she agreed.` }] : [{ t: `The grade says otherwise. [[Luck doesn't break your own rules.]]`, note: `She has the file.`, sketch: 'box', set: 'excused' }], to: 'rule' },
+        info: { say: [{ t: `Was it on your desk? Because [[most of the time it was]].`, note: `It usually was.`, sketch: 'q' }], to: 'rule' },
+        owned: { say: [{ t: `[[That's the most useful sentence I'll hear this week.]]`, note: `Owning it is the start.` }], to: 'rule' },
+        rule: { say: [{ t: `Now write the rule that would have stopped you. [[One line.]] It goes on the board, and I'll hold you to it.` }, { who: 'n', t: `She waits, pen ready.` }], to: 'decide' }
       },
       decide: {
-        prompt: `A quality name is down 7% this morning. It's exactly the setup your method buys. What do you do?`,
+        prompt: `What goes in the report?`,
+        note: s => { const w = worst(s); return w && w.kind ? `The decision broke one thing above all.` : null; },
         options: [
-          { key: 'A', text: `Defend the method. Buy the dip at full size.`, did: `Defended the method at full size.`, exposure: 'large', q: s => (s.sortedAway >= 2 ? 0 : 1), breaks: ['evidence'] },
-          { key: 'B', text: `Keep the method at half size until the next dip settles it.`, did: `Halved size until the evidence settled.`, exposure: 'normal', q: 3 },
-          { key: 'C', text: `Stop for two weeks and study it.`, did: `Paused the method to investigate.`, exposure: 'none', q: 3, cap: { time: -1 } },
-          { key: 'D', text: `Adapt: buy dips only where money is still flowing in.`, did: `Adapted the method to the new evidence.`, exposure: 'normal', q: 4, cap: { str: 1 } },
-          { key: 'E', text: `Abandon the method. Sell everything.`, did: `Threw the method away overnight.`, exposure: 'none', q: 1, cap: { str: -2, psy: -1 } }
+          { key: 'A', text: `"Bad luck. Nothing to change."`, did: `Reported it as bad luck.`, exposure: 'none', q: s => (isLuck(s) ? 3 : 0) },
+          { key: 'B', text: `Rule: "My exits are orders, not intentions."`, did: `Wrote a rule about exits.`, exposure: 'none', rule: 'stops', q: s => (kindOf(s) === 'stops' ? 4 : 2), cap: { soc: 1 } },
+          { key: 'C', text: `Rule: "No single idea above a quarter of the account."`, did: `Wrote a rule about size.`, exposure: 'none', rule: 'size', q: s => (['size', 'leverage'].includes(kindOf(s)) ? 4 : 2), cap: { soc: 1 } },
+          { key: 'D', text: `Rule: "After a loss, my next bet gets smaller, not bigger."`, did: `Wrote a rule about losing streaks.`, exposure: 'none', rule: 'smaller', q: s => (kindOf(s) === 'smaller' ? 4 : 3), cap: { soc: 1 } },
+          { key: 'E', text: `Rule: "I count bets by what moves them, not by their names."`, did: `Wrote a rule about correlation.`, exposure: 'none', rule: 'together', q: s => (kindOf(s) === 'together' ? 4 : 2), cap: { soc: 1 } },
+          { key: 'F', text: `Blame the analyst's note you were working from.`, did: `Blamed someone else's note.`, exposure: 'none', q: 0, cap: { soc: -2 } }
         ],
         out: {
-          A: s => by(s, { regime: { fin: -6.2, tone: 'bad', text: `The dip keeps going, and so do the next two. Three full-size buys, three losses.` }, blip: { fin: 3.1, tone: 'good', text: `It recovers in nine days. So does the next one. The method was fine.` } }),
-          B: s => by(s, { regime: { fin: -2.1, tone: 'mixed', text: `The dip keeps going. Half size meant half the damage, and the second dip told you the rest.` }, blip: { fin: 1.4, tone: 'good', text: `It recovers in nine days. Half size, half the gain, and now you know.` } }),
-          C: s => by(s, { regime: { fin: 0, tone: 'good', text: `Two weeks of reading. The first two dips bounce while you watch, and you feel early and foolish. Then three fail. Being early looks exactly like being wrong, for a while. You come back with a new rule.` }, blip: { fin: 0, tone: 'mixed', text: `Two weeks of reading. The dips recover while you watch. Expensive homework, but homework.` } }),
-          D: s => by(s, { regime: { fin: 0.8, tone: 'good', text: `Most dips fail. The two where money was still coming in don't.` }, blip: { fin: 0.9, tone: 'good', text: `Fewer trades, still working. The filter cost you a little and taught you a lot.` } }),
-          E: s => by(s, { regime: { fin: 0, tone: 'mixed', text: `You're safe, and flat, and you've thrown away fourteen months of knowing how you make money.` }, blip: { fin: -1.8, tone: 'bad', text: `You sold at the bottom of a blip. Everything you sold recovers within two weeks.` } })
+          A: s => isLuck(s) ? { fin: 0, tone: 'good', text: `Nadia reads it out. "Agreed. Sound decision, bad roll." Nobody argues.` } : { fin: 0, tone: 'bad', cap: { soc: -2 }, text: `Nadia reads it out, then reads the grade. Nobody says anything. Nobody has to.` },
+          B: s => ({ fin: 0, tone: kindOf(s) === 'stops' ? 'good' : 'mixed', text: `Nadia reads your rule to the desk and writes it on the board: "My exits are orders, not intentions."` }),
+          C: s => ({ fin: 0, tone: ['size', 'leverage'].includes(kindOf(s)) ? 'good' : 'mixed', text: `Nadia reads your rule to the desk and writes it on the board: "No single idea above a quarter of the account."` }),
+          D: s => ({ fin: 0, tone: kindOf(s) === 'smaller' ? 'good' : 'mixed', text: `Nadia reads your rule to the desk and writes it on the board: "After a loss, my next bet gets smaller, not bigger."` }),
+          E: s => ({ fin: 0, tone: kindOf(s) === 'together' ? 'good' : 'mixed', text: `Nadia reads your rule to the desk and writes it on the board: "I count bets by what moves them, not by their names."` }),
+          F: () => ({ fin: 0, tone: 'bad', text: `Nadia reads it out. The analyst is in the room. So is everyone who heard you.` })
         }
       },
-      unsaid: s => by(s, {
-        regime: {
-          wanted: `To test her view on someone who trades it, before her fund leaned harder against the sector.`,
-          knew: `The flows and recovery data. Both real.`,
-          didnt: `How long the change would last.`,
-          incentive: `Her fund's underweight position. She'd profit from being right.`,
-          fact: `The next three sector dips failed. Outflows ran another six weeks.`,
-          read: `An incentive doesn't make evidence false. It just means you should check it.`,
+      unsaid: s => {
+        const w = worst(s);
+        return {
+          wanted: `For you to name the mistake before she did.`,
+          knew: w ? `Exactly which decision it was, what it graded, and what it cost. She'd had the file since Tuesday.` : `That you hadn't made a bad decision she could find. She asked anyway.`,
+          didnt: `Which rule you'd choose. That's the part only you could write.`,
+          incentive: `A desk that learns from one person's mistake doesn't have to make it twice.`,
+          fact: w ? `${w.title}: graded ${PP.grades[w.q].name.toLowerCase()}${w.kind ? `, and it broke one rule above all: “${PP.market.journalRules[w.kind].line}”` : ''}.` : `No decision graded below sound this year.`,
+          read: `Pain plus reflection is how a mistake becomes a principle. Writing it down is the reflection. Keeping it is the principle.`,
           signals: [
-            { t: `Dips were recovering three times slower.`, saw: s => s.sorted && s.sorted.recovery === 'change' },
-            { t: `A calm market was the warning, not the comfort.`, saw: s => s.sorted && s.sorted.calm === 'change' },
-            { t: `She had a test that could prove her wrong.`, saw: s => f(s, 'askedTest') }
+            { t: `You said what went wrong, in your own words.`, saw: s => f(s, 'saidOwned') || f(s, 'saidInfo') },
+            { t: `You called it luck when the grade said otherwise.`, saw: s => f(s, 'excused') }
           ]
-        },
-        blip: {
-          wanted: `To test her view on someone who trades it, before her fund leaned harder against the sector.`,
-          knew: `The flows and recovery data. Both real.`,
-          didnt: `That it was one bad quarter, and the outflows were capitulation.`,
-          incentive: `Her fund's underweight position.`,
-          fact: `The next dip recovered in nine days. Sarah covered her underweight.`,
-          read: `Being humble about a method isn't the same as abandoning it.`,
-          signals: [
-            { t: `She said it could be one bad quarter.`, saw: s => f(s, 'askedTest') },
-            { t: `Your holdings were still beating earnings.`, saw: s => s.sorted && s.sorted.earnings !== 'change' },
-            { t: `She was talking her book.`, saw: s => f(s, 'askedBook') }
-          ]
-        }
-      })
+        };
+      }
     },
 
     // ───────────────────────────────────────── 5. The Last Call
@@ -519,7 +512,7 @@ window.PP = window.PP || {};
   // Catherine has heard about you. What she heard depends on what you did.
   function memoryLines(s) {
     const out = [];
-    const w = m(s, 'warning'), t = m(s, 'tip'), d = m(s, 'committee'), sh = m(s, 'shift');
+    const w = m(s, 'warning'), t = m(s, 'tip'), d = m(s, 'committee'), db = m(s, 'debrief');
     if (w.flags && w.flags.revealedSize) out.push({ t: `Michael Reeves told me [[your Halden size]] before you'd put the phone down.`, note: `I told one person.`, sketch: 'arrow' });
     else if (w.key === 'F') out.push({ t: `Michael Reeves says you put him on hold to [[read the tape]]. He was annoyed. I was impressed.` });
     else if (w.key === 'D') out.push({ t: `You bought more Halden [[while a fund was selling]]. People noticed.` });
@@ -528,7 +521,8 @@ window.PP = window.PP || {};
     else if (t.flags && (t.flags.askedSource || t.flags.checkedOptions)) out.push({ t: `Richard says you [[made him wait]]. Richard hates waiting.` });
     if (d.key === 'C' || d.key === 'F') out.push({ t: `Theo Brandt says you weighed the room [[by its record]], not its volume.` });
     else if (d.key === 'A' || d.key === 'B') out.push({ t: `You went with [[the loudest voices]] on Kestrel.` });
-    if (sh.flags && sh.flags.askedTest) out.push({ t: `Sarah Bennett says you asked what would [[prove her wrong]]. Nobody asks that.` });
+    if (['B', 'C', 'D', 'E'].includes(db.key)) out.push({ t: `Nadia read your rule out at the Friday debrief. [[People remember rules]] they hear read aloud.`, note: `So does she.` });
+    else if (db.key === 'F') out.push({ t: `I hear you [[blamed an analyst]] at your debrief.`, note: `Of course she heard.` });
     return out.slice(0, 3);
   }
 

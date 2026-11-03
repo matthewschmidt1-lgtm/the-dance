@@ -1730,3 +1730,18 @@ button.ix-row:hover .ix-hover, button.ix-row:focus-visible .ix-hover { display: 
 .evx-t tr.is-locked { opacity: .45; }
 .evx-note { font-size: var(--t-sm); color: var(--muted); margin: 8px 0 0; line-height: 1.5; }
 @media (max-width: 560px) { .evx-t th, .evx-t td { padding: 6px 6px; } }
+
+/* Your journal: a rule written after a bad decision, and your principles at the end of the year */
+.jbox { margin: 16px 0 4px; padding: 16px 18px; border-radius: var(--r); background: var(--surface); border: 1px dashed var(--sq-dark); }
+.jbox.is-set { border-style: solid; border-left: 4px solid var(--accent); }
+.jbox-k { font-family: var(--f-display); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+.jbox-rule { font-family: 'Caveat', var(--f-read); font-size: 1.6rem; line-height: 1.2; margin: 0 0 6px; }
+.jbox-note { font-family: var(--f-read); font-size: var(--t-sm); color: var(--muted); margin: 0 0 10px; line-height: 1.5; }
+.jbox-opts { display: flex; flex-direction: column; gap: 8px; }
+.jbox-opt { text-align: left; justify-content: flex-start; white-space: normal; font-family: 'Caveat', var(--f-read); font-size: 1.3rem; line-height: 1.2; }
+.principles-own { margin-top: 28px; }
+.pr-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.pr-row { padding: 14px 18px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--good); }
+.pr-row.is-broke { border-left-color: var(--bad); }
+.pr-rule { font-family: 'Caveat', var(--f-read); font-size: 1.5rem; line-height: 1.2; margin: 0 0 4px; }
+.pr-meta { font-size: var(--t-sm); color: var(--muted); margin: 0; }

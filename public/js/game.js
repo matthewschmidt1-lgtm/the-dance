@@ -129,12 +129,15 @@
   const fill = t => typeof t !== 'string' || !t.includes('{') ? t : t
     .replace(/\{rule\}/g, rules ? ruleOf('risk', rules.risk).label : 'your')
     .replace(/\{edge\}/g, rules ? ruleOf('edge', rules.edge).label.toLowerCase() : 'your edge')
-    .replace(/\{account\}/g, `$${capitals().cap.fin}k`);
+    .replace(/\{account\}/g, `$${capitals().cap.fin}k`)
+    .replace(/\{book\}/g, () => { const b = MK.books && MK.books[derive(history).flags.book]; return b ? b.name : `the book you built in June`; });
   function capitals(hist = history) {
     const cap = Object.fromEntries(MK.capitals.map(c => [c.k, c.start]));
+    const flags = {}; // what earlier challenges left behind, like the book you built in June
     let ruinedAt = null;
     const steps = hist.map((h, i) => {
-      const sc = TRACKS.market.list[i], opt = resolve(sc, { rel: {}, flags: {}, type: typeOf(sc, h), cap: { ...cap } }, h.clues).find(o => o.key === h.key), oc = opt.outcomes[h.outcome];
+      const sc = TRACKS.market.list[i], opt = resolve(sc, { rel: {}, flags: { ...flags }, type: typeOf(sc, h), cap: { ...cap } }, h.clues).find(o => o.key === h.key), oc = opt.outcomes[h.outcome];
+      Object.assign(flags, opt.flags || {});
       const before = { ...cap };
       cap.time -= 1;
       Object.entries(opt.cap || {}).forEach(([k, v]) => { cap[k] += v; });
@@ -246,14 +249,15 @@
   const val = (v, ctx) => typeof v === 'function' ? v(ctx) : v;
   function resolveRaw(sc, ctx = { rel: {}, flags: {} }, clues = []) {
     const c = { ...ctx, rules, clues };
-    return sc.options.map(o => {
+    // An option can exist only in some situations (when: fn of ctx), like cutting a book you never built.
+    return sc.options.filter(o => !o.when || o.when(c)).map(o => {
       const needs = val(o.needs, c);
       const vague = !!needs && !needs.every(i => clues.includes(i));
       const b = vague ? { ...o, ...o.vague, vague } : { ...o, vague };
       // A vague version can keep the same results at different odds (pv), or bring its own.
       const outs = vague && o.vague.pv ? b.outcomes.map((x, i) => ({ ...x, p: o.vague.pv[i] })) : b.outcomes;
       const relv = b.rel && Object.fromEntries(Object.entries(b.rel).map(([k, v]) => [k, val(v, c)]));
-      return { ...b, _c: c, needs, text: val(b.text, c), rel: relv, flags: val(b.flags, c), cap: val(b.cap, c), concept: val(b.concept, c), q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
+      return { ...b, _c: c, needs, text: val(b.text, c), did: val(b.did, c), later: val(b.later, c), rel: relv, flags: val(b.flags, c), cap: val(b.cap, c), concept: val(b.concept, c), q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
     });
   }
   // Grades judge what you could know. Versions of the other person that nothing you saw could tell apart
@@ -1408,10 +1412,8 @@
     const soft = MK.capitals.filter(c => c.k !== 'fin').map(c => ({ c, d: C.cap[c.k] - c.start })).sort((x, y) => y.d - x.d);
     const capLine = `${fin > 100 ? `You made money` : fin === 100 ? `You protected your money` : out ? (fin === 0 ? `You lost the whole account` : `You lost 20% of the account, and the desk's capital with it`) : `You lost some money`}${soft[0].d > 0 ? ` and built ${soft[0].c.name.toLowerCase()}` : ''}${soft[soft.length - 1].d < 0 ? `, and spent ${soft[soft.length - 1].c.name.toLowerCase()}` : ''}.`;
 
-    const eh = C.steps.find(x => x.sc.id === 'empty-hand');
-    const edgeSummary = !rules || !eh ? '' : eh.opt.key === 'B' ? `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}, and when four ideas arrived you played only the one that fit it.`
-      : eh.opt.key === 'C' ? `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}. On the slow Thursday you waited. Waiting was cheap here. Check whether one of the four was yours.`
-        : `You said your edge was ${ruleOf('edge', rules.edge).label.toLowerCase()}. On the slow Thursday you played someone else's game.`;
+    const bk = C.steps.find(x => x.sc.id === 'the-book'), tn = C.steps.find(x => x.sc.id === 'the-turn');
+    const edgeSummary = !bk ? '' : ((MK.books[bk.opt.flags && bk.opt.flags.book] || {}).summary || '') + (tn ? ` When the turn came in January, you ${tn.opt.did.charAt(0).toLowerCase() + tn.opt.did.slice(1)}` : '');
 
     const review = C.steps.map((x, i) => {
       return `<li class="dr">

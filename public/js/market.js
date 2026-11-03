@@ -23,8 +23,8 @@ window.PP = window.PP || {};
     places: [
       { key: 'night', name: `The desk, 8:47 pm`, scenes: ['losing-position'] },
       { key: 'april', name: `The desk, April`, scenes: ['the-peg'] },
-      { key: 'thursday', name: `The desk, a slow Thursday`, scenes: ['empty-hand'] },
-      { key: 'january', name: `The desk, January`, scenes: ['changing-market'] },
+      { key: 'june', name: `The desk, June`, scenes: ['the-book'] },
+      { key: 'january', name: `The desk, January`, scenes: ['the-turn'] },
       { key: 'december', name: `The desk, December`, scenes: ['final-bet'] }
     ]
   };
@@ -81,13 +81,36 @@ window.PP = window.PP || {};
   M.exposureLabel = { none: `No new risk`, small: `Up to 1% at risk`, normal: `Up to 2.5% at risk`, large: `Up to 10% at risk`, all: `Over 10% at risk` };
   M.exposureVerb = { none: `risked nothing new`, small: `risked up to 1% of the account`, normal: `risked up to 2.5% of the account`, large: `risked up to 10% of the account`, all: `risked more than 10% of the account` };
 
+  // The Book and The Turn share June's portfolio. How much of it the January shock takes depends on what you built.
+  M.books = {
+    oneBet: { name: `five rate-sensitive names, $12,000 each`, summary: `In June you built five positions that turned out to be one bet on falling rates.` },
+    hedged: { name: `the same five names, with a $10,000 rate hedge`, summary: `In June you built five rate-sensitive names and hedged about half of what they shared.` },
+    balanced: { name: `a book balanced by risk: three rate names, Tallis, Ashcombe and a rate hedge`, summary: `In June you balanced your book by risk, not by how many names it held.` },
+    concentrated: { name: `$40,000 in Quillfeather Software`, summary: `In June you put most of the summer into one name.` },
+    cash: { name: `cash`, summary: `In June you stayed in cash.` }
+  };
+  const bookOf = c => (c.flags && M.books[c.flags.book] ? c.flags.book : 'oneBet');
+  const BOOK_LOSS = { oneBet: -14.8, concentrated: -12, hedged: -6, balanced: -2.4, cash: 0 }; // holding through a full turn
+  const L = c => BOOK_LOSS[bookOf(c)], A = c => -L(c);
+  const r1 = v => Math.round(v * 10) / 10;
+  const k$ = v => `${v < 0 ? '−' : ''}$${Math.abs(Math.round(v * 1000)).toLocaleString('en-US')}`;
+  const know = c => saw(c, 0); // the recovery data tells you which market you're in
+  const delev = c => c.type === 'deleveraging';
+  const bookRisk = {
+    oneBet: `Everything you own is falling together. Correlation across your five names this week: 0.93. In a crisis, correlations go to one.`,
+    hedged: `Your five names are falling together, and the rate hedge is up $3,100, covering about half the drop so far.`,
+    balanced: `Your three rate names are down. Tallis is up 4%, Ashcombe is flat, the hedge is up. Net so far: −$800.`,
+    concentrated: `One name, $40,000, moving with rates. Quillfeather is down 7% before the open.`,
+    cash: `You own nothing. You're watching.`
+  };
+
   // The code is never shown up front. It's revealed at the end, scored from what you did.
   M.principles = [
     { k: 'downside', name: `Protect your downside`, line: `Never risk so much that one decision ends your ability to play.`, scenes: ['losing-position', 'final-bet'] },
-    { k: 'edge', name: `Find your edge`, line: `Don't play because you want to win. Play because you have a reason to believe you can.`, scenes: ['empty-hand', 'the-peg'] },
-    { k: 'evidence', name: `Follow the evidence`, line: `Don't confuse your predictions, beliefs or ego with reality.`, scenes: ['changing-market', 'losing-position'] },
-    { k: 'self', name: `Master yourself`, line: `Your impulses are often a more dangerous opponent than the person across from you.`, scenes: ['the-peg', 'empty-hand'] },
-    { k: 'stay', name: `Stay in the game`, line: `Preserve the resources, relationships and opportunities that let you keep playing.`, scenes: ['final-bet', 'changing-market'] }
+    { k: 'edge', name: `Find your edge`, line: `Don't play because you want to win. Play because you have a reason to believe you can.`, scenes: ['the-book', 'the-peg'] },
+    { k: 'evidence', name: `Follow the evidence`, line: `Don't confuse your predictions, beliefs or ego with reality.`, scenes: ['the-turn', 'losing-position'] },
+    { k: 'self', name: `Master yourself`, line: `Your impulses are often a more dangerous opponent than the person across from you.`, scenes: ['the-peg', 'the-book'] },
+    { k: 'stay', name: `Stay in the game`, line: `Preserve the resources, relationships and opportunities that let you keep playing.`, scenes: ['final-bet', 'the-turn'] }
   ];
 
   M.scenarios = [
@@ -311,221 +334,245 @@ window.PP = window.PP || {};
       life: { title: `The raise`, text: `Your review is next week. Asking for a real raise costs, at worst, a few awkward seconds and a "not this year." Not asking costs a little every year for the rest of your career, because every future raise is a percentage of this number. The downside is capped. The upside compounds.` }
     },
 
-    // ───────────────────────────────────────── 3. Four ideas, and the shape of each bet
+    // ───────────────────────────────────────── 3. Five ideas, or one bet?
     {
-      id: 'empty-hand',
-      opponent: `your impatience`,
-      tests: `Can you wait for an edge?`,
-      level: `Selective participation`,
-      title: `The Empty Hand`,
-      lens: ['seykota', 'schelling'],
-      setting: `The desk · A slow Thursday · Four ideas before lunch`,
-      cycle: { t: 3, read: `Quiet. Volume 20% below average. Nobody's excited and nobody's scared.` },
+      id: 'the-book',
+      opponent: `your sense of being diversified`,
+      tests: `Can you tell five bets from one?`,
+      level: `Correlation`,
+      title: `The Book`,
+      lens: ['aumann', 'duke'],
+      setting: `The desk · June · $60,000 to put to work`,
+      cycle: { t: 5, read: `Hot. Futures price three rate cuts this year, homebuilders are at all-time highs, and the chat says rates only go one way from here. Theo: "When everyone's bet is the same bet, I count it once."` },
       types: [
-        { id: 'closes', p: 0.84, who: `the Ledgerline deal`, label: `The one deal you could check, Ledgerline, closed`, tell: `Financing was committed and the EU cleared it early. The $1.40 spread paid out, as it does most of the time.` },
-        { id: 'breaks', p: 0.16, who: `the Ledgerline deal`, label: `The one deal you could check, Ledgerline, broke`, tell: `The EU extended its review, and Arcton walked away. Ledgerline fell back to where it was before the deal.` }
+        { id: 'melt', p: 0.6, who: `the summer`, label: `The rally kept going`, tell: `Rates drifted lower all summer, and everything that loves cheap money rose together. Your book's real test was still coming.` },
+        { id: 'wobble', p: 0.4, who: `the summer`, label: `The rally wobbled`, tell: `A hot inflation print in August took one rate cut away. Everything that loves cheap money fell together, for a week.` }
       ],
       facts: [
-        `You own nothing right now. A normal trade is about $10,000. Your edge: <strong>{edge}</strong>.`,
-        `<strong>Nimbic AI</strong> reports earnings tomorrow, and the trading chat is all in. It could move 20% either way.`,
-        `<strong>Ledgerline</strong> is being bought by Arcton Software for $30 cash. It trades at $28.60. Before the deal it was $21.`,
-        `<strong>Voltaic Cells</strong> just broke a two-year high on three times normal volume, after a supply deal with an automaker.`,
-        `<strong>Hashgrid</strong>, a crypto miner, is down 40% this morning after its auditor quit. Nobody knows why.`
+        `You have <strong>$60,000</strong> of the account to put to work for the summer. Nadia wants your book by Friday.`,
+        `Your five strongest ideas: <strong>Brightwell Homes</strong> (homebuilder), <strong>Calder Regional Bank</strong>, <strong>Pinemoor REIT</strong> (apartments), <strong>Ostrander Auto Credit</strong> and <strong>Quillfeather Software</strong>. Five sectors. Five good stories.`,
+        `Two weaker ideas that move on their own news: <strong>Tallis Gold Royalty</strong> and <strong>Ashcombe Pharma</strong>, waiting on a trial readout.`,
+        `You can also hold a rate hedge: a position that gains when interest rates rise.`,
+        `Your account: <strong>{account}</strong>. Your rule: {rule} of the account at risk on any one idea.`
       ],
       cast: [
-        { name: `Theo`, role: `Senior trader`, archetype: `The Survivor`, power: `Patience`, note: `Hasn't placed a trade in nine days.` }
+        { name: `Nadia`, role: `Head of risk`, archetype: `The Guardian`, power: `Your limits`, note: `Measures risk in what moves together, not in how many names you own.` },
+        { name: `Theo`, role: `Senior trader`, archetype: `The Survivor`, power: `Experience`, note: `Has watched a lot of "diversified" books fall on the same day.` }
       ],
-      known: [`Four ideas, about $10,000 each.`, `You own nothing.`, `Nothing requires you to trade today.`],
-      unknown: [`Which ideas will work.`, `Whether the Ledgerline deal closes.`, `Why Hashgrid's auditor quit.`],
+      known: [`Five strong ideas in five sectors.`, `Two weaker ideas with their own drivers.`, `A rate hedge is available.`],
+      unknown: [`Whether your five ideas are five bets or one.`, `What rates do next.`],
       clues: [
-        { label: `Work out each bet's shape`, text: `Ledgerline: make $490 if the deal closes, lose about $2,450 if it breaks. Voltaic: make about $2,100 if the breakout runs, lose $700 at a 7% stop. Nimbic: a coin flip, ±$2,000. Hashgrid: unknown.` },
-        { label: `Theo's screen`, text: `Theo hasn't placed a trade in nine days. He's having his best year in a decade.` },
-        { label: `Check the Ledgerline deal's progress`, text: c => c.type === 'breaks' ? `The EU's first-phase deadline is Friday, and the questions it's asking are about cloud bundling. Two arbitrage desks you know have quietly cut their Ledgerline positions this week; the spread has crept from $1.10 to $1.40.` : `Arcton's financing is fully committed, and the EU's first-phase review cleared a week early.` },
-        { label: `What's priced in?`, text: `Ledgerline's $28.60 prices about an 84% chance the deal closes. Nimbic's options price a 19% earnings move, so the chat's 20% is already paid for. Voltaic's supply deal is priced for one year; nobody's priced the second.` }
+        { label: `Your spring trades`, text: `Five of your seven winners this spring came in a market that rose almost every day. The two that didn't depend on that made the smallest gains.` },
+        { label: `Nadia's correlation sheet`, text: `Over 90 days, your five strong names move together: average correlation 0.78. All five fell on the same day in each of the last three rate scares. Tallis: −0.2. Ashcombe: +0.1. The rate hedge: −0.9.` },
+        { label: `Run a stress test: rates up 0.75 points`, text: `Five strong names at $12,000 each: −$14,800. Add the rate hedge: −$6,000. Balance it by risk, with Tallis, Ashcombe and the hedge carrying a share: −$2,400.` },
+        { label: `What's priced in?`, text: `Futures price three rate cuts this year, and homebuilders trade at all-time highs. One hot inflation print could take two of those cuts away. Your five ideas all need the cuts.` }
       ],
       edgeNote: {
-        research: `Your idea was Ledgerline: a deal you'd read every filing on. You risk $2,450 to make $490, and at $28.60 the market already prices about an 84% chance it closes. You need a reason to think it's higher.`,
-        speed: `Your idea was Voltaic: a clean breakout on heavy volume, risking $700 to make about $2,100. That's the shape a trader who reads price is built for.`,
-        patience: `Your honest answer was probably none. A patient trader waits for the rare, obvious setup, and a slow Thursday seldom brings one.`
+        research: `You know these five companies cold. That's why it's hard to see that the market only sees one thing about them: what they'll be worth if rates fall.`,
+        speed: `All five are in strong uptrends, which is exactly why they look like five signals. One trend, five tickers.`,
+        patience: `Patience means waiting for the setup, and then sizing it. It doesn't mean putting all your summer into the same setup five times.`
       },
-      question: `Four ideas. How many deserve your money?`,
+      question: `Five strong ideas. How many bets is that?`,
       options: [
         {
-          key: 'A', text: `Buy all four, about $10,000 each. More shots, more chances.`, did: `Bought all four ideas.`, exposure: 'large',
-          q: 0, s: { reg: -2, jdg: -2, inf: -1 }, cap: { psy: -1, str: -1 },
+          key: 'A', text: `Your five best ideas, $12,000 each. Five sectors: you're diversified.`, did: `Built five positions on one bet.`, exposure: 'large', flags: { book: 'oneBet' },
+          q: c => saw(c, 1) || saw(c, 2) ? 0 : 1, s: { jdg: -1, inf: -1 }, cap: { psy: 1 },
           outcomes: [
-            { p: when('closes'), tone: 'mixed', fin: -2.9, text: `Nimbic misses and drops 20%, Hashgrid keeps falling, Voltaic runs and Ledgerline closes. A busy month, $2,900 lighter.` },
-            { p: when('breaks'), tone: 'bad', fin: -5.9, text: `Nimbic misses, Hashgrid keeps falling, and the Ledgerline deal breaks. Voltaic's gain barely dents it. You're down $5,900.` }
+            { p: when('melt'), tone: 'good', fin: 4.2, text: `Rates drift lower all summer and all five rise together. Up $4,200. It feels like five good decisions.` },
+            { p: when('wobble'), tone: 'bad', fin: -2, text: `A hot inflation print in August. All five fall the same week. −$2,000, and you notice for the first time that they move as one.` }
           ],
-          later: `Activity felt like progress. Four positions you half understood cost more than they could earn.`,
-          verdict: { who: 'theo', line: `Four trades before lunch. I remember being that busy. I don't remember it working.` }
+          later: `Five sectors, one driver. Counting names isn't diversifying. You'll find out how much it's one bet when rates really move.`,
+          verdict: { who: 'nadia', line: `Five names, one risk. I count it once, and so will the market.` }
         },
         {
-          key: 'B', text: `Buy only the idea that fits your edge ({edge}), at normal size. Pass on the rest.`, did: `Played only the idea that fit your edge.`,
-          exposure: c => edge(c) === 'speed' ? 'small' : edge(c) === 'patience' ? 'none' : 'normal',
-          q: c => edge(c) === 'speed' ? 4 : edge(c) === 'patience' ? 3 : (saw(c, 2) && c.type === 'breaks' ? 1 : 4),
-          s: { jdg: 2, inf: 2, bnd: 1, str: 1 }, cap: { str: 2, psy: 1 },
+          key: 'B', text: `The same five, plus a $10,000 rate hedge.`, did: `Built the five, with a rate hedge.`, exposure: 'normal', flags: { book: 'hedged' },
+          q: 3, s: { jdg: 1, inf: 1, lng: 1 }, cap: { str: 1 },
           outcomes: [
-            { p: c => edge(c) === 'patience' ? 0 : edge(c) === 'speed' ? 0.55 : when('closes')(c), tone: 'good', fin: c => edge(c) === 'speed' ? 2.1 : 0.5, text: c => edge(c) === 'speed' ? `Voltaic runs. You sell into strength three weeks later, up $2,100.` : `The Ledgerline deal closes on schedule. You collect $490 and your money back.` },
-            { p: c => edge(c) === 'patience' ? 0 : edge(c) === 'speed' ? 0.45 : when('breaks')(c), tone: c => edge(c) === 'speed' ? 'mixed' : 'bad', fin: c => edge(c) === 'speed' ? -0.7 : -2.5, text: c => edge(c) === 'speed' ? `Voltaic stalls and hits your 7% stop. A $700 loss on a good setup. You'd take it again.` : `Arcton walks away. Ledgerline falls to $21.60 and you lose $2,450: five months of spreads in one morning.` },
-            { p: c => edge(c) === 'patience' ? 1 : 0, tone: 'good', fin: 0, text: `None of the four is the rare, obvious setup you wait for, so you buy nothing. Theo nods without looking up.` }
+            { p: when('melt'), tone: 'good', fin: 2.6, text: `Rates drift lower. The five rise and the hedge loses a little. Up $2,600.` },
+            { p: when('wobble'), tone: 'mixed', fin: -0.6, text: `The August scare hits all five, and the hedge covers most of it. −$600.` }
           ],
-          later: `You played the one game you're built for, and looked at the shape of the bet before you placed it.`,
-          verdict: { who: 'theo', line: `Took one trade, the one that looked like them. I'd let them sit next to me.` }
+          later: `You saw the shared risk and paid to cover half of it. The book is still mostly one bet, just a smaller one.`,
+          verdict: { who: 'nadia', line: `Hedged the one thing all five had in common. Halfway there.` }
         },
         {
-          key: 'C', text: `Buy nothing today. Nothing here is good enough.`, did: `Waited. Bought nothing.`, exposure: 'none',
-          q: c => edge(c) === 'patience' || (edge(c) === 'research' && saw(c, 2) && c.type === 'breaks') ? 4 : 3,
-          s: { jdg: 1, reg: 2, bnd: 1 }, cap: { psy: 1, time: -1 },
+          key: 'C', text: `Balance by risk: $8,000 each in Brightwell, Calder and Quillfeather, $10,000 each in Tallis and Ashcombe, and a hedge sized so each group carries about the same risk.`, did: `Balanced the book by risk, not by count.`, exposure: 'normal', flags: { book: 'balanced' },
+          q: c => saw(c, 1) || saw(c, 2) ? 4 : 3, s: { jdg: 2, inf: 2, lng: 2, inc: 1 }, cap: { str: 2, psy: 1 },
           outcomes: [
-            { p: when('closes'), tone: 'mixed', fin: 0, text: `You don't trade. Nimbic misses and Hashgrid keeps falling. Voltaic runs, and Ledgerline closes. A quiet day, and one or two you'll think about.` },
-            { p: when('breaks'), tone: 'good', fin: 0, text: `You don't trade. Nimbic misses, Hashgrid keeps falling, and the Ledgerline deal breaks. Doing nothing never looked so smart.` }
+            { p: when('melt'), tone: 'mixed', fin: 2, text: `Rates drift lower. Your rate names rise, Tallis drifts, the hedge costs a little. Up $2,000: less than the room, and you'll hear about it.` },
+            { p: when('wobble'), tone: 'good', fin: 0.2, text: `The August scare. Your rate names fall, Tallis and the hedge rise. Up $200 in the week everyone else lost money.` }
           ],
-          later: `Not playing is a position. Sometimes it's the best one on the board.`,
-          verdict: { who: 'theo', line: `Didn't trade. Good. Next time, notice when the one you've been waiting for walks in.` }
+          later: `Several bets that each have a reason and don't move together. In the good summer it looks timid. Its job is the bad winter.`,
+          verdict: { who: 'nadia', line: `Built a book I could explain on the worst day of the year. That's the whole job.` }
         },
         {
-          key: 'D', text: `Buy Hashgrid at normal size. Down 40% in a morning, it has to bounce.`, did: `Bought the stock that had just fallen 40%.`, exposure: 'large',
-          q: 1, s: { jdg: -2, inf: -2 }, cap: { psy: -1 },
+          key: 'D', text: `Put $40,000 into Quillfeather, your single best idea.`, did: `Concentrated the summer in one name.`, exposure: 'all', flags: { book: 'concentrated' },
+          q: 1, s: { jdg: -1, bnd: -1, reg: -1 }, cap: { psy: -1 },
           outcomes: [
-            { p: 0.6, tone: 'bad', fin: -3.5, text: `The auditor's letter comes out Friday. Hashgrid falls another 35%. You lose $3,500 on a company you hadn't heard of yesterday.` },
-            { p: 0.4, tone: 'good', fin: 1.5, text: `Hashgrid bounces 15% by the close. You make $1,500 and can't explain why.` }
+            { p: when('melt'), tone: 'good', fin: 5.5, text: `Quillfeather rises 14% with the market. Up $5,500, the best summer on the desk.` },
+            { p: when('wobble'), tone: 'bad', fin: -4, text: `The August scare takes Quillfeather down 10% in a week. −$4,000.` }
           ],
-          later: `A falling price isn't a reason. It's a fact you don't understand yet.`,
-          verdict: { who: 'nadia', line: `Bought a stock that was falling for reasons nobody knew. Nothing broke. That's the scary part.` }
+          later: `At least it's honest: one bet, sized like one. It's also most of the summer on a single name that moves with rates.`,
+          verdict: { who: 'theo', line: `Put the summer in one name. Brave. Ask me again in January.` }
         },
         {
-          key: 'E', text: `Buy Nimbic at normal size before earnings. Everyone's in it, and you don't want to miss out.`, did: `Followed the crowd into earnings.`, exposure: 'normal',
-          q: 1, s: { jdg: -1, reg: -1 }, cap: {},
+          key: 'E', text: `Stay in cash until the summer settles.`, did: `Stayed in cash for the summer.`, exposure: 'none', flags: { book: 'cash' },
+          q: 2, s: { reg: 1 }, cap: { time: -1 },
           outcomes: [
-            { p: 0.55, tone: 'bad', fin: -2, text: `Nimbic misses and drops 20%. The chat room goes silent. You lose $2,000.` },
-            { p: 0.45, tone: 'good', fin: 2, text: `Nimbic beats and jumps 20%. You make $2,000 and feel like part of something.` }
+            { p: when('melt'), tone: 'mixed', fin: 0, text: `Everything rises all summer without you.` },
+            { p: when('wobble'), tone: 'good', fin: 0, text: `The August scare comes and goes. You watched it.` }
           ],
-          later: `Fear of missing out is an edge, for whoever is selling to you.`,
-          verdict: { who: 'theo', line: `Bought the chat room's stock so they wouldn't miss it. The chat room never misses anything.` }
+          later: `Cash is a position too: it's the bet that nothing is worth owning. Sometimes right. Rarely all summer.`,
+          verdict: { who: 'theo', line: `Sat out the summer. Safe. Not the same as having a plan.` }
         }
       ],
       analysis: {
-        game: `Not a game against one opponent but a stream of offers. Most are bets someone else wants you to take. The skill is in declining, and in reading each bet's shape: how much you can make against how much you can lose.`,
-        incentives: `The chat room benefits from more buyers. A falling stock attracts people who confuse cheap with valuable. A merger spread looks safe because it usually pays, a little.`,
-        leverage: `You can wait as long as you like. Every idea has to earn your money. You never have to spend it.`,
-        missing: `Whether the Ledgerline deal would close, and why Hashgrid's auditor quit. Only one of those was knowable.`,
-        assumptions: `That a busy day is a productive one. That a bet that usually wins is a good bet.`,
-        controlled: `Which games to enter, and at what shape of risk.`,
-        couldnt: `Which ideas happened to work.`,
-        concept: { thinker: 'seykota', term: `Edge`, name: `Play only the game you're built for`, body: `The traders in Market Wizards use methods that look nothing alike. What they share is that each plays only the game they're built for. Paul Tudor Jones wouldn't take a trade unless it could make five times what it risked.` },
-        second: { thinker: 'schelling', term: `The option not to play`, name: `Declining is a move, and often a strong one`, body: `Schelling showed that declining to engage is a move, and often a strong one. The trader who can say no to everything gets to choose the few things worth a yes.` },
-        better: `B, if your edge fits one idea and its shape is good. C if not. Ledgerline risks $2,450 to make $490: only take it when the deal's progress says it's safe.`,
-        lesson: `Shape tells you what's at stake. Only probability against price tells you whether it's a bet.`
+        game: `A portfolio that looks diversified and isn't. Five names in five sectors can still be one bet if they all depend on the same thing, here falling interest rates.`,
+        incentives: `Five good stories feel like five good reasons. The streak makes every story feel more certain.`,
+        leverage: `Nadia's correlation sheet and a stress test. Both cost nothing and both told you the answer.`,
+        missing: `How your positions behave on the same bad day. That's the only diversification that counts.`,
+        assumptions: `That different sectors are different bets. That more names means less risk.`,
+        controlled: `What you owned, how much of each, and whether anything in the book moved the other way.`,
+        couldnt: `Rates, and when they'd move.`,
+        concept: { thinker: 'aumann', term: `Correlated bets`, name: `Count your bets by what moves them, not by their names`, body: `Fifteen bets that don't move together cut your risk by about three quarters. Five that move together cut it by almost nothing. Ray Dalio calls the first the holy grail of investing. The second is one bet in five coats.` },
+        second: { thinker: 'duke', term: `Stress testing`, name: `Decide on the bad day before it comes`, body: `Duke's pre-mortem: imagine it's January and the book lost money. Why? If one answer explains every position, you own one position.` },
+        better: `C. Several bets that each have a reason and don't move together, sized so each carries a similar share of the risk. B if you want the five: hedge what they share.`,
+        lesson: `Diversification is measured by what moves together on a bad day, not by how many names you own.`
       },
-      life: { title: `The full calendar`, text: `Four invitations arrive in one week: a side project, a board seat, a speaking slot and a friend's startup. Saying yes to all of them feels like momentum. Only one of them uses what you're actually good at.` }
+      life: { title: `The household`, text: `Two salaries from the same company, a house in the same town, savings in that company's stock. It looks like a household with several sources of security. It's one bet on one employer, and you'll find out on the day it has a bad year.` }
     },
 
-    // ───────────────────────────────────────── 4. A normal losing stretch, or a new market?
+    // ───────────────────────────────────────── 4. The shock lands on the book you built
     {
-      id: 'changing-market',
+      id: 'the-turn',
       opponent: `your assumptions`,
-      tests: `Can you abandon your assumptions?`,
+      tests: `Can you tell a turn from a dip, with your own book on the line?`,
       level: `Regime change`,
-      title: `The Changing Market`,
+      title: `The Turn`,
       lens: ['nash', 'duke'],
-      setting: `The desk · January · Six losing weeks`,
-      cycle: { t: 1, read: `Cold. Five weeks of outflows, strategists cutting targets, and nobody picks up the phone. Theo: "When nobody calls back, I start reading."` },
+      setting: `The desk · January · The morning the cycle turned`,
+      cycle: { t: 1, read: `Cold. Margin debt is falling 4% a month, futures took two rate cuts out of the year in an hour, and nobody picks up the phone. Theo: "When the borrowed money leaves, it leaves together."` },
       types: [
-        { id: 'drawdown', p: 0.45, who: `the market`, label: `It was a normal losing stretch`, tell: `Your method's recoveries had slowed from four days to six, not broken. Within weeks, the dips started bouncing again.` },
-        { id: 'regime', p: 0.55, who: `the market`, label: `The market had changed`, tell: `Dips that used to recover in four days were taking nineteen. Cheaper money and booming AI spending had been doing the buying, and both had stopped.` }
+        { id: 'wobble', p: 0.45, who: `the market`, label: `It was a sharp dip`, tell: `The inflation print was one bad month. Within three weeks the dip-buyers were back and rate-sensitive stocks recovered most of the drop.` },
+        { id: 'deleveraging', p: 0.55, who: `the market`, label: `The cycle had turned`, tell: `Rates had stopped falling for good. The dip-buyers had been buying with borrowed money, and as it was called in they sold together. Dips that used to recover in four days took weeks, or didn't.` }
       ],
       facts: [
-        `For two years you've bought dips in AI-chip stocks while big cloud companies kept raising their data-center spending.`,
-        `The method has lost money six weeks in a row. Interest rates are at a 14-year high.`,
-        `Overnight, Cirrane Cloud cut its data-center spending by 30%. Tensora, an AI-chip designer, is <strong>down 14%</strong> before the open.`,
-        `Your dip-buying book is 11% below its peak. Nadia already cut its limits at 10%, and cuts them in half again at 15%.`,
-        `A normal trade is about $10,000. The market opens at 9:30.`
+        `Your book from June is still on: <strong>{book}</strong>.`,
+        `This morning's inflation print came in hot. Futures took two rate cuts out of the year in an hour.`,
+        `Rate-sensitive stocks are down hard before the open. Homebuilders −6%, regional banks −5%.`,
+        `Your account: <strong>{account}</strong>. Nadia's limits step down as the account falls.`,
+        `The market opens at 9:30.`
       ],
       cast: [
-        { name: `Nadia`, role: `Head of risk`, archetype: `The Guardian`, power: `Your limits`, note: `Limits step down as losses grow.` },
+        { name: `Nadia`, role: `Head of risk`, archetype: `The Guardian`, power: `Your limits`, note: `Has your book on her screen before you do.` },
         { name: `Theo`, role: `Senior trader`, archetype: `The Survivor`, power: `Experience`, note: `In since 5 am. Reading, not trading.` }
       ],
-      known: [`Six losing weeks.`, `Rates at a 14-year high.`, `Cirrane cut data-center spending 30% overnight.`],
-      unknown: [`Whether this is a normal losing stretch or a new market.`, `Whether Cirrane's cut is the start of a trend.`],
+      known: [`A hot inflation print.`, `Two rate cuts gone from the year.`, `Rate-sensitive stocks down hard.`],
+      unknown: [`Whether this is a sharp dip or a turn in the cycle.`, `How your book will behave if it's a turn.`],
       clues: [
-        { label: `Check your method's backtest`, text: `The worst run in two years of testing was seven losing weeks. You're at six. Every method has losing stretches.` },
-        { label: `Check how fast dips are recovering`, text: c => c.type === 'regime' ? `Dips used to recover in about four days. Since October, the last six took 19, 4, 22, 15, 6 and 21. Mostly much slower. Not every one.` : `Dips used to recover in about four days. Since October, the last six took 6, 11, 4, 9, 5 and 7. Slower, and noisier, but still recovering.` },
-        { label: `Theo's desk`, text: `Theo has been in since 5 am. He hasn't placed a trade. He's reading Cirrane's spending guidance line by line.` },
-        { label: `What's priced in?`, text: `Chip stocks trade at a three-year low against earnings. Five weeks of record outflows end in one of two ways: the selling exhausts itself, or it's the start. Which one is in the price?` }
+        { label: `Check how fast dips are recovering`, text: c => c.type === 'deleveraging' ? `Dips used to recover in about four days. Since October, the last six took 19, 4, 22, 15, 6 and 21. Mostly much slower. Not every one.` : `Dips used to recover in about four days. Since October, the last six took 6, 11, 4, 9, 5 and 7. Slower, and noisier, but still recovering.` },
+        { label: `Nadia's risk report on your book`, text: c => bookRisk[bookOf(c)] },
+        { label: `Theo's desk`, text: `Theo has been in since 5 am. He hasn't placed a trade. He's reading the margin-debt numbers line by line.` },
+        { label: `What's priced in?`, text: `Margin debt is falling 4% a month: the dip-buyers were borrowing to buy. Futures now price one rate cut, not three. Rate-sensitive stocks still price most of the cuts that just disappeared.` }
       ],
       edgeNote: {
-        research: `Your edge travels better than most. Companies you know deeply are still worth knowing in a new market. Narrow to them while you relearn the rest.`,
-        speed: `Reading price is the edge most exposed to a new market. The patterns you trusted were partly made by cheap money and booming spending. Test them again, small.`,
-        patience: `A patient trader's edge is waiting, and this is when it pays. The rare, obvious setups usually come after the panic, not during it.`
+        research: `You know these companies. The market isn't trading them this morning; it's trading rates. Your research is right and, today, beside the point.`,
+        speed: `Reading price is the edge most exposed to a turn. The patterns you trusted were partly made by cheap money. Test them again, small.`,
+        patience: `A patient trader's edge is waiting, and this is when it pays. The rare, obvious setups usually come after the forced selling, not during it.`
       },
-      question: `Your method stopped working. Does the method change, or do you?`,
+      question: `The cycle may have turned, with your book in it. What do you do?`,
       options: [
         {
-          key: 'A', text: `Stay the course: keep buying the dips at normal size. Every method has losing stretches.`, did: `Stayed the course at full size.`, exposure: 'normal',
-          q: c => saw(c, 1) ? (c.type === 'regime' ? 1 : 3) : 2, s: { jdg: -1, reg: 1 }, cap: {},
+          key: 'A', text: c => bookOf(c) === 'cash' ? `Buy the dip: put $10,000 into the rate names that fell hardest.` : `Buy the dip: add $10,000 to the names that fell hardest.`, did: `Bought the dip.`, exposure: 'normal',
+          q: c => know(c) ? (delev(c) ? 0 : (['balanced', 'cash'].includes(bookOf(c)) ? 4 : 3)) : 1, s: { reg: -1, jdg: -1 }, cap: {},
           outcomes: [
-            { p: when('drawdown'), tone: 'good', fin: 4, text: `The losing stretch ends in week seven, just as your backtest said it might. The dips bounce again. Up $4,000.` },
-            { p: when('regime'), tone: 'bad', fin: -4, text: `You buy the dip at the open. It keeps dipping. Three more weeks cost you $4,000, and you're one bad day from Nadia's next cut.` }
+            { p: when('deleveraging'), tone: 'bad', fin: c => r1(L(c) - 3), text: c => `The borrowed money keeps leaving. Your book loses ${k$(-L(c))}, and the dip you bought loses $3,000 more.` },
+            { p: when('wobble'), tone: 'good', fin: c => r1(0.3 * A(c) + 2), text: c => `The dip-buyers are back within three weeks. ${bookOf(c) === 'cash' ? '' : `Your book recovers ${k$(0.3 * A(c))}, and `}the dip you bought makes $2,000.` }
           ],
-          later: `Sticking with a method through a normal losing stretch is discipline. Sticking with it after the world changed is stubbornness. The evidence was there to tell them apart.`,
-          verdict: { who: 'nadia', line: `Kept buying dips. Whether that was discipline or denial depended on a number they could have checked.` }
+          later: c => delev(c) ? `Buying the dip is a bet that nothing has changed. Here something had.` : `Buying a sharp dip in a market that hadn't changed was the right read, and you had the evidence for it.`,
+          verdict: { who: 'theo', line: `Bought the dip on the morning the borrowed money left. Or the morning it didn't. The recovery data would have told you which.` }
         },
         {
-          key: 'B', text: `Use every bit of your remaining limit to win back the six weeks.`, did: `Bet everything to win back the losses.`, exposure: 'all',
+          key: 'B', text: `Halve everything.`, did: `Halved the whole book.`, exposure: 'small', when: c => bookOf(c) !== 'cash',
+          q: c => bookOf(c) === 'balanced' ? 2 : know(c) && !delev(c) ? 2 : 3, s: { jdg: 1, reg: 1 }, cap: { psy: 1 },
+          outcomes: [
+            { p: when('deleveraging'), tone: 'mixed', fin: c => r1(L(c) / 2), text: c => `The selling goes on for weeks. Halving cut the damage to ${k$(-L(c) / 2)}.` },
+            { p: when('wobble'), tone: 'mixed', fin: c => r1(0.15 * A(c)), text: c => `The dip recovers within three weeks, on half your size: ${k$(0.15 * A(c))}.` }
+          ],
+          later: `Halving everything is a sound reflex when you can't tell what's wrong. It cuts the good with the bad.`,
+          verdict: { who: 'nadia', line: `Cut everything by half. Blunt, and better than nothing.` }
+        },
+        {
+          key: 'C', text: c => bookOf(c) === 'concentrated' ? `Cut Quillfeather to $10,000. It's one name moving with rates.` : bookOf(c) === 'balanced' ? `Sell the three rate names. Keep Tallis, Ashcombe and the hedge.` : `Cut what moves together: sell the rate-sensitive names and keep what moves on its own.`, did: `Cut the positions that moved together.`, exposure: 'small', when: c => bookOf(c) !== 'cash',
+          q: c => bookOf(c) === 'balanced' ? 2 : know(c) && !delev(c) ? 2 : saw(c, 1) || (know(c) && delev(c)) ? 4 : 3, s: { jdg: 2, inf: 2, lng: 1 }, cap: { str: 2 },
+          outcomes: [
+            { p: when('deleveraging'), tone: 'good', fin: c => r1(L(c) * 0.25), text: c => `You cut the cluster before the second leg down. The book loses ${k$(-L(c) * 0.25)} instead of ${k$(-L(c))}.` },
+            { p: when('wobble'), tone: 'mixed', fin: c => r1(0.05 * A(c)), text: `The dip recovers within three weeks, mostly without the names you sold.` }
+          ],
+          later: `You cut the one risk your book really had, and kept the parts that didn't depend on it.`,
+          verdict: { who: 'nadia', line: `Cut exactly what was moving together. That's reading the book, not the headlines.` }
+        },
+        {
+          key: 'D', text: c => bookOf(c) === 'cash' ? `Borrow to buy big: $40,000 of the rate names, at 2×.` : `Lever up: borrow to buy more of everything, at 2×.`, did: `Levered up into the drop.`, exposure: 'all',
           q: 0, s: { reg: -3, jdg: -3, bnd: -2 }, cap: { psy: -2, soc: -1 },
           outcomes: [
-            { p: when('drawdown'), tone: 'good', fin: 7, text: `The bounce comes, and your full-size positions catch it. Up $7,000. It worked, which makes the next time more dangerous.` },
-            { p: when('regime'), tone: 'bad', fin: -12, text: `Two more cloud companies trim spending. Your positions fall together. You lose $12,000 in four days, and Nadia halves your limits.` }
+            { p: when('deleveraging'), tone: 'bad', fin: c => r1(bookOf(c) === 'cash' ? -9 : 2 * L(c) - 3), text: `You borrowed into a market that was being forced to stop borrowing. The selling feeds on itself, and your leverage feeds it too.` },
+            { p: when('wobble'), tone: 'good', fin: c => r1(bookOf(c) === 'cash' ? 6 : 0.6 * A(c) + 2), text: `The dip recovers. With leverage, it recovers twice as fast for you. It worked, which makes the next time more dangerous.` }
           ],
-          later: `Revenge sizing turns a drawdown into a crisis. It's the losing position again, wearing a bigger coat.`,
-          verdict: { who: 'nadia', line: `Maxed out their limit to get even. That's when I stop watching the numbers and start watching the person.` }
+          later: `Borrowing more on the morning the cycle may have turned is the bet that ends careers when it's wrong.`,
+          verdict: { who: 'nadia', line: `Borrowed into the selling. I stop watching the numbers and start watching the person.` }
         },
         {
-          key: 'C', text: `Halve your size and test whether the method still works, with small trades you write down.`, did: `Halved size and tested the method.`, exposure: 'small',
-          q: c => saw(c, 1) && c.type === 'regime' ? 4 : 3, s: { jdg: 2, inf: 2, reg: 2, lng: 1 }, cap: { str: 2, psy: 1 },
+          key: 'E', text: `Sell everything and wait.`, did: `Sold everything and waited.`, exposure: 'none', when: c => bookOf(c) !== 'cash',
+          q: c => know(c) ? (delev(c) ? 3 : 1) : 2, s: { reg: 1 }, cap: { time: -1 },
           outcomes: [
-            { p: when('drawdown'), tone: 'mixed', fin: 1.5, text: `Your small tests work. The method was fine, and you made $1,500 instead of $4,000. You'll know faster next time.` },
-            { p: when('regime'), tone: 'mixed', fin: -1.5, text: `Your small tests confirm it: dips don't bounce the way they did. You lose $1,500 learning something worth far more.` }
+            { p: when('deleveraging'), tone: 'good', fin: c => r1(L(c) * 0.15), text: c => `You sell at the open for ${k$(-L(c) * 0.15)}, and miss the weeks of selling that follow.` },
+            { p: when('wobble'), tone: 'bad', fin: c => r1(-0.1 * A(c)), text: c => `You sell near the low. Three weeks later it has recovered without you: ${k$(-0.1 * A(c))}.` }
           ],
-          later: `You treated the method like a hypothesis and paid a small price to test it.`,
-          verdict: { who: 'theo', line: `Cut size and started measuring again. From the outside, adapting looks boring. Good.` }
+          later: `Selling everything protects you from the turn and from the recovery equally. It's a decision not to decide.`,
+          verdict: { who: 'theo', line: `Sold the lot at the open. Sometimes that's wisdom. Sometimes it's fear with good timing.` }
         },
         {
-          key: 'D', text: `Switch to what's working now: bet AI-chip stocks will fall (short them), like everyone else.`, did: `Switched to what everyone else was doing.`, exposure: 'normal',
-          q: 1, s: { jdg: -1, inf: -1, reg: -1 }, cap: { str: -1 },
+          key: 'F', text: c => bookOf(c) === 'cash' ? `Flip: short a basket of rate-sensitive stocks at normal size, stop at today's high.` : `Sell the rate names and flip: short a basket of them at normal size, stop at today's high.`, did: `Flipped short when the evidence turned.`, exposure: 'normal',
+          q: c => know(c) ? (delev(c) ? 4 : 0) : 1, s: { jdg: 2, reg: 1, inf: 1 }, cap: { str: 2 },
           outcomes: [
-            { p: when('drawdown'), tone: 'bad', fin: -5.4, text: `A week later Cirrane says the cut was a one-time pause. Chip stocks jump 18%. You lose $5,400 with a method you'd never used.` },
-            { p: when('regime'), tone: 'good', fin: 3, text: `Chip stocks keep sliding. You make $3,000, with no idea when to get out.` }
+            { p: when('deleveraging'), tone: 'good', fin: c => r1((bookOf(c) === 'cash' ? 0 : L(c) * 0.15) + 6), text: `The forced selling runs for weeks. Your short makes $6,000, with a stop you never needed.` },
+            { p: when('wobble'), tone: 'bad', fin: c => r1((bookOf(c) === 'cash' ? 0 : -0.1 * A(c)) - 2.5), text: `The dip recovers, and your short hits its stop: −$2,500. You turned around one bad print too early.` }
           ],
-          later: `Copying a strategy doesn't copy the edge. You left your own game for someone else's, at the most crowded moment.`,
-          verdict: { who: 'theo', line: `Jumped to the hot trade with no map. I've seen people make money that way. Once.` }
+          later: c => delev(c) ? `You changed your mind as fast as the evidence did, and bet on the new market with a stop. That's what having no attachment looks like.` : `Flipping is right only if the market changed. The recovery data said whether it had.`,
+          verdict: { who: 'theo', line: `Turned around in one morning. With the right evidence that's the best trade of the year. Without it, it's a guess.` }
         },
         {
-          key: 'E', text: `Stop trading for a month. Study what changed before you risk anything.`, did: `Stopped to study what changed.`, exposure: 'none',
-          q: c => saw(c, 1) ? (c.type === 'regime' ? 4 : 2) : 3, s: { jdg: 1, reg: 2, inf: 2 }, cap: { str: 2, time: -2 },
+          key: 'G', text: c => bookOf(c) === 'cash' ? `Stay in cash and watch.` : `Hold. The book was built to take a morning like this.`, did: c => bookOf(c) === 'cash' ? `Stayed in cash.` : `Held the book through it.`,
+          exposure: c => ({ oneBet: 'large', concentrated: 'all', hedged: 'normal', balanced: 'normal', cash: 'none' })[bookOf(c)],
+          q: c => ({
+            balanced: 4,
+            hedged: know(c) && delev(c) ? 2 : 3,
+            oneBet: know(c) ? (delev(c) ? 0 : 3) : 1,
+            concentrated: know(c) ? (delev(c) ? 0 : 3) : 1,
+            cash: know(c) ? (delev(c) ? 4 : 2) : 3
+          })[bookOf(c)], s: { reg: 1 }, cap: {},
           outcomes: [
-            { p: when('drawdown'), tone: 'mixed', fin: 0, text: `You sit out the month, and the method recovers without you. You come back wiser, and a month behind.` },
-            { p: when('regime'), tone: 'good', fin: 0, text: `The first two dips bounce while you read, and you feel early and foolish. Then the slide comes. Being early looks exactly like being wrong, for a while. A month later you come back with a narrower method and a clearer head.` }
+            { p: when('deleveraging'), tone: c => L(c) <= -6 ? 'bad' : 'mixed', fin: c => r1(L(c)), text: c => bookOf(c) === 'cash' ? `The selling runs for weeks. You own nothing, and it costs you nothing.` : bookOf(c) === 'balanced' ? `The selling runs for weeks. Your rate names fall; Tallis and the hedge rise. The book loses ${k$(-L(c))} in the worst month of the year.` : `The selling runs for weeks and your book falls with it: ${k$(-L(c))}. ${bookOf(c) === 'oneBet' ? 'Five names, one bet, all at once.' : ''}` },
+            { p: when('wobble'), tone: 'good', fin: c => r1(0.3 * A(c)), text: c => bookOf(c) === 'cash' ? `The dip recovers within three weeks. You watched.` : `The dip recovers within three weeks, and so does your book: ${k$(0.3 * A(c))}.` }
           ],
-          later: `Stepping away protected your money and spent your time. Both are capital.`,
-          verdict: { who: 'nadia', line: `Stood down for a month and came back with notes. Best thing I saw all quarter.` }
+          later: c => bookOf(c) === 'balanced' ? `This is the morning June's book was built for. Holding wasn't hope; the book was designed for it.` : bookOf(c) === 'cash' ? `Cash made the morning easy. It also meant you had nothing to decide.` : `Holding a book that is one bet, on the morning that bet may have turned, is hope, not a plan.`,
+          verdict: { who: 'nadia', line: `Held what they built in June. Whether that was a plan depends entirely on what they built.` }
         }
       ],
       analysis: {
-        game: `Your method was a best response to a market that may no longer exist. The hard part is telling a normal losing stretch from a changed world while you're inside it.`,
-        incentives: `You want the method to keep working, because it's part of how you see yourself. The market has no stake in your identity.`,
-        leverage: `Two numbers: how long your method's worst losing run lasted in testing, and how fast dips are recovering now. Together they tell you which world you're in.`,
-        missing: `Whether the conditions would come back. The recovery data was the best evidence available.`,
-        assumptions: `That six weeks is a blip because two years were good. Or the opposite: that six weeks proves the method is dead.`,
-        controlled: `Your size, and whether you checked the evidence before deciding.`,
-        couldnt: `Rates, cloud spending, the crowd.`,
-        concept: { thinker: 'nash', term: `Regime change`, name: `A best response to a game that changed`, body: `A Nash equilibrium is a set of best responses: each strategy is best only against the others being played. When the other players change, when cheap money leaves and the big buyers stop, your best response changes too. Linda Raschke knows her methods' normal drawdowns, so she can tell when one is abnormal.` },
-        second: { thinker: 'duke', term: `Bayesian updating`, name: `Move your confidence when the evidence moves`, body: `Duke asks you to hold beliefs with a level of confidence, and to update it. "This method works" was a 90% belief two years ago. The recovery data should move that number, up or down.` },
-        better: `Check the recoveries first. If they've broken, C or E. If they've only slowed, A is discipline, not denial.`,
-        lesson: `You don't have to predict the shock. You have to know your method well enough to recognize one.`
+        game: `A turn in the debt cycle, landing on a book you built in a different market. The question isn't whether to predict the turn. It's whether you can recognize one, and whether your book was ever as diversified as it looked.`,
+        incentives: `You want June's book to have been right. The market only cares what it's worth this morning.`,
+        leverage: `Two numbers: how fast dips are recovering, and how your positions move together on a bad day. Both were on your desk.`,
+        missing: `Whether the borrowed money was leaving for good. The recovery data and the margin-debt numbers were the best evidence.`,
+        assumptions: `That a dip is always a dip because it was for two years. That five names are five bets.`,
+        controlled: `What you built in June, and what you cut this morning.`,
+        couldnt: `Inflation, rates, and when other people's borrowing would be called in.`,
+        concept: { thinker: 'nash', term: `Regime change`, name: `A best response to a game that changed`, body: `A strategy is a best response to the other players. When cheap money stops and borrowed money is called in, the other players change, and dip-buying stops being the best response. Ray Dalio describes this as the turn of the debt cycle: what worked on the way up works against you on the way down.` },
+        second: { thinker: 'duke', term: `Bayesian updating`, name: `Move your confidence when the evidence moves`, body: `"Dips always come back" was a 90% belief for two years. The recovery data should move that number, up or down, and your size with it.` },
+        better: `Check the recoveries. If they've broken, cut what moves together (C) or flip with a stop (F); with a balanced book, holding is fine. If they're only slow, buying the dip or holding is discipline, not denial.`,
+        lesson: `You don't have to predict the turn. You have to know your book well enough to recognize one, and build it in June for a morning like this.`
       },
-      life: { title: `The skill that built your career`, text: `For ten years one skill paid your bills. Now software does most of it. You can do it harder, jump to whatever's hot, or test what still works and retrain on purpose, before the market makes the choice for you.` }
+      life: { title: `The job market`, text: `For years, switching jobs every eighteen months got you a raise each time. This year the calls stopped. Is it a slow quarter or a changed market? The answer decides whether to wait for the next offer or learn the skill the new market is paying for.` }
     },
 
     // ───────────────────────────────────────── 5. Too timid, sized right, or too big
@@ -741,22 +788,23 @@ window.PP = window.PP || {};
       },
       right: () => feed('NEWS · VALDOR', [['MON', 'Valdor raises rates 2 points to defend the crown', C.amber], ['TUE', 'Unemployment hits 11%'], ['WED', 'Bloc minutes: "support for partners within the system"'], ['THU', 'Valdor Rail at a ten-year low'], ['FX', 'Crown forwards ~$40bn a day · 2× approved', C.dim]])
     },
-    'empty-hand': {
-      center: () => T(36, 92, `FOUR IDEAS · YOU OWN NOTHING · WHAT YOU COULD MAKE / LOSE`, { size: 18, fill: C.dim }) +
-        tile(24, 104, 'Nimbic AI', 'Earnings tomorrow', path(30, [[0, 40], [1, 62]], 3, 1.2), C.teal, '+$2,000 / −$2,000', null, 'Chat: everyone is in') +
-        tile(512, 104, 'Ledgerline', 'Bought at $30 · now $28.60', path(30, [[0, 21], [0.35, 21.5], [0.4, 28.4], [1, 28.6]], 8, 0.15), C.ink, '+$490 / −$2,450', (b, Y) => dash(b, Y(30), C.amber, '$30 if the deal closes'), 'Deal pending') +
-        tile(24, 330, 'Voltaic Cells', '2-year high · 3× volume', path(30, [[0, 30], [0.5, 33], [0.85, 33.5], [1, 37]], 5, 0.5), C.teal, '+$2,100 / −$700', (b, Y) => dash(b, Y(34), C.dim, 'old high', 'end'), 'Exit 7% below') +
-        tile(512, 330, 'Hashgrid', '−40% today', path(30, [[0, 50], [0.8, 51], [0.86, 30], [1, 30.5]], 6, 0.6), C.red, '? / ?', null, 'Auditor quit'),
-      right: () => feed('TRADING CHAT', [['09:41', '“Nimbic is going to crush earnings”'], ['09:44', '“Loaded up on Nimbic this morning”'], ['09:52', '“If you are not in Nimbic, what are you doing”'], ['10:05', '“Hashgrid at -40% has to bounce, right?”'], ['10:11', '“Bought more Nimbic”', C.dim]])
-    },
-    'changing-market': {
+    'the-book': {
       center: () => {
-        const b = [36, 150, 964, 500], vals = path(60, [[0, 100], [0.86, 128], [1, 114]], 21, 1.1), Y = scaler(b, 98, 132);
-        return T(36, 112, 'YOUR METHOD · BUY AI-CHIP DIPS', { size: 22, fill: C.dim }) + frame(b, 8, 4) + poly(b, vals, Y, C.teal) +
-          dash(b, Y(128), C.dim, 'PEAK', 'end') + dash(b, Y(115.2), C.amber, '−10% · LIMITS ALREADY CUT', 'end') + dash(b, Y(108.8), C.red, '−15% · CUT IN HALF AGAIN', 'end') +
-          T(36, 530, '2 years ago', { size: 16, fill: C.dim }) + T(36 + (b[2] - b[0]) * 0.86, 530, '6 weeks ago', { size: 16, fill: C.dim, anchor: 'middle' }) + T(964, 530, 'today · −11%', { size: 16, fill: C.amber, anchor: 'end' });
+        const rows = [['BRIGHTWELL HOMES', 'Homebuilder', 'rates', C.amber], ['CALDER REGIONAL BANK', 'Bank', 'rates', C.amber], ['PINEMOOR REIT', 'Apartments', 'rates', C.amber], ['OSTRANDER AUTO CREDIT', 'Auto loans', 'rates', C.amber], ['QUILLFEATHER SOFTWARE', 'Software', 'rates', C.amber], ['TALLIS GOLD ROYALTY', 'Gold', 'its own', C.teal], ['ASHCOMBE PHARMA', 'Trial readout', 'its own', C.teal]];
+        return T(36, 92, `$60,000 TO PUT TO WORK · SEVEN IDEAS`, { size: 20, fill: C.dim }) +
+          rows.map(([n, sec, drv, col], i) => `${T(36, 150 + i * 52, n, { size: 24, sans: true, weight: 600 })}${T(520, 150 + i * 52, sec, { size: 20, fill: C.dim, sans: true })}${T(964, 150 + i * 52, `moves with ${drv}`, { size: 18, fill: col, anchor: 'end' })}<line x1="36" y1="${166 + i * 52}" x2="964" y2="${166 + i * 52}" stroke="${C.grid}"/>`).join('') +
+          T(36, 534, `RATE HEDGE AVAILABLE · gains when rates rise`, { size: 18, fill: C.dim });
       },
-      right: () => feed('NEWS · 06:15', [['06:02', 'Cirrane cuts data-center spending 30%', C.amber], ['06:10', 'Tensora −14% before the open', C.red], ['05:40', 'Rates: highest in fourteen years'], ['TEST', 'Backtest worst run: 7 losing weeks · you: 6', C.dim]])
+      right: () => feed('NEWS · JUNE', [['09:30', 'Futures price three rate cuts this year', C.teal], ['10:05', 'Homebuilders hit all-time highs'], ['11:20', 'Chat: "rates only go one way from here"'], ['RISK', 'Nadia: book due Friday · show me what moves together', C.amber]])
+    },
+    'the-turn': {
+      center: ctx => {
+        const bk = bookOf(ctx || {}), loss = BOOK_LOSS[bk], b = [36, 150, 964, 500];
+        const vals = path(60, [[0, 100], [0.8, 104], [0.9, 103], [1, 103 + loss * 0.4]], 21, 0.6), Y = scaler(b, 94, 108);
+        return T(36, 112, `YOUR BOOK FROM JUNE · ${M.books[bk].name.toUpperCase()}`.slice(0, 70), { size: 20, fill: C.dim }) + frame(b, 8, 4) + poly(b, vals, Y, loss < -5 ? C.red : C.teal) +
+          dash(b, Y(100), C.dim, 'JUNE', 'end') + T(36, 530, 'June', { size: 16, fill: C.dim }) + T(964, 530, 'pre-market today', { size: 16, fill: C.amber, anchor: 'end' });
+      },
+      right: () => feed('NEWS · 06:15', [['06:00', 'Inflation hot · futures drop two rate cuts', C.amber], ['06:05', 'Homebuilders −6% · regional banks −5% pre-market', C.red], ['05:40', 'Margin debt falling 4% a month'], ['DESK', 'Theo in since 5 am · no trades', C.dim]])
     },
     'final-bet': {
       center: ctx => {
@@ -823,8 +871,8 @@ window.PP = window.PP || {};
         `<text x="135" y="90" font-family="system-ui, sans-serif" font-size="44" fill="#eef2f4" text-anchor="middle">${DAYS[i].clock.replace(/ (AM|PM)/, '')}</text></g>`;
     }
   });
-  const ENV = { 'losing-position': 'desk-dusk', 'the-peg': 'desk-morning', 'empty-hand': 'desk-noon', 'changing-market': 'desk-rain', 'final-bet': 'desk-night' };
-  const ORDER = ['losing-position', 'the-peg', 'empty-hand', 'changing-market', 'final-bet'];
+  const ENV = { 'losing-position': 'desk-dusk', 'the-peg': 'desk-morning', 'the-book': 'desk-noon', 'the-turn': 'desk-rain', 'final-bet': 'desk-night' };
+  const ORDER = ['losing-position', 'the-peg', 'the-book', 'the-turn', 'final-bet'];
   const screensFor = id => ({ ...SCREENS[id], ...desk(ORDER.indexOf(id)) });
   M.scenes = {
     'losing-position': {
@@ -927,96 +975,106 @@ window.PP = window.PP || {};
       links: [['nadia', 'theo', 'trusts']]
     },
 
-    'empty-hand': {
-      env: ENV['empty-hand'],
-      screens: screensFor('empty-hand'),
-      cast: [{ id: 'theo', spot: 'theo', mood: 'neutral', pose: 'mug', wants: `To trade only when the trade is obvious.` }],
+    'the-book': {
+      env: ENV['the-book'],
+      screens: screensFor('the-book'),
+      cast: [
+        { id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `A book she can explain on the worst day of the year.` },
+        { id: 'theo', spot: 'theo', mood: 'neutral', pose: 'pocket', wants: `To see whether you count bets or names.` }
+      ],
       intro: [
-        { cam: 'wide', caption: `A slow Thursday. Four ideas cross your desk before lunch.` },
-        { if: c => (c.past || {})['the-peg'] === 'E', cam: 'phone', caption: `Your phone lights up. Nadia, about Valdor. The exception you asked for is still on her desk.` },
+        { cam: 'wide', caption: `June. The market has gone up almost every day since April. So have you.` },
+        { if: c => (c.past || {})['the-peg'] === 'E', cam: 'phone', caption: `Nadia still hasn't forgotten the exception you asked for on Valdor.` },
         { if: c => /^[BC]$/.test((c.past || {})['the-peg'] || ''), caption: `The Valdor trade is still on Theo's whiteboard: a very large number, next to a very small stop.` },
-        { cam: 'screens', ...alert(`Trading chat: everyone loading up on Nimbic AI before earnings`) },
-        { cam: 'screens', ...alert(`Ledgerline: being bought for $30 · trades at $28.60`) },
-        { cam: 'screens', ...alert(`Voltaic Cells: two-year high on 3× volume`) },
-        { cam: 'screens', ...alert(`Hashgrid −40% · its auditor quits`) },
-        { who: 'theo', mood: 'smile', pose: 'mug', say: `Busy morning?` },
-        { you: `(Four ideas. It feels wrong to do nothing.)` },
-        { cam: 'wide', caption: `Theo hasn't placed a trade in nine days. He's having his best year in a decade.` }
+        { cam: 'screens', caption: `Seven ideas on the screen. Five of them are the best you've had all year.` },
+        { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `Sixty thousand to put to work for the summer. I want your book by Friday.` },
+        { who: 'nadia', mood: 'neutral', say: `And I'll be looking at what moves together, not how many names you own.` },
+        { you: `(Five sectors. Homes, a bank, apartments, auto loans, software. That's diversified.)` },
+        { who: 'theo', mood: 'thinking', pose: 'pocket', say: `What do all five need to happen?` }
       ],
       options: {
-        A: { line: `(All four. More shots, more chances.)`, preview: `Busy. Is it good?`,
+        A: { line: `(My five best ideas, twelve thousand each.)`, preview: `Five names. Possibly one bet.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`4 positions · Nimbic −20% · Hashgrid −35% · Voltaic +21%`) }, { who: 'theo', mood: 'neutral', act: 'sigh', caption: `A busy month. An expensive one.` }] },
-            { beats: [{ cam: 'screens', ...alert(`Ledgerline deal terminated · LDGL back to $21.60`) }, { who: 'theo', mood: 'neutral', act: 'sigh' }] }
+            { beats: [{ cam: 'screens', ...alert(`ALL FIVE UP · +4,200`) }, { who: 'nadia', mood: 'skeptical', act: 'glance', caption: `It felt like five good decisions.` }] },
+            { beats: [{ cam: 'screens', ...alert(`HOT INFLATION PRINT · ALL FIVE DOWN · −2,000`) }, { who: 'theo', mood: 'neutral', act: 'nod', caption: `Five names fell on the same day. Remember that.` }] }
           ] },
-        B: { line: `(Just the one that fits how I trade.)`, preview: `One trade, the one you understand. Check its shape.`,
+        B: { line: `The same five, with a ten-thousand-dollar rate hedge.`, preview: `Covers half of what the five share.`,
           outcomes: [
-            { beats: [{ who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', caption: `Weeks later, your one trade has done what your trades are supposed to do.` }] },
-            { beats: [{ who: 'theo', mood: 'neutral', act: 'nod' }, { cam: 'screens', caption: `It went against you. Was the shape worth it?` }] },
-            { beats: [{ who: 'theo', mood: 'smile', pose: 'mug', act: 'nod' }, { cam: 'screens', caption: `None of the four was yours. You buy nothing, on purpose.` }] }
+            { beats: [{ cam: 'screens', ...alert(`FIVE UP · HEDGE DOWN · +2,600`) }, { who: 'nadia', mood: 'neutral', act: 'nod' }] },
+            { beats: [{ cam: 'screens', ...alert(`FIVE DOWN · HEDGE UP · −600`) }, { who: 'nadia', mood: 'smile', act: 'nod' }] }
           ] },
-        C: { line: `(Nothing today.)`, preview: `Patience, at the cost of maybe missing yours.`,
+        C: { line: `Balanced by risk. Three rate names, Tallis, Ashcombe, and a hedge sized so each group carries the same risk.`, preview: `Looks timid in a good summer. Built for a bad winter.`,
           outcomes: [
-            { beats: [{ who: 'theo', mood: 'smile', pose: 'mug', act: 'nod' }, { cam: 'screens', caption: `A quiet day, and one or two you'll think about.` }] },
-            { beats: [{ who: 'theo', mood: 'smile', pose: 'mug', act: 'nod' }, { cam: 'screens', ...alert(`Ledgerline deal terminated · LDGL back to $21.60`) }] }
+            { beats: [{ cam: 'screens', ...alert(`+2,000 · less than the room`) }, { who: 'theo', mood: 'smile', act: 'nod' }] },
+            { beats: [{ cam: 'screens', ...alert(`HOT PRINT · RATE NAMES DOWN · TALLIS AND HEDGE UP · +200`) }, { who: 'nadia', mood: 'smile', act: 'nod', caption: `Up in the week everyone else lost money.` }] }
           ] },
-        D: { line: `(Hashgrid. Down 40%, it has to bounce.)`, preview: `Cheap isn't the same as good.`,
+        D: { line: `(Forty thousand in Quillfeather. My best idea.)`, preview: `One bet, sized like one.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`Hashgrid: auditor's letter released · −35%`) }, { who: 'theo', mood: 'skeptical', act: 'shake' }] },
-            { beats: [{ cam: 'screens', ...alert(`Hashgrid +15% into the close`), caption: `It bounced. You can't explain why.` }] }
+            { beats: [{ cam: 'screens', ...alert(`QUILLFEATHER +14% · +5,500`) }, { who: 'theo', mood: 'neutral', act: 'nod', caption: `Ask him again in January.` }] },
+            { beats: [{ cam: 'screens', ...alert(`QUILLFEATHER −10% · −4,000`) }, { who: 'nadia', mood: 'skeptical', pose: 'crossed' }] }
           ] },
-        E: { line: `(Nimbic. Everyone's in it.)`, preview: `Borrowed conviction.`,
+        E: { line: `(Cash, until the summer settles.)`, preview: `No book. No risk. No plan either.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`Nimbic misses · −20%`), caption: `The chat room goes quiet.` }] },
-            { beats: [{ cam: 'screens', ...alert(`Nimbic beats · +20%`), caption: `You feel like part of something.` }] }
+            { beats: [{ cam: 'screens', caption: `Everything rises all summer without you.` }] },
+            { beats: [{ cam: 'screens', ...alert(`HOT INFLATION PRINT`), caption: `You watched it.` }] }
           ] }
       },
-      links: []
+      links: [['nadia', 'theo', 'trusts']]
     },
 
-    'changing-market': {
-      env: ENV['changing-market'],
-      screens: screensFor('changing-market'),
+    'the-turn': {
+      env: ENV['the-turn'],
+      screens: screensFor('the-turn'),
       cast: [
-        { id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `To keep you inside your limits.` },
+        { id: 'nadia', spot: 'nadia', mood: 'neutral', pose: 'tablet', wants: `To know what your book does if this is the turn.` },
         { id: 'theo', spot: 'theo', mood: 'thinking', pose: 'thinking', wants: `To understand what changed before he risks anything.` }
       ],
       intro: [
-        { cam: 'window', caption: `January. Rain since midnight. For two years one method made your money: buy AI-chip stocks when they dip.` },
+        { cam: 'window', caption: `January. Rain since midnight. The book you built in June is still on.` },
         { if: c => (c.cap || {}).psy <= 3, caption: `You haven't slept properly in weeks. It shows in how fast you want to act.` },
-        { if: c => (c.cap || {}).fin > 110, caption: `The account is up on the year. The method is not. Those are two different facts.` },
-        { cam: 'screens', caption: `For six weeks, it has lost.` },
-        { cam: 'screens', ...alert(`06:02 · Cirrane Cloud cuts data-center spending 30%`), caption: `Overnight, the biggest buyer of AI chips pulled back.` },
-        { cam: 'screens', ...alert(`Tensora −14% before the open`) },
-        { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `Your dip-buying book is eleven percent off its peak. Its limits already stepped down at ten. At fifteen, they halve again.` },
-        { you: `(Every dip I've bought for two years has come back.)` },
-        { who: 'theo', mood: 'thinking', pose: 'thinking', caption: `Theo has been in since five. He isn't trading. He's reading.` }
+        { if: c => (c.flags || {}).book === 'balanced', cam: 'journal', caption: `Your June note: "Built for a bad winter." This might be it.` },
+        { if: c => ['oneBet', 'concentrated'].includes((c.flags || {}).book), cam: 'journal', caption: `Your June note: "Five sectors. Diversified."` },
+        { cam: 'screens', ...alert(`06:00 · Inflation hot · futures take two rate cuts out of the year`) },
+        { cam: 'screens', ...alert(`Homebuilders −6% · regional banks −5% before the open`) },
+        { who: 'nadia', mood: 'neutral', pose: 'tablet', say: `Your book's on my screen. I'd like to know what it does if this is the turn.` },
+        { you: `(Every dip I've seen for two years has come back.)` },
+        { who: 'theo', mood: 'thinking', pose: 'thinking', caption: `Theo has been in since five. He isn't trading. He's reading the margin-debt numbers.` }
       ],
       options: {
-        A: { line: `(Stay the course. Every method has losing stretches.)`, preview: `Discipline, if this is a normal stretch. Denial, if it isn't.`,
+        A: { line: `(Buy the dip. Ten thousand more.)`, preview: `Right if nothing changed. Expensive if something did.`,
           outcomes: [
-            { beats: [{ cam: 'screens', caption: `Week seven. The dips start bouncing again.` }, { who: 'nadia', mood: 'neutral', act: 'nod' }] },
-            { beats: [{ cam: 'screens', ...alert(`3 weeks · dips keep dipping · −4,000`) }, { who: 'nadia', mood: 'skeptical', pose: 'tablet' }] }
+            { beats: [{ cam: 'screens', ...alert(`SELLING CONTINUES · dip −3,000`) }, { who: 'nadia', mood: 'skeptical', pose: 'tablet' }] },
+            { beats: [{ cam: 'screens', ...alert(`DIP RECOVERS IN THREE WEEKS · +2,000`) }, { who: 'theo', mood: 'neutral', act: 'nod' }] }
           ] },
-        B: { line: `(Use everything I've got left. Win it back.)`, preview: `Revenge, with a spreadsheet.`,
+        B: { line: `I'm halving everything.`, preview: `Blunt. Cuts the good with the bad.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`Chips rebound · +7,000`) }, { who: 'nadia', mood: 'skeptical', act: 'glance', caption: `It worked. That makes next time more dangerous.` }] },
-            { beats: [{ cam: 'screens', ...alert(`Two more cloud companies trim spending · chips −9%`) }, { who: 'nadia', mood: 'frustrated', pose: 'crossed', say: `I'm halving your limits. Today.` }] }
+            { beats: [{ who: 'nadia', mood: 'neutral', act: 'nod' }, { cam: 'screens', caption: `Half the damage of the weeks that follow.` }] },
+            { beats: [{ cam: 'screens', caption: `The dip recovers, on half your size.` }] }
           ] },
-        C: { line: `I'm halving my size and testing whether this still works. Small trades, all written down.`, preview: `Treat the method as a hypothesis.`,
+        C: { line: `I'm cutting what moves together, and keeping what doesn't.`, preview: `Cuts the one risk the book really has.`,
           outcomes: [
-            { beats: [{ who: 'nadia', mood: 'smile', act: 'nod' }, { cam: 'screens', caption: `The tests work. The method was fine, and you know it faster.` }] },
-            { beats: [{ who: 'theo', mood: 'smile', act: 'nod' }, { cam: 'screens', caption: `The small tests say it plainly: the dips don't bounce like they used to.` }] }
+            { beats: [{ who: 'nadia', mood: 'smile', act: 'nod' }, { cam: 'screens', caption: `You cut the cluster before the second leg down.` }] },
+            { beats: [{ cam: 'screens', caption: `The dip recovers, mostly without what you sold.` }] }
           ] },
-        D: { line: `(Everyone's shorting chips. I'll do that.)`, preview: `Someone else's edge.`,
+        D: { line: `(Lever up. Borrow and buy more.)`, preview: `Twice the recovery, or twice the turn.`,
           outcomes: [
-            { beats: [{ cam: 'screens', ...alert(`Cirrane: cut was "a one-time pause" · chips +18%`) }, { who: 'theo', mood: 'neutral', act: 'shake' }] },
-            { beats: [{ cam: 'screens', ...alert(`Chips −10% on the week`), caption: `It works, and you have no idea when to get out.` }] }
+            { beats: [{ cam: 'screens', ...alert(`FORCED SELLING · LEVERAGE CALLED`) }, { who: 'nadia', mood: 'frustrated', pose: 'crossed', say: `I'm halving your limits. Today.` }] },
+            { beats: [{ cam: 'screens', ...alert(`DIP RECOVERS · LEVERED`) }, { who: 'nadia', mood: 'skeptical', act: 'glance', caption: `It worked. That makes next time more dangerous.` }] }
           ] },
-        E: { line: `I'm standing down for a month. I want to understand what changed.`, preview: `Spends time to save capital.`,
+        E: { line: `I'm selling everything at the open.`, preview: `Safe from the turn, and from the recovery.`,
           outcomes: [
-            { beats: [{ who: 'nadia', mood: 'neutral', act: 'nod' }, { cam: 'screens', caption: `The method recovers without you. Wiser, and a month behind.` }] },
-            { beats: [{ who: 'nadia', mood: 'surprised' }, { who: 'theo', mood: 'smile', act: 'nod', caption: `You sit out the slide and come back with notes.` }] }
+            { beats: [{ who: 'theo', mood: 'neutral', act: 'nod' }, { cam: 'screens', caption: `You miss the weeks of selling that follow.` }] },
+            { beats: [{ cam: 'screens', caption: `Three weeks later it has recovered without you.` }] }
+          ] },
+        F: { line: `I'm flipping: short the rate names, stop at today's high.`, preview: `The best trade of the year, if the market changed.`,
+          outcomes: [
+            { beats: [{ cam: 'screens', ...alert(`FORCED SELLING FOR WEEKS · SHORT +6,000`) }, { who: 'theo', mood: 'smile', act: 'nod' }] },
+            { beats: [{ cam: 'screens', ...alert(`DIP RECOVERS · STOP HIT · −2,500`) }, { who: 'theo', mood: 'neutral', act: 'shake', caption: `One bad print too early.` }] }
+          ] },
+        G: { line: `(Hold. The book was built for this.)`, preview: `A plan, or a hope, depending on what you built.`,
+          outcomes: [
+            { beats: [{ cam: 'screens', caption: `The selling runs for weeks.` }, { who: 'nadia', mood: 'neutral', pose: 'tablet' }] },
+            { beats: [{ cam: 'screens', caption: `The dip recovers within three weeks.` }, { who: 'theo', mood: 'neutral', act: 'nod' }] }
           ] }
       },
       links: [['nadia', 'theo', 'trusts']]

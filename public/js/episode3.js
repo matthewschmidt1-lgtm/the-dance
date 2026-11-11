@@ -1,5 +1,5 @@
 // Episode 3, The Circle: friends, family and the group chat.
-// Substance and staging live together here; the format matches episode2.js.
+// Substance and staging live together here, in the format described in scenarios.js and scenes.js.
 // Omar and Nate are each one hidden type for the whole episode (share: 'omar' / 'nate'),
 // so what you notice about them in one scene is still true in the next.
 window.PP = window.PP || {};

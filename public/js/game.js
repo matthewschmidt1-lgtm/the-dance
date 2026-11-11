@@ -24,7 +24,7 @@
   const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
   // step / stake / push are for beat scenes (sc.play): stakes first, then reads, her pitch, your answer, her push.
   const fresh = (clues = [], type = null) => ({ selected: null, clues, type, step: null, stake: null, push: null });
-  // Some people are one of several hidden types (Luis honest or padding). Each play draws one.
+  // Some people are one of several hidden types (Omar squares up or takes advantage). Each play draws one.
   // Scenes that share a key (Omar across the trip and the loan) keep whoever was drawn first.
   function drawType(sc, past = []) {
     if (!sc.types) return null;
@@ -35,7 +35,7 @@
     return sc.types[sc.types.length - 1].id;
   }
   const typeOf = (sc, h) => (h && h.type) || (sc.types ? sc.types[0].id : null);
-  const RECURRING = ['dana', 'gary', 'jordan', 'priya', 'marcus'];
+  const RECURRING = ['omar', 'nate', 'jess', 'lena', 'carol'];
   const app = document.getElementById('app');
 
   const growthAdvice = {
@@ -514,7 +514,7 @@
     };
 
 
-    const cred = LIST.find(s => s.id === 'credit-taker');
+    const cred = LIST.find(s => s.id === 'the-bill');
     const pins = cred.stage.cast.map((c, i) => {
       const h = PP.people[c.id].look.h || 1;
       const p = PP.art.place(cred.stage.env, c);
@@ -585,7 +585,7 @@
         </div>
         <div class="wrap hm-tm-qs">
           <p class="hm-tm-qk">The same five questions, asked two ways</p>
-          <ol>${TRACKS.market.list.map((sc, k) => `<li><span class="hm-tm-n">${String(k + 1).padStart(2, '0')}</span><span class="hm-tm-q">${sc.tests}</span><span class="hm-tm-a"><small>The Desk</small>${sc.title}</span><span class="hm-tm-a"><small>The Call</small>${PP.call.calls[k].title}</span></li>`).join('')}</ol>
+          <ol>${MK.ep.places.map((pl, k) => { const sc = TRACKS.market.list.find(x => x.id === pl.scenes[0]), call = PP.call.calls[k]; return `<li><span class="hm-tm-n">${String(k + 1).padStart(2, '0')}</span><span class="hm-tm-q">${sc.tests}</span><span class="hm-tm-a"><small>The Desk</small>${sc.title.split(' · ')[0]}</span><span class="hm-tm-a"><small>The Call</small>${call ? call.title : ''}</span></li>`; }).join('')}</ol>
         </div>
       </section>
 
@@ -621,7 +621,7 @@
             <p class="hm-sec-deck">Freeze any scene mid-conversation. The room goes still, and you see what each person wants, what you know, what you don't, and where each option might lead. Then resume, or replay the scene with a different approach.</p>
           </div>
           <div class="slowmo-still">
-            <div class="stage is-frozen is-still">${staticScene(cred, { jordan: { mood: 'awkward', pose: 'clicker' }, ellen: { mood: 'happy' } })}
+            <div class="stage is-frozen is-still">${staticScene(cred, { omar: { mood: 'happy', pose: 'gesture' }, lena: { mood: 'awkward', pose: 'phone' } })}
               <div class="pins">${pins}</div><div class="freeze-badge"><span class="freeze-dot"></span>Slow Motion Strategy</div></div>
             <ol class="still-legend">${cred.stage.cast.map((c, i) => `<li><span class="pin pin-inline">${i + 1}</span><strong>${PP.people[c.id].name}</strong> wants ${c.wants.charAt(0).toLowerCase() + c.wants.slice(1)}</li>`).join('')}</ol>
           </div>

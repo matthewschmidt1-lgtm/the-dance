@@ -4,39 +4,11 @@
 
 > You don't have to be the most powerful person in the room. You have to understand the dynamics of the room well enough to make good decisions.
 
-The Dance is a playable, animated episode of everyday situations. You watch a scene unfold in a grocery store, an office or your street, choose what to do, and watch the people in the room react. Then the game shows what was happening underneath: who wanted what, where the leverage was, what you couldn't know, and which idea from game theory was at work.
+The Dance is a playable, animated episode of everyday situations. You watch a scene unfold on a trip with friends, in the group chat or at the family table, choose what to do, and watch the people in the room react. Then the game shows what was happening underneath: who wanted what, where the leverage was, what you couldn't know, and which idea from game theory was at work.
 
 The aim is to see the game without becoming the game. Manipulation is never rewarded.
 
-## Episode 1: Ordinary Life
-
-Three places, six scenes. Characters remember you across scenes, and no single style of move wins every one: the best answer depends on who you're dealing with.
-
-| # | Scene | Place | Main lens | Hidden type |
-|---|---|---|---|---|
-| 1 | The Wrong Price | The Grocery Store | Annie Duke | Maya rookie or veteran, and the tag right or wrong |
-| 2 | Just This Once | The Office | Robert Axelrod | Dana: overloaded, offloading, or hiding a crisis |
-| 3 | The Spot | The Neighborhood | Thomas Schelling | Gary: unaware, needs the spot, or leaving |
-| 4 | The Credit Taker | The Office | John Nash | Jordan: scared, scheming, or presenting at Ellen's request |
-| 5 | Pick a Side | The Office | Barry Nalebuff | The tool: phased fix works, needs a rebuild, or a patch is enough |
-| 6 | The Fence | The Neighborhood | Robert Aumann | Gary (same draw as The Spot) |
-
-Some clues cost something to read: asking Ruth, Priya or Tom gets back to the person you asked about, and checking the shelf holds up the line. The cost shows before you read the clue.
-
-## Episode 2: The Deal
-
-Six deals. In most, the other side knows more than you. In one, you're the one who knows.
-
-| # | Scene | Place | Lens | Hidden type |
-|---|---|---|---|---|
-| 1 | The Change Order | Your Home | Thomas Schelling | Luis: honest or padding |
-| 2 | The Bidding War | Your Home (an open house) | John Nash | The market: crowded or quiet |
-| 3 | The Offer | The Offer (Northfield's lobby) | John Nash | |
-| 4 | The Counteroffer | The Offer (back at Brightline) | Thomas Schelling | Ellen: real counter or a stall |
-| 5 | The Used Car | The Marketplace (Alder Street) | Robert Aumann | Kim: careful or trusting |
-| 6 | The Trade-In | The Marketplace (a dealership) | Barry Nalebuff | Vince: four-square or straight |
-
-## Episode 3: The Circle
+## Episode 1: The Circle
 
 Friends, family and the group chat. The games you play with people you can't walk away from.
 
@@ -129,10 +101,10 @@ public/
   css/styles.css        all styles, light + dark, stage and character animation
   img/env/*.webp        rendered sets: <env>-bg / -mid / -fg layers
   js/thinkers.js        the bench, skills, grades
-  js/scenarios.js       substance for The Change Order and The Offer
-  js/scenes.js          people, episodes, and staging for those two scenes
+  js/scenarios.js       the scene format (options, grades, outcomes); the array the episode fills
+  js/scenes.js          the desk's people, and the episode list
   js/insight.js         what each move pursues, what people say about you, closing questions
-  js/episode1-3.js      each episode's other scenes: substance, staging and verdicts together
+  js/episode3.js        The Circle: substance, staging and verdicts together
   js/market.js          The Trader's Mind: challenges, staging, capital, rules and principles
   js/call.js            The Call: five callers, their hidden truths, moments and reveals
   js/callplay.js        The Call: engine, the phone, the paper and The Mirror

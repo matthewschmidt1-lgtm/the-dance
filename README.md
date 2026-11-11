@@ -4,24 +4,9 @@
 
 > You don't have to be the most powerful person in the room. You have to understand the dynamics of the room well enough to make good decisions.
 
-The Dance is a playable, animated episode of everyday situations. You watch a scene unfold on a trip with friends, in the group chat or at the family table, choose what to do, and watch the people in the room react. Then the game shows what was happening underneath: who wanted what, where the leverage was, what you couldn't know, and which idea from game theory was at work.
+The Dance is a playable, animated game about deciding under uncertainty. You sit at a trading desk and take the calls that come with it, choose what to do, and watch the people around you react. Then the game shows what was happening underneath: who wanted what, what you could have known, what was priced in, and how much of the result was skill and how much was luck.
 
 The aim is to see the game without becoming the game. Manipulation is never rewarded.
-
-## Episode 1: The Circle
-
-Friends, family and the group chat. The games you play with people you can't walk away from.
-
-| # | Scene | Place | Lens | Formal term | Hidden type |
-|---|---|---|---|---|---|
-| 1 | The Rental | The Trip (a lake cabin) | Barry Nalebuff | Mechanism design | Omar: square or a taker |
-| 2 | The Bill | The Trip (the last dinner) | John Nash | Free-rider problem | Omar (same draw) |
-| 3 | The Date | The Group Chat (your new place) | Thomas Schelling | Focal point | The group: birthday clear or a clash |
-| 4 | The Loan | The Group Chat (your new place) | Robert Axelrod | Tit for tat | Omar (same draw) |
-| 5 | The Holidays | The Family (Mom's kitchen) | Robert Aumann | Repeated bargaining | Nate: stretched thin or coasting |
-| 6 | The Parents' House | The Family (Mom's kitchen) | Barry Nalebuff | Fair division | Nate (same draw) |
-
-Omar and Nate are each drawn once and stay the same across their scenes (`share: 'omar'` / `share: 'nate'` in `episode3.js`), so what you learn about them early still holds later.
 
 ## The Trader's Mind
 
@@ -58,28 +43,19 @@ Five phone calls, one account, the same five kinds of capital. Every call holds 
 
 Content lives in `js/call.js`; the engine, the paper and the screens in `js/callplay.js`. Ring and line sounds are made with Web Audio and follow the voices setting.
 
-## How each scene plays
+## How each challenge plays
 
 1. **Establishing shot** of a lit 3D set, with a title card.
 2. **The situation plays out**: every line (narration, dialogue, your thoughts, and what a screen says) appears in one script box under the stage, typed out, camera push-ins on whoever is speaking, characters changing expression (11 moods), posture (15 poses) and gesturing (nod, head shake, flinch, sigh, lean, glance, walk).
 3. **Voices and speed**: characters, your lines and a narrator are spoken with the device's built-in voices, each character cast to a distinct natural voice. The speaker button turns voices off; the speed button cycles 0.75× to 1.5× and paces speech, typing and timing together. Both are remembered.
 4. **Slow Motion Strategy** (Slow-mo button, or press `P`): the scene freezes and desaturates over a strategy grid, numbered pins mark each person, and a panel shows what each wants, what you know, what's uncertain, details you can investigate, and where each option might lead. Resume, or replay from the start.
 5. **You choose a move.** What you can say depends on what you found out: reading a clue sharpens some options (not always into the right one), and your history with people shifts how they respond. Gary pays for the fence alone far more often if The Spot went well.
-   Some people are one of several hidden types, drawn fresh each play: Luis is honest or padding the bill, Jordan is scared or scheming, Dana is overloaded or offloading. Clues and small signals in the scene tell you which, the best move depends on who they are, and the result reveals who they were and what gave it away.
+   Each challenge and call draws one hidden world (did the peg break, was the caller warning you or shopping your shares), and clues hint at which one you're in.
 6. **The room reacts** in a short animated sequence. Results are partly random.
 7. **Analysis in four tabs**: *Outcome* (decision grade vs. result, now vs. later, trust changes, and the other side: their reasoning, what earlier scenes changed, and what you knew), *The game* (payoff matrix with your cell highlighted, decision tree of every move's possible results, what reading the room would have shown), *The people* (relationship map, leverage scale, incentives), *The lens* (the thinkers' concepts, every move graded, the lesson).
 8. **Replay with another strategy**, or move on.
 
 Moves are graded with chess annotations (`!!` `!` `!?` `?!` `?`) on decision quality, never on outcome. The profile tracks ten measures, a strategic rating, your relationship network, and Annie Duke's decision-vs-result grid.
-
-## Your Dance
-
-After Episode 1, the profile opens with a mirror rather than a lesson:
-
-- **What the room saw.** Each person you met says, in one line, how they'd describe you after your choice.
-- **What your choices were buying.** Every move pursues something: knowing more, a fair deal, the long game, being right, winning the round, being liked, avoiding friction, or protecting your time. Ed Seykota's line applies: everybody gets what they want.
-- **Three moments**, your best call, where luck covered for you (or let you down), and what someone will remember, each with a one-line margin note from Nash, Duke or Schelling.
-- **One question to take with you**, chosen from your weakest measure.
 
 ## What's animated, honestly
 
@@ -101,10 +77,9 @@ public/
   css/styles.css        all styles, light + dark, stage and character animation
   img/env/*.webp        rendered sets: <env>-bg / -mid / -fg layers
   js/thinkers.js        the bench, skills, grades
-  js/scenarios.js       the scene format (options, grades, outcomes); the array the episode fills
-  js/scenes.js          the desk's people, and the episode list
+  js/scenarios.js       the scene format (options, grades, outcomes) shared with the Desk
+  js/scenes.js          the desk's people (the Play track's episode list is empty)
   js/insight.js         what each move pursues, what people say about you, closing questions
-  js/episode3.js        The Circle: substance, staging and verdicts together
   js/market.js          The Trader's Mind: challenges, staging, capital, rules and principles
   js/call.js            The Call: five callers, their hidden truths, moments and reveals
   js/callplay.js        The Call: engine, the phone, the paper and The Mirror
@@ -134,16 +109,6 @@ The home page header ("The Dance Floor") is its own scene: two pieces in overlap
 ```
 
 For the game sets, add env names (`checkout desks kitchen conference street yard`) after `"$PWD"` to render only some. The script also rewrites `public/js/env-data.js`, projecting each character's standing spot through the real camera so feet land on the floor at the correct scale. If the renders are missing, the game falls back to hand-drawn SVG sets.
-
-### Adding a scene
-
-1. In the episode's file (for example `episode3.js`), add the substance (options, grades, outcomes, analysis), the staging (environment, cast spots, intro beats, reaction beats per outcome, matrix, leverage) and the verdicts. The comment at the top of `scenes.js` documents beat fields.
-2. Give every option at least as many staged outcomes as scripted ones.
-3. Add the id to an episode in `PP.episodes` in `scenes.js`.
-
-### Beat scenes (Phase 1: Just This Once)
-
-A scene with `play: true` is played in beats instead of one decision: `stakes` (what you're protecting: standing, allies or time), a budget of `reads` (the same budget Slow-mo uses), `press` (what the other person says once you stop looking, which depends on who they are and what you checked), your answer, and an optional `push` per option (they push back; you hold, give in or change your answer, and giving in changes what your move was). Options and outcomes can carry `fx` (changes to standing, allies and hours) and `rep` (what people now think of you: easy to ask, holds their ground, and so on). Reputation is kept in `flags.rep`, so later scenes can react to it: in The Credit Taker, Jordan has heard what kind of colleague you are. The results screen for these scenes leads with consequences; the grade sits under "How you played it." 
 
 ## Run locally
 

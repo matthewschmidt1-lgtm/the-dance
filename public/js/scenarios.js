@@ -1,4 +1,4 @@
-// The Play track's scenes. The episode file (episode3.js) adds them, with their staging, in this format.
+// The Play track's scenes (none right now). An episode file adds them, with their staging, in this format.
 //
 // Option fields:
 //   q        decision quality 0-4 (maps to PP.grades). Scored regardless of outcome.

@@ -20,7 +20,7 @@
   // Scene numbers restart in each episode.
   const pos = i => { const sc = LIST[i], eps = LIST.filter(s => s.ep === sc.ep); return { n: eps.indexOf(sc) + 1, of: eps.length, ep: sc.ep }; };
   const epEnd = i => !!LIST[i] && (!LIST[i + 1] || LIST[i + 1].ep !== LIST[i].ep);
-  const DANCE_AT = EPS[0].scenes.length; // "Your Dance" opens once the first episode is played
+  const DANCE_AT = EPS.length ? EPS[0].scenes.length : 0; // "Your Dance" opens once the first episode is played
   const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
   // step / stake / push are for beat scenes (sc.play): stakes first, then reads, her pitch, your answer, her push.
   const fresh = (clues = [], type = null) => ({ selected: null, clues, type, step: null, stake: null, push: null });
@@ -337,7 +337,11 @@
     ui.runId++;
   }
 
+  // With no episodes on the site, the Play pages (and the profile built on them) lead to the Market.
+  const PLAY_VIEWS = ['play', 'episodes', 'profile'];
+  const routeOf = view => !TRACKS.main.list.length && PLAY_VIEWS.includes(view) ? 'market' : view;
   function go(view, keepScroll) {
+    view = routeOf(view);
     teardown();
     useTrack(trackFor(view));
     ui.view = view;
@@ -486,47 +490,11 @@
   // ───────────────────────── Home
 
   function viewHome() {
-    const d = derive(history);
-    const n = history.length, done = n >= LIST.length;
-    const at = done ? null : pos(n);
-
-    // The episodes, as chapters of one campaign: the same rows and nodes as the Play index.
-    const chapter = (ep, e) => {
-      const idx = LIST.map((sc, i) => i).filter(i => LIST[i].ep === ep);
-      const played = idx.filter(i => i < n).length, total = idx.length;
-      const current = !done && LIST[n].ep === ep, complete = played === total;
-      const status = complete ? 'Completed' : current ? (played ? `In progress · ${played} of ${total}` : 'Open') : `Requires Episode ${EPS[e - 1].number}`;
-      return `<article class="hm-ch ${current ? 'ix-ch-now' : ''} ${!current && !complete ? 'ix-ch-later' : ''}" aria-labelledby="hm-ch-${ep.number}">
-        <header class="hm-ch-head">
-          <div class="hm-ch-id"><span class="ix-ch-num">${String(ep.number).padStart(2, '0')}</span><span class="ix-label">Episode${current ? ' · Current' : ''}</span></div>
-          <div class="hm-ch-main"><h3 class="hm-ch-title" id="hm-ch-${ep.number}">${ep.title}</h3><p class="hm-ch-deck">${ep.blurb}</p></div>
-          <div class="ix-ch-side">
-            <div class="ix-ch-forces">${forceMatrix(ep.forces || [])}<span><span class="ix-label">In play</span><span class="ix-forces-list">${(ep.forces || []).map(f => FORCE_NAME[f]).join(' · ')}</span></span></div>
-            <div class="ix-ch-status"><span class="ix-bar" aria-hidden="true"><span style="width:${Math.round(played / total * 100)}%"></span></span><span class="ix-label">${status}</span></div>
-          </div>
-        </header>
-        <div class="hm-places">${ep.places.map(p => `<section class="hm-place">
-          <figure class="hm-shot">${staticScene(LIST.find(s => s.id === p.preview))}<figcaption class="ix-label">${p.name}</figcaption></figure>
-          <p class="hm-place-d">${p.theme}</p>
-          <ol class="ix-path">${p.scenes.map(id => ixRow(LIST.findIndex(s => s.id === id), d)).join('')}</ol>
-        </section>`).join('')}</div>
-      </article>`;
-    };
-
-
-    const cred = LIST.find(s => s.id === 'the-bill');
-    const pins = cred.stage.cast.map((c, i) => {
-      const h = PP.people[c.id].look.h || 1;
-      const p = PP.art.place(cred.stage.env, c);
-      return `<span class="pin" style="left:${(p.x / 1600 * 100).toFixed(1)}%;top:${((p.y - 600 * p.s * h) / 900 * 100).toFixed(1)}%">${i + 1}</span>`;
-    }).join('');
-
     const bench = thinkerOrder.map(k => {
       const t = thinkers[k];
       return `<li class="${t.practitioner ? 'is-wide' : ''}"><button type="button" class="bench-card ${t.grandfather ? 'is-grand' : ''} ${t.practitioner ? 'is-practitioner' : ''}" data-thinker="${k}" aria-haspopup="dialog" style="--tc:${t.color}"><span class="bench-icon">${t.icon}</span>${t.grandfather ? `<span class="bench-badge">Intellectual grandfather</span>` : ''}${t.practitioner ? `<span class="bench-badge">The practitioner · Market Wizards</span>` : ''}<span class="bench-name">${t.name}</span><span class="bench-teaches">teaches you ${t.teaches}</span><span class="bench-more" aria-hidden="true">Read more</span></button></li>`;
     }).join('');
 
-    const soon = PP.episodes.find(e => e.locked);
     return `<div class="hm">
       <section class="hm-hero">
         <div class="hm-hero-art"><img src="/img/hero-dance-floor.webp?v=${PP.assetV}" width="2400" height="1028" alt="Two chess pieces, one ivory and one black, face each other on a checkered dance floor. Each stands in its own spotlight; where the light overlaps, a teal circle glows between them. Dice rest in the foreground, and a corridor of doorways recedes into a soft glow of haze. Beyond the floor, a low moon lays a path of light across the waves of a dark sea."></div>
@@ -540,8 +508,8 @@
       <section class="wrap hm-intro">
         <div class="hm-intro-main">
           <p class="ix-label hm-label-accent">A game about understanding people</p>
-          <p class="hm-statement">Why do people cooperate, and why do they stop? Why does a fair offer get refused, or a friend take a little more than their share?</p>
-          <p class="hm-intro-sub">There's a logic to all of it, and you've been inside it your whole life. The Dance puts you in rooms you already know, lets you choose, and then shows you what was going on: what each person wanted, what they knew, and what your move taught them about you. The ideas come from game theory. The subject is people.</p>
+          <p class="hm-statement">Why do smart people hold a losing position, chase a tip, or bet the account on one idea? Why does the person on the phone always seem to know a little more than you?</p>
+          <p class="hm-intro-sub">There's a logic to all of it, and most of it isn't about markets. The Dance puts you at a trading desk and on the phone, lets you choose, and then shows you what was going on: what each person wanted, what you could have known, and how much of the result was skill and how much was luck.</p>
         </div>
       </section>
 
@@ -561,8 +529,8 @@
               <span class="hm-tm-vs">You against the market.</span>
               <span class="hm-tm-d">Five challenges at one trading desk. The price moves, the news arrives, and nobody tells you what it means.</span>
               <span class="hm-tm-live hm-tm-chart" aria-hidden="true">
-                <span class="hm-tm-tick">CORVANE CLOUD<b>−$9,150</b></span>
-                <svg viewBox="0 0 320 110" preserveAspectRatio="none"><line class="stop" x1="0" y1="62" x2="320" y2="62"/><text x="316" y="56">STOP 47.80</text><polyline class="px" points="0,24 22,30 40,22 62,34 84,30 104,42 126,38 146,50 168,46 188,58 206,55 226,70 246,66 268,82 290,78 312,96"/><circle cx="312" cy="96" r="4"/></svg>
+                <span class="hm-tm-tick">HALCYON HOMES<b>−$2,250</b></span>
+                <svg viewBox="0 0 320 110" preserveAspectRatio="none"><line class="stop" x1="0" y1="62" x2="320" y2="62"/><text x="316" y="56">STOP 37.00</text><polyline class="px" points="0,24 22,30 40,22 62,34 84,30 104,42 126,38 146,50 168,46 188,58 206,55 226,70 246,66 268,82 290,78 312,96"/><circle cx="312" cy="96" r="4"/></svg>
               </span>
               <span class="hm-tm-go">Sit down at the desk <i aria-hidden="true">→</i></span>
             </span>
@@ -601,59 +569,6 @@
         <button class="hm-link" data-act="bench">Read what each one teaches ${IX_ARROW}</button>
       </section>
 
-      <section class="hm-eps" aria-labelledby="hm-eps-h">
-        <div class="wrap">
-          <header class="hm-sec-head">
-            <p class="ix-label hm-label-accent">The episodes</p>
-            <h2 id="hm-eps-h">Three chapters. One board.</h2>
-            <p class="hm-sec-deck">Each episode moves you into rooms with more at stake: everyday life, then money, then the people you can't walk away from. Every scene remembers the ones before it.</p>
-          </header>
-          ${EPS.map(chapter).join('')}
-          ${soon ? `<article class="hm-ch ix-ch-later"><header class="hm-ch-head"><div class="hm-ch-id"><span class="ix-ch-num">${String(soon.number).padStart(2, '0')}</span><span class="ix-label">Episode · In development</span></div><div class="hm-ch-main"><h3 class="hm-ch-title">${soon.title}</h3><p class="hm-ch-deck">${soon.blurb}</p></div></header></article>` : ''}
-        </div>
-      </section>
-
-      <section class="hm-slowmo">
-        <div class="wrap slowmo">
-          <div class="slowmo-copy">
-            <p class="ix-label hm-label-accent">Signature feature</p>
-            <h2>Slow Motion Strategy</h2>
-            <p class="hm-sec-deck">Freeze any scene mid-conversation. The room goes still, and you see what each person wants, what you know, what you don't, and where each option might lead. Then resume, or replay the scene with a different approach.</p>
-          </div>
-          <div class="slowmo-still">
-            <div class="stage is-frozen is-still">${staticScene(cred, { omar: { mood: 'happy', pose: 'gesture' }, lena: { mood: 'awkward', pose: 'phone' } })}
-              <div class="pins">${pins}</div><div class="freeze-badge"><span class="freeze-dot"></span>Slow Motion Strategy</div></div>
-            <ol class="still-legend">${cred.stage.cast.map((c, i) => `<li><span class="pin pin-inline">${i + 1}</span><strong>${PP.people[c.id].name}</strong> wants ${c.wants.charAt(0).toLowerCase() + c.wants.slice(1)}</li>`).join('')}</ol>
-          </div>
-        </div>
-      </section>
-
-      <section class="wrap hm-next" aria-labelledby="next-move-h">
-        <header class="hm-sec-head"><p class="ix-label hm-label-accent">Your next move</p><h2 id="next-move-h">See the game without becoming part of the game.</h2></header>
-        <div class="hm-next-grid">
-          <button class="hm-nm" data-act="${done ? 'profile' : 'play'}">
-            <img class="hm-nm-art" src="/img/next/play.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
-            <span class="ix-label">${done ? 'Every scene played' : n ? `Episode ${at.ep.number} · Scene ${at.n} of ${at.of}` : 'Start here'}</span>
-            <span class="hm-nm-t">${done ? 'See your dance' : !n ? 'Play Episode 1' : at.n === 1 ? `Start Episode ${at.ep.number}` : 'Continue playing'}</span>
-            <span class="hm-nm-d">${done ? 'What the room saw, what your choices were buying, and one question to take with you.' : n ? `Pick up at ${LIST[n].title}.` : `${LIST.length} scenes across ${NUM[EPS.length] || EPS.length} episodes, starting at a grocery store checkout.`}</span>
-            <span class="hm-nm-go">${IX_ARROW}</span>
-          </button>
-          <button class="hm-nm" data-act="bench">
-            <img class="hm-nm-art" src="/img/next/bench.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
-            <span class="ix-label">The bench</span>
-            <span class="hm-nm-t">Meet the thinkers</span>
-            <span class="hm-nm-d">Six thinkers and a trader, from Schelling and Nash to Ed Seykota, one question each.</span>
-            <span class="hm-nm-go">${IX_ARROW}</span>
-          </button>
-          <button class="hm-nm" data-act="profile">
-            <img class="hm-nm-art" src="/img/next/profile.webp?v=${PP.assetV}" width="720" height="720" alt="" loading="lazy">
-            <span class="ix-label">Your profile</span>
-            <span class="hm-nm-t">${n ? 'See how you play' : 'What gets measured'}</span>
-            <span class="hm-nm-d">${n ? 'Strengths, blind spots, and decisions versus luck.' : 'Ten measures of strategic judgment. Getting your way isn\'t one of them.'}</span>
-            <span class="hm-nm-go">${IX_ARROW}</span>
-          </button>
-        </div>
-      </section>
     </div>`;
   }
 
@@ -682,7 +597,7 @@
       <div class="section-head"><p class="eyebrow">The bench</p><h1>The thinkers behind the game</h1>
         <p class="lede">You won't be asked to memorize anything. Each scene puts one of these ideas in front of you as a situation, and the analysis afterward names it. Six thinkers built the theory, and a practitioner from the markets shows what it takes to live by it.</p></div>
       <div class="thinker-grid">${cards}</div>
-      <div class="page-actions"><button class="btn btn-primary" data-act="play">${history.length ? 'Back to the game' : 'Play Episode 1'}</button></div>
+      <div class="page-actions"><button class="btn btn-primary" data-act="market">Sit down at the desk</button></div>
     </section>`;
   }
 
@@ -1521,6 +1436,7 @@
   // ───────────────────────── Render + events
 
   function render() {
+    ui.view = routeOf(ui.view);
     useTrack(trackFor(ui.view));
     const settled = ui.phase !== 'result' && ui.phase !== 'react';
     if (ui.view === 'play' && history.length >= LIST.length && settled) ui.view = 'profile';

@@ -1,31 +1,18 @@
-// The Dance game flow and views.
-// Progress is derived entirely from `history`, so replaying a scene is just popping it.
+// The Dance: The Trader's Mind. Flow and views for the Desk; the calls live in callplay.js.
+// Progress is derived entirely from `history`, so replaying a challenge is just popping it.
 (function () {
-  const { thinkers, thinkerOrder, skills, grades } = PP;
-  const START_RATING = 1200;
-  const EPS = PP.episodes.filter(e => !e.locked);
+  const { thinkers, thinkerOrder, grades } = PP;
   const MK = PP.market;
-  // Two tracks share one engine: the episodes, and The Trader's Mind. Each keeps its own progress.
-  const TRACKS = {
-    main: { key: 'powerplay:ep1:v2', list: EPS.flatMap(ep => ep.scenes.map(id => ({ ...PP.scenarios.find(s => s.id === id), stage: PP.scenes[id], ep }))) },
-    market: { key: 'thedance:market:v1', list: MK.scenarios.map(s => ({ ...s, stage: MK.scenes[s.id], ep: MK.ep })) }
-  };
+  // The Desk's challenges, in order, each with its staging.
+  const LIST = MK.scenarios.map(s => ({ ...s, stage: MK.scenes[s.id], ep: MK.ep }));
+  const KEY = 'thedance:market:v1';
   const RULES_KEY = 'thedance:market:rules';
-  let track = 'main';
-  let LIST = TRACKS.main.list;
-  const isMarket = () => track === 'market';
-  const trackFor = view => ['market', 'trade', 'call', 'phone'].includes(view) ? 'market' : view === 'bench' ? track : 'main';
-  const NAV_OF = { trade: 'market', episodes: 'play', call: 'market', phone: 'market' };
-  const placeOf = id => [...EPS, MK.ep].flatMap(e => e.places).find(p => p.scenes.includes(id));
-  // Scene numbers restart in each episode.
-  const pos = i => { const sc = LIST[i], eps = LIST.filter(s => s.ep === sc.ep); return { n: eps.indexOf(sc) + 1, of: eps.length, ep: sc.ep }; };
-  const epEnd = i => !!LIST[i] && (!LIST[i + 1] || LIST[i + 1].ep !== LIST[i].ep);
-  const DANCE_AT = EPS.length ? EPS[0].scenes.length : 0; // "Your Dance" opens once the first episode is played
+  const NAV_OF = { trade: 'market', call: 'market', phone: 'market' };
+  const placeOf = id => MK.ep.places.find(p => p.scenes.includes(id));
+  const pos = i => ({ n: i + 1, of: LIST.length, ep: MK.ep });
   const NUM = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
-  // step / stake / push are for beat scenes (sc.play): stakes first, then reads, her pitch, your answer, her push.
-  const fresh = (clues = [], type = null) => ({ selected: null, clues, type, step: null, stake: null, push: null });
-  // Some people are one of several hidden types (Omar squares up or takes advantage). Each play draws one.
-  // Scenes that share a key (Omar across the trip and the loan) keep whoever was drawn first.
+  const fresh = (clues = [], type = null) => ({ selected: null, clues, type });
+  // Each challenge draws one hidden world. Days that share a key (the Round Trip) keep the first draw.
   function drawType(sc, past = []) {
     if (!sc.types) return null;
     const prev = sc.share && past.find((h, i) => LIST[i] && LIST[i].share === sc.share && h.type);
@@ -35,64 +22,30 @@
     return sc.types[sc.types.length - 1].id;
   }
   const typeOf = (sc, h) => (h && h.type) || (sc.types ? sc.types[0].id : null);
-  const RECURRING = ['omar', 'nate', 'jess', 'lena', 'carol'];
   const app = document.getElementById('app');
-
-  const growthAdvice = {
-    str: `Before choosing, ask what each person's best reply to your move would be.`,
-    reg: `Your strongest urge to act usually arrives when you know the least. Wait one beat, name the feeling, then decide.`,
-    inc: `Ask what each person gains or loses before deciding what they "really" want.`,
-    neg: `Look for a "yes, if" before settling for a yes or a no.`,
-    com: `Say what you need plainly and give the other person an easy way to help.`,
-    lng: `Ask whether you'll see this person again. If so, you're playing a different game.`,
-    coo: `Look for the version where both people come out ahead before defending your share.`,
-    bnd: `A clear, early limit is kinder than a late, resentful one.`,
-    inf: `One good question often beats a confident guess. Freeze the scene and read the room first.`,
-    jdg: `Before you act, ask two things: what does it cost to check, and what does it cost to be wrong? When checking is cheap, check.`
-  };
-  const strengthNote = {
-    str: `You think a move ahead of the conversation.`,
-    reg: `You stay steady when the room gets warm.`,
-    inc: `You look for what people want before judging them.`,
-    neg: `You find terms instead of settling for yes or no.`,
-    com: `You make it easy for people to say yes to you.`,
-    lng: `You play for the next ten rounds, so you rarely overpay to win this one.`,
-    coo: `You look for outcomes where both sides win.`,
-    bnd: `You protect your time without burning bridges.`,
-    inf: `You gather facts before you commit.`,
-    jdg: `You match the size of your move to how much you actually know.`
-  };
   const toneLabel = { good: `Went well`, mixed: `Mixed`, bad: `Went badly` };
 
   // ───────────────────────── State
 
   let history = load();
   let rules = loadRules();
-  const FIRSTS_KEY = 'thedance:firsts:v1';
-  let firsts = (() => {
-    try {
-      const f = JSON.parse(localStorage.getItem(FIRSTS_KEY) || '{}');
-      return f && typeof f === 'object' && !Array.isArray(f) ? Object.fromEntries(Object.entries(f).filter(([, q]) => Number.isInteger(q) && q >= 0 && q <= 4)) : {};
-    } catch (e) { return {}; }
-  })();
-  const saveFirsts = () => { try { localStorage.setItem(FIRSTS_KEY, JSON.stringify(firsts)); } catch (e) { /* storage unavailable */ } };
   let draft = fresh();
   let confirmReset = false;
-  let confirmScene = -1; // index of a played scene awaiting a second tap to replay
+  let confirmScene = -1; // index of a played challenge awaiting a second tap to replay
   let stage = null;
   const ui = { view: 'home', phase: 'intro', frozen: false, tab: 'outcome', runId: 0 };
 
   function load() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(TRACKS[track].key) || '[]');
+      const parsed = JSON.parse(localStorage.getItem(KEY) || '[]');
       if (!Array.isArray(parsed)) return [];
-      // Keep moves up to the first one that no longer fits the scenes; later moves depend on it.
+      // Keep moves up to the first one that no longer fits the challenges; later moves depend on it.
       const ok = (h, i) => h && LIST[i] && LIST[i].id === h.id && typeof h.key === 'string' && Number.isInteger(h.outcome) && h.outcome >= 0 && Array.isArray(h.clues) && h.clues.every(Number.isInteger);
       const bad = parsed.findIndex((h, i) => !ok(h, i));
       return bad < 0 ? parsed : parsed.slice(0, bad);
     } catch (e) { return []; }
   }
-  function save() { try { localStorage.setItem(TRACKS[track].key, JSON.stringify(history)); } catch (e) { /* storage unavailable */ } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(history)); } catch (e) { /* storage unavailable */ } }
   function loadRules() {
     try {
       const r = JSON.parse(localStorage.getItem(RULES_KEY) || 'null');
@@ -101,17 +54,13 @@
     } catch (e) { return null; }
   }
   function saveRules() { try { rules ? localStorage.setItem(RULES_KEY, JSON.stringify(rules)) : localStorage.removeItem(RULES_KEY); } catch (e) { /* storage unavailable */ } }
-  function useTrack(t) {
-    if (t === track) return;
-    track = t; LIST = TRACKS[t].list; history = playable(load()); draft = fresh(); ui.phase = 'intro'; confirmScene = -1;
-  }
   // A save from an older version can name an option or outcome that no longer exists. Drop moves from there on.
   function playable(hist) {
     const fits = h => {
       try {
         const d = derive(h);
         if (!d.moves.every(m => m.opt && m.outcome)) return false;
-        if (track === 'market') capitals(h);
+        capitals(h);
         return true;
       } catch (e) { return false; }
     };
@@ -137,7 +86,7 @@
     const flags = {}; // what earlier challenges left behind, like the book you built in June
     let ruinedAt = null;
     const steps = hist.map((h, i) => {
-      const sc = TRACKS.market.list[i], opt = resolve(sc, { rel: {}, flags: { ...flags }, type: typeOf(sc, h), cap: { ...cap } }, h.clues).find(o => o.key === h.key), oc = opt.outcomes[h.outcome];
+      const sc = LIST[i], opt = resolve(sc, { rel: {}, flags: { ...flags }, type: typeOf(sc, h), cap: { ...cap } }, h.clues).find(o => o.key === h.key), oc = opt.outcomes[h.outcome];
       Object.assign(flags, opt.flags || {});
       const before = { ...cap };
       if (!sc.freeTime) cap.time -= 1; // the later days of one trade share a single turn
@@ -199,56 +148,25 @@
     </div>`;
   }
 
-  // What you're protecting in a beat scene: standing with your manager, allies, and free hours this week.
-  const START_METERS = { standing: 0, allies: 0, time: 10 };
-  const METER_NAME = { standing: 'Reputation', allies: 'Friends', time: 'Time' };
-  const addUp = (...objs) => objs.reduce((t, o) => { Object.entries(o || {}).forEach(([k, v]) => { t[k] = (t[k] || 0) + v; }); return t; }, {});
   function derive(hist) {
-    const totals = Object.fromEntries(Object.keys(skills).map(k => [k, 0]));
-    const rel = {}, flags = {};
-    let rating = START_RATING;
+    const flags = {};
     const moves = hist.map((h, i) => {
       const sc = LIST[i];
-      const ctx = { rel: { ...rel }, flags: { ...flags }, type: typeOf(sc, h), known: metBefore(sc, i) };
+      const ctx = { flags: { ...flags }, type: typeOf(sc, h) };
       const opts = resolve(sc, ctx, h.clues);
       const opt = opts.find(o => o.key === h.key);
-      Object.entries(opt.s || {}).forEach(([k, v]) => { totals[k] += v; });
-      totals.inf += Math.min(h.clues.length, 2) * 0.5;
-      Object.entries(opt.rel || {}).forEach(([k, v]) => { rel[k] = (rel[k] || 0) + v; });
       Object.assign(flags, opt.flags || {});
-      // An outcome can leave a mark too (the salary you actually got), for later scenes to read.
+      // An outcome can leave a mark too, for later challenges to read.
       Object.assign(flags, val(opt.outcomes[h.outcome].flags, ctx) || {});
-      // Some clues cost something to read: asking around gets back to people.
-      h.clues.forEach(i => {
-        const cost = ((sc.clues || [])[i] || {}).cost;
-        if (!cost) return;
-        Object.entries(cost.rel || {}).forEach(([k, v]) => { rel[k] = (rel[k] || 0) + v; });
-        Object.assign(flags, cost.flags || {});
-      });
-      // Beat scenes also move what you're protecting (standing, allies, hours) and what people think of you.
-      let fx = null, repDelta = null;
-      if (sc.play) {
-        const c = { ...ctx, clues: h.clues, rules };
-        const push = h.push && sc.pushFx ? sc.pushFx[h.push] || {} : {};
-        fx = addUp(val(opt.fx, c), val(opt.outcomes[h.outcome].fx, c), push.fx);
-        repDelta = addUp(val(opt.rep, c), push.rep, ...h.clues.map(i => (sc.clues[i] || {}).cost && sc.clues[i].cost.rep));
-        const m = flags.meters || { ...START_METERS };
-        flags.meters = Object.fromEntries(Object.keys(START_METERS).map(k => [k, m[k] + (fx[k] || 0)]));
-        flags.rep = addUp(flags.rep, repDelta);
-        if (h.stake) flags.stake = h.stake;
-      }
-      const before = rating;
-      // The rating counts your first try at a scene. Replays are practice.
-      rating += ((firsts[sc.id] ?? opt.q) - 2) * 40;
-      return { sc, opt, opts, ctx, type: ctx.type, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues, ratingBefore: before, ratingAfter: rating, fx, rep: repDelta, stake: h.stake, push: h.push, said: h.said, replay: !!h.replay };
+      return { sc, opt, opts, ctx, type: ctx.type, outcomeIdx: h.outcome, outcome: opt.outcomes[h.outcome], clues: h.clues };
     });
-    return { totals, rel, flags, rating, moves };
+    return { flags, moves };
   }
   // An option can depend on what came before and on what you found out:
-  //   q, outcome p, their, shaped  may be functions of ctx ({ rel, flags, rules })
+  //   q, outcome p, text, did, later  may be functions of ctx ({ flags, type, clues, rules, cap })
   //   needs: [clue indexes]        without those clues you can only make the vague version
   const val = (v, ctx) => typeof v === 'function' ? v(ctx) : v;
-  function resolveRaw(sc, ctx = { rel: {}, flags: {} }, clues = []) {
+  function resolveRaw(sc, ctx = { flags: {} }, clues = []) {
     const c = { ...ctx, rules, clues };
     // An option can exist only in some situations (when: fn of ctx), like cutting a book you never built.
     return sc.options.filter(o => !o.when || o.when(c)).map(o => {
@@ -257,19 +175,12 @@
       const b = vague ? { ...o, ...o.vague, vague } : { ...o, vague };
       // A vague version can keep the same results at different odds (pv), or bring its own.
       const outs = vague && o.vague.pv ? b.outcomes.map((x, i) => ({ ...x, p: o.vague.pv[i] })) : b.outcomes;
-      const relv = b.rel && Object.fromEntries(Object.entries(b.rel).map(([k, v]) => [k, val(v, c)]));
-      return { ...b, _c: c, needs, text: val(b.text, c), did: val(b.did, c), later: val(b.later, c), rel: relv, flags: val(b.flags, c), cap: val(b.cap, c), concept: val(b.concept, c), q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })), their: val(b.their, c), shaped: val(b.shaped, c) };
+      return { ...b, _c: c, needs, text: val(b.text, c), did: val(b.did, c), later: val(b.later, c), flags: val(b.flags, c), cap: val(b.cap, c), concept: val(b.concept, c), q: val(b.q, c), exposure: val(b.exposure, c), outcomes: outs.map(x => ({ ...x, p: val(x.p, c), fin: val(x.fin, c), text: val(x.text, c), tone: val(x.tone, c) })) };
     });
   }
-  // Grades judge what you could know. Versions of the other person that nothing you saw could tell apart
-  // (the scene's opening and the details you read) are graded together, weighted by how likely each was.
-  // A person you've already met this episode is known. The Trader's Mind grades its own way.
-  const MARKET_IDS = new Set(MK.scenarios.map(s => s.id));
-  // The versions of the other side the player couldn't rule out, with their odds renormalized.
+  // The worlds the player couldn't rule out (from the opening and the details they read), with their odds renormalized.
   function posterior(sc, ctx, clues) {
     if (!sc.types || !ctx.type) return null;
-    const mineT = sc.types.find(t => t.id === ctx.type);
-    if (ctx.known) return [{ t: mineT, w: 1 }];
     const seen = t => {
       const c = { ...ctx, type: t, clues };
       const intro = ((sc.stage && sc.stage.intro) || []).map(b => b.if ? (b.if(c) ? 1 : 0) : '').join('');
@@ -279,37 +190,22 @@
     const ws = sc.types.filter(t => seen(t.id) === mine), total = ws.reduce((a, t) => a + t.p, 0);
     return ws.map(t => ({ t, w: t.p / total }));
   }
-  function worlds(sc, ctx, clues) {
-    if (MARKET_IDS.has(sc.id)) return null;
-    const post = posterior(sc, ctx, clues);
-    return post && post.length > 1 ? post.map(x => x.t) : null;
-  }
   // Rules from your journal that bind Desk decision i: written after an earlier decision that's still in the saves.
-  const deskHist = () => track === 'market' ? history : MK.journal.stored(TRACKS.market.key);
   function rulesAt(i) {
     const out = {};
-    MK.journal.valid(deskHist(), MK.journal.stored('thedance:call:v1')).filter(e => e.src === 'desk' && e.at < i).forEach(e => { out[e.rule] = e; });
+    MK.journal.valid(history, MK.journal.stored('thedance:call:v1')).filter(e => e.src === 'desk' && e.at < i).forEach(e => { out[e.rule] = e; });
     return out;
   }
   function withJournal(sc, opts) {
-    const i = TRACKS.market.list.indexOf(sc), active = rulesAt(i);
+    const i = LIST.indexOf(sc), active = rulesAt(i);
     if (!Object.keys(active).length) return opts;
     return opts.map(o => {
       const broke = (val(o.defies, o._c) || []).filter(r => active[r]);
       return broke.length ? { ...o, q: Math.max(0, o.q - 1), brokeRules: broke.map(r => active[r]) } : o;
     });
   }
-  function resolve(sc, ctx = { rel: {}, flags: {} }, clues = []) {
-    if (MARKET_IDS.has(sc.id)) return withJournal(sc, resolveRaw(sc, ctx, clues));
-    const opts = resolveRaw(sc, ctx, clues);
-    const ws = worlds(sc, ctx, clues);
-    if (!ws) return opts;
-    const total = ws.reduce((a, t) => a + t.p, 0);
-    const per = ws.map(t => ({ w: t.p / total, opts: t.id === ctx.type ? opts : resolveRaw(sc, { ...ctx, type: t.id }, clues) }));
-    return opts.map((o, k) => ({ ...o, qWorld: o.q, q: Math.round(per.reduce((a, x) => a + x.w * x.opts[k].q, 0)), worlds: ws }));
-  }
-  const metBefore = (sc, i) => !!sc.share && LIST.slice(0, i).some(s => s.share === sc.share);
-  const optsNow = sc => { const i = LIST.indexOf(sc), d = derive(history.slice(0, i)); return resolve(sc, { rel: d.rel, flags: d.flags, type: draft.type, known: metBefore(sc, i), cap: isMarket() ? capitals().cap : null }, draft.clues); };
+  function resolve(sc, ctx = { flags: {} }, clues = []) { return withJournal(sc, resolveRaw(sc, ctx, clues)); }
+  const optsNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return resolve(sc, { flags: d.flags, type: draft.type, cap: capitals().cap }, draft.clues); };
   const clueText = (c, ctx) => val(c.text, ctx);
   // Staging for the version actually played: a vague option may have its own line and reactions.
   const staged = (sc, opt) => {
@@ -321,7 +217,6 @@
     return said(v);
   };
 
-  const skillScore = t => Math.max(0, Math.min(100, Math.round(50 + t * 3.5)));
   const text = (v, ctx) => (typeof v === 'function' ? v(ctx) : v);
   function pickOutcome(opt) {
     let r = Math.random();
@@ -337,13 +232,11 @@
     ui.runId++;
   }
 
-  // With no episodes on the site, the Play pages (and the profile built on them) lead to the Market.
-  const PLAY_VIEWS = ['play', 'episodes', 'profile'];
-  const routeOf = view => !TRACKS.main.list.length && PLAY_VIEWS.includes(view) ? 'market' : view;
+  // Old links to the Play pages and the profile, which no longer exist, open the Market.
+  const RETIRED = ['play', 'episodes', 'profile'];
   function go(view, keepScroll) {
-    view = routeOf(view);
+    if (RETIRED.includes(view)) view = 'market';
     teardown();
-    useTrack(trackFor(view));
     ui.view = view;
     const hash = view === 'home' ? '' : '#' + view;
     if (location.hash !== hash) window.history.replaceState(null, '', hash || location.pathname);
@@ -363,129 +256,11 @@
       const cls = ['sq', j % 2 ? 'sq-l' : 'sq-d', i === current ? 'is-current' : '', m ? 'is-done' : ''].join(' ');
       const inner = i === current ? pawnSvg : m ? `<span class="sq-glyph">${grades[m.opt.q].glyph}</span>` : `<span class="sq-rank">${j + 1}</span>`;
       const label = `<span class="sr">Scene ${j + 1}, ${sc.title}${m ? ', played' : ''}</span>`;
-      // Played scenes open the chooser with that scene ready to replay.
-      if (m && i !== current && !isMarket()) return `<li class="${cls}"><button type="button" class="sq-btn" data-act="pick" data-i="${i}" title="Replay scene ${j + 1}: ${sc.title}">${label}${inner}</button></li>`;
       return `<li class="${cls}" title="Scene ${j + 1}: ${sc.title}">${label}${inner}</li>`;
     }).join('')}</ol>`;
   }
 
-  // ───────────────────────── The campaign index (the Play link)
-  // Every scene as a position on a path: completed, next, or waiting on the one before.
-  // The signature is the logo's 2×2 matrix, read as the four forces every scene turns on.
-
   const IX_ARROW = `<svg class="ix-arrow" viewBox="0 0 40 10" aria-hidden="true"><path d="M0 5h38M33 1l5 4-5 4" fill="none" stroke="currentColor" stroke-width="1.25"/></svg>`;
-  const FORCES = ['incentives', 'information', 'power', 'relationships'];
-  const FORCE_NAME = { incentives: 'Incentives', information: 'Information', power: 'Power', relationships: 'Relationships' };
-  // The matrix: four cells, the ones in play filled. Large and labelled in the masthead, small on each episode.
-  const forceMatrix = (on, big) => `<svg class="ix-matrix ${big ? 'is-big' : ''}" viewBox="0 0 40 40" aria-hidden="true">${FORCES.map((f, k) =>
-    `<rect class="${on.includes(f) ? 'is-on' : ''}" x="${(k % 2) * 21}" y="${Math.floor(k / 2) * 21}" width="19" height="19"/>`).join('')}</svg>`;
-  const ixNo = i => `${LIST[i].ep.number}.${pos(i).n}`;
-
-  // One scene: a node on the path, its number, its title, and its status in a fixed vocabulary.
-  function ixRow(i, d) {
-    const n = history.length, m = d.moves[i], sc = LIST[i];
-    const node = `<span class="ix-node" aria-hidden="true"></span>`;
-    const lead = `${node}<span class="ix-no">${ixNo(i)}</span><span class="ix-name">${sc.title}</span>`;
-    if (i < n) {
-      const asking = confirmScene === i, later = n - 1 - i, g = grades[m.opt.q];
-      if (asking) {
-        const lastEp = LIST[n - 1].ep;
-        const what = !later ? 'Nothing after it changes.' : `Resets ${later === 1 ? 'the next scene' : `the ${NUM[later] || later} scenes after it`}${lastEp !== sc.ep ? `, through Episode ${lastEp.number}` : ''}.`;
-        return `<li class="ix-step is-done is-asking"><button type="button" class="ix-row" data-act="scene" data-i="${i}">${lead}
-          <span class="ix-meta"><span class="ix-label">Confirm replay</span><span class="ix-warn">${what}</span></span></button></li>`;
-      }
-      return `<li class="ix-step is-done"><button type="button" class="ix-row" data-act="scene" data-i="${i}" aria-label="${sc.title}. Completed, ${g.name}. Replay.">${lead}
-        <span class="ix-meta"><span class="ix-label ix-rest">Completed · ${g.name}</span><span class="ix-label ix-hover">Replay this scenario</span></span><span class="ix-end ix-grade ix-q${m.opt.q}" title="${g.name}">${g.glyph}</span></button></li>`;
-    }
-    if (i === n) return `<li class="ix-step is-next"><button type="button" class="ix-row" data-act="scene" data-i="${i}" aria-label="${sc.title}. Next scenario. Play.">${lead}
-      <span class="ix-meta"><span class="ix-label">Next scenario</span></span><span class="ix-end">${IX_ARROW}</span></button></li>`;
-    return `<li class="ix-step is-locked"><span class="ix-row" aria-disabled="true">${lead}
-      <span class="ix-meta"><span class="ix-label">Requires ${ixNo(i - 1)}</span></span></span></li>`;
-  }
-
-  function viewEpisodes() {
-    const d = derive(history), n = history.length, done = n >= LIST.length;
-    const at = done ? null : pos(n);
-    const epsDone = EPS.filter(ep => LIST.every((sc, i) => sc.ep !== ep || i < n)).length;
-    const sharp = d.moves.filter(m => m.opt.q >= 3).length;
-
-    const resume = done
-      ? `<button type="button" class="ix-resume" data-act="profile">
-          <span class="ix-resume-k">Campaign complete</span>
-          <span class="ix-resume-main"><span class="ix-resume-t">Review your dance</span><span class="ix-resume-d">Every scene played. Replay any of them below.</span></span>
-          <span class="ix-resume-go">Open profile ${IX_ARROW}</span></button>`
-      : `<button type="button" class="ix-resume" data-act="play">
-          <span class="ix-resume-k"><span class="ix-node" aria-hidden="true"></span>${!n ? 'Begin' : at.n === 1 ? 'Next episode' : 'Resume'}</span>
-          <span class="ix-resume-main"><span class="ix-resume-no">Scenario ${ixNo(n)} · ${placeOf(LIST[n].id).name}</span><span class="ix-resume-t">${LIST[n].title}</span><span class="ix-resume-d">Episode ${at.ep.number}, ${at.ep.title}. Scene ${at.n} of ${at.of}.</span></span>
-          <span class="ix-resume-go">Enter scenario ${IX_ARROW}</span></button>`;
-
-    const chapters = EPS.map((ep, e) => {
-      const idx = LIST.map((sc, i) => i).filter(i => LIST[i].ep === ep);
-      const played = idx.filter(i => i < n).length, total = idx.length;
-      const current = !done && LIST[n].ep === ep, complete = played === total;
-      const status = complete ? 'Completed' : current ? `In progress · ${played} of ${total}` : `Requires Episode ${EPS[e - 1].number}`;
-      const forces = ep.forces || [];
-      return `<article class="ix-ch ${current ? 'ix-ch-now' : ''} ${complete ? 'ix-ch-done' : ''} ${!current && !complete ? 'ix-ch-later' : ''}" aria-labelledby="ix-ch-${ep.number}">
-        <header class="ix-ch-head">
-          <div class="ix-ch-id"><span class="ix-ch-num">${String(ep.number).padStart(2, '0')}</span><span class="ix-label">Episode${current ? ' · Current' : ''}</span></div>
-          <div class="ix-ch-main">
-            <h2 class="ix-ch-title" id="ix-ch-${ep.number}">${ep.title}</h2>
-            <p class="ix-ch-deck">${ep.blurb}</p>
-          </div>
-          <div class="ix-ch-side">
-            <div class="ix-ch-forces">${forceMatrix(forces)}<span><span class="ix-label">In play</span><span class="ix-forces-list">${forces.map(f => FORCE_NAME[f]).join(' · ')}</span></span></div>
-            <div class="ix-ch-status"><span class="ix-bar" aria-hidden="true"><span style="width:${Math.round(played / total * 100)}%"></span></span><span class="ix-label">${status}</span></div>
-          </div>
-        </header>
-        <div class="ix-places">${ep.places.map(p => `<section class="ix-place">
-          <h3 class="ix-place-h">${p.name}</h3>
-          <p class="ix-place-d">${p.theme}</p>
-          <ol class="ix-path">${p.scenes.map(id => ixRow(LIST.findIndex(s => s.id === id), d)).join('')}</ol>
-        </section>`).join('')}</div>
-      </article>`;
-    }).join('');
-
-    return `<section class="ix">
-      <div class="wrap ix-in">
-        <header class="ix-mast">
-          <div class="ix-mast-main">
-            <p class="ix-kicker ix-label">The campaign</p>
-            <h1 class="ix-title">Where to next.</h1>
-            <p class="ix-lede">How people behave when incentives, information, power and relationships collide. ${LIST.length} situations in ${NUM[EPS.length] || EPS.length} episodes; each remembers the ones before it.</p>
-          </div>
-          <figure class="ix-forces" aria-label="The four forces: incentives, information, power, relationships">
-            <span class="ix-f ix-f-tl">Incentives</span><span class="ix-f ix-f-tr">Information</span>
-            ${forceMatrix(FORCES, true)}
-            <span class="ix-f ix-f-bl">Power</span><span class="ix-f ix-f-br">Relationships</span>
-          </figure>
-        </header>
-        <dl class="ix-ledger">
-          <div><dt class="ix-label">Scenes completed</dt><dd>${n}<span>/${LIST.length}</span></dd></div>
-          <div><dt class="ix-label">Episodes completed</dt><dd>${epsDone}<span>/${EPS.length}</span></dd></div>
-          <div><dt class="ix-label">Strong decisions</dt><dd>${sharp}<span>/${n || 0}</span></dd></div>
-          <div><dt class="ix-label">Strategic rating</dt><dd>${d.rating}</dd></div>
-        </dl>
-        ${resume}
-        <div class="ix-key" aria-hidden="true">
-          <span><span class="ix-step is-done"><span class="ix-node"></span></span>Completed</span>
-          <span><span class="ix-step is-next"><span class="ix-node"></span></span>Next scenario</span>
-          <span><span class="ix-step is-locked"><span class="ix-node"></span></span>Requires the one before</span>
-          <span class="ix-key-g">!! ! !? ?! ?&nbsp; Decision grade</span>
-        </div>
-        ${chapters}
-        <button type="button" class="ix-aside" data-act="market">
-          <span class="ix-label">Separate track</span>
-          <span class="ix-aside-t">The Trader's Mind</span>
-          <span class="ix-aside-d">Five challenges at one desk, with one account.</span>
-          <span class="ix-aside-go ix-label">Open ${IX_ARROW}</span>
-        </button>
-      </div>
-    </section>`;
-  }
-
-  function staticScene(sc, moods) {
-    return PP.art.sceneSvg(sc.stage, PP.people, moods || {}, `${sc.title}: illustrated scene`).svg;
-  }
 
   // ───────────────────────── Home
 
@@ -553,7 +328,7 @@
         </div>
         <div class="wrap hm-tm-qs">
           <p class="hm-tm-qk">The same five questions, asked two ways</p>
-          <ol>${MK.ep.places.map((pl, k) => { const sc = TRACKS.market.list.find(x => x.id === pl.scenes[0]), call = PP.call.calls[k]; return `<li><span class="hm-tm-n">${String(k + 1).padStart(2, '0')}</span><span class="hm-tm-q">${sc.tests}</span><span class="hm-tm-a"><small>The Desk</small>${sc.title.split(' · ')[0]}</span><span class="hm-tm-a"><small>The Call</small>${call ? call.title : ''}</span></li>`; }).join('')}</ol>
+          <ol>${MK.ep.places.map((pl, k) => { const sc = LIST.find(x => x.id === pl.scenes[0]), call = PP.call.calls[k]; return `<li><span class="hm-tm-n">${String(k + 1).padStart(2, '0')}</span><span class="hm-tm-q">${sc.tests}</span><span class="hm-tm-a"><small>The Desk</small>${sc.title.split(' · ')[0]}</span><span class="hm-tm-a"><small>The Call</small>${call ? call.title : ''}</span></li>`; }).join('')}</ol>
         </div>
       </section>
 
@@ -608,18 +383,16 @@
   function viewPlay() {
     const idx = currentIndex();
     const sc = LIST[idx];
-    const d = derive(history.slice(0, idx));
-    const place = placeOf(sc.id), at = pos(idx);
+    const at = pos(idx);
     return `<section class="play">
       <div class="wrap play-head">
         ${strip(idx, derive(history))}
         <div class="play-meta">
-          <p class="meta">${isMarket() ? `The Trader's Mind · Challenge ${at.n} of ${at.of}${sc.opponent ? ` · The opponent: ${sc.opponent}` : ''}` : `Episode ${at.ep.number} · Scene ${at.n} of ${at.of} · ${place.name}`}</p>
-          ${isMarket() ? `<button type="button" class="btn btn-link play-out" data-act="market">All challenges</button>` : `<button type="button" class="btn btn-link play-out" data-act="episodes">All episodes</button>`}
+          <p class="meta">The Trader's Mind · Challenge ${at.n} of ${at.of}${sc.opponent ? ` · The opponent: ${sc.opponent}` : ''}</p>
+          <button type="button" class="btn btn-link play-out" data-act="market">All challenges</button>
           <div class="chips"><span class="chip">${sc.level}</span>${sc.lens.map((k, i) => `<span class="chip ${i ? '' : 'chip-lens'}">${i ? 'Also' : 'Lens'} · ${thinkers[k].short}</span>`).join('')}</div>
         </div>
-        ${isMarket() ? `<div class="hud" id="hud" aria-label="Your capital">${hud(capitals(history.slice(0, idx)).cap)}</div>` : ''}
-        ${sc.play ? `<div class="meters" id="meters" aria-label="What you're protecting"></div>` : ''}
+        <div class="hud" id="hud" aria-label="Your capital">${hud(capitals(history.slice(0, idx)).cap)}</div>
       </div>
       <div class="play-body">
         <div class="stage-wrap" id="stage-mount"></div>
@@ -641,8 +414,7 @@
     if (idx >= history.length && sc.types && !draft.type) draft.type = drawType(sc, history.slice(0, idx));
     const type = idx < history.length ? typeOf(sc, history[idx]) : draft.type;
     stage = new PP.Stage(document.getElementById('stage-mount'), sc.stage, {
-      ctx: { rel: d.rel, flags: d.flags, type, account: isMarket() ? capitals(history.slice(0, idx)).cap.fin : null, rules,
-        ...(isMarket() ? marketMemory(idx) : {}) },
+      ctx: { flags: d.flags, type, account: capitals(history.slice(0, idx)).cap.fin, rules, ...marketMemory(idx) },
       label: `${sc.title}. ${sc.setting}`,
       onFreeze: () => { ui.frozen = true; renderPanel(); },
       onResume: () => { ui.frozen = false; renderPanel(); }
@@ -656,7 +428,7 @@
     ui.phase = 'intro'; ui.frozen = false;
     mountStage(sc, idx);
     renderPanel();
-    await stage.run(sc.stage.intro, { title: `<span>${isMarket() ? `Challenge ${pos(idx).n}` : `${pos(idx).n === 1 ? `Episode ${sc.ep.number} · ` : ''}Scene ${pos(idx).n}`} · ${placeOf(sc.id).name}</span><strong>${sc.title}</strong>` });
+    await stage.run(sc.stage.intro, { title: `<span>Challenge ${pos(idx).n} · ${placeOf(sc.id).name}</span><strong>${sc.title}</strong>` });
     if (run !== ui.runId) return;
     ui.phase = 'decide';
     renderPanel();
@@ -680,9 +452,8 @@
     const run = ++ui.runId;
     ui.phase = 'react';
     renderPanel();
-    const lead = h.said ? { you: h.said } : opt.line ? { you: opt.line } : { caption: opt.caption, cam: 'wide' };
-    const epi = sc.epilogue && val(sc.epilogue, { type: h.type, clues: h.clues });
-    const beats = [lead, ...opt.outcomes[h.outcome].beats, ...(epi ? [{ cam: 'wide', ...epi }] : [])];
+    const lead = opt.line ? { you: opt.line } : { caption: opt.caption, cam: 'wide' };
+    const beats = [lead, ...opt.outcomes[h.outcome].beats];
     await stage.run(beats);
     if (run !== ui.runId) return;
     ui.phase = 'result'; ui.tab = 'outcome';
@@ -701,15 +472,9 @@
     else if (ui.phase === 'intro') html = panelWatching(sc, `Watch the scene. Tap the stage to move faster, or press Slow-mo to freeze it and study the room.`);
     else if (ui.phase === 'react') html = panelWatching(sc, `The room reacts…`);
     else if (ui.phase === 'decide') html = panelDecide(sc);
-    else html = panelResult(sc);
+    else html = panelResultMarket(sc);
     p.innerHTML = html;
     p.dataset.phase = ui.frozen ? 'frozen' : ui.phase;
-    const mt = document.getElementById('meters');
-    if (mt) {
-      const after = derive(ui.phase === 'result' ? history : history.slice(0, idx));
-      const mv = ui.phase === 'result' ? after.moves[idx] : null;
-      mt.innerHTML = meterLine(after.flags.meters || START_METERS, mv && mv.fx, (mv && mv.stake) || draft.stake || after.flags.stake);
-    }
     const h = document.getElementById('hud');
     if (h) h.innerHTML = ui.phase === 'result' ? hud(capitals().cap, capitals(history.slice(0, -1)).cap) : hud(capitals(history.slice(0, idx)).cap);
   }
@@ -720,43 +485,35 @@
   }
 
   function panelDecide(sc) {
-    if (sc.play) {
-      if (!draft.step) draft.step = sc.stakes && !draft.stake && !ctxNow(sc).flags.stake ? 'stake' : 'read';
-      if (draft.step !== 'choose') return panelBeats(sc);
-    }
-    const press = sc.play && sc.press ? val(sc.press, ctxNow(sc)) : null;
     const options = optsNow(sc).map(o => `<li>
       <input type="radio" name="move" id="move-${sc.id}-${o.key}" value="${o.key}" ${draft.selected === o.key ? 'checked' : ''} ${trustLocked(o) ? 'disabled' : ''}>
       <label for="move-${sc.id}-${o.key}" class="option ${trustLocked(o) ? 'is-locked' : ''}"><span class="option-key">${o.key}</span><span class="option-text">${fill(o.text)}${o.exposure ? `<span class="exp exp-${o.exposure} ${breaks(o) ? 'is-over' : ''}">${MK.exposureLabel[o.exposure]}${breaks(o) ? ' · over your limit' : ''}${o.brokeRules ? ' · breaks a rule in your journal' : ''}${trustLocked(o) ? ` · ${lockReason(o)}` : ''}</span>` : ''}</span></label>
     </li>`).join('');
     return `<form id="decide-form" class="decide">
       <div class="decide-top">
-        ${press ? `<blockquote class="beat-say beat-say-lead"><span>${PP.people[press.who].name}</span>“${press.say}”</blockquote>` : ''}
         ${sc.facts ? `<section class="facts" aria-label="The situation"><p class="facts-k">The situation</p><ul>${sc.facts.map(f => `<li>${fill(f)}</li>`).join('')}</ul></section>` : ''}
         <fieldset><legend class="decide-q">${sc.question}</legend>
-          ${isMarket() && rules ? marketState(sc) : ''}
-          ${isMarket() && rules ? `<p class="rules-mini">Your rules: <strong>${ruleOf('risk', rules.risk).label}</strong> risk per decision · edge: <strong>${ruleOf('edge', rules.edge).label}</strong></p>` : ''}
+          ${rules ? marketState(sc) : ''}
+          ${rules ? `<p class="rules-mini">Your rules: <strong>${ruleOf('risk', rules.risk).label}</strong> risk per decision · edge: <strong>${ruleOf('edge', rules.edge).label}</strong></p>` : ''}
           <ul class="options">${options}</ul></fieldset>
       </div>
       <div class="decide-bar">
         <button type="button" class="btn btn-ghost" data-act="freeze"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>Freeze and analyze</button>
         <button type="submit" class="btn btn-primary" id="evaluate-btn" ${draft.selected ? '' : 'disabled'}>Make this move</button>
       </div>
-      ${sc.play ? '' : `<p class="decide-hint">${draft.clues.length ? `You've read ${draft.clues.length} of ${sc.clues.length} details in the room.` : `Tip: freezing the scene lets you read the room before you commit.`} <button type="button" class="btn-link-sm" data-act="replay-intro">Watch the scene again</button></p>`}
+      <p class="decide-hint">${draft.clues.length ? `You've read ${draft.clues.length} of ${sc.clues.length} details in the room.` : `Tip: freezing the scene lets you read the room before you commit.`} <button type="button" class="btn-link-sm" data-act="replay-intro">Watch the scene again</button></p>
     </form>`;
   }
 
-  // The room's details. In a beat scene you only get so many reads, and they close once you answer.
-  // In The Trader's Mind your state sets how much you can take in: rattled, you check one thing;
+  // The room's details. Your state sets how much you can take in: rattled, you check one thing;
   // calm, three; a sharp edge buys one more look.
   function marketReads() {
     const c = capitals().cap;
     return (c.psy >= 7 ? 3 : c.psy >= 4 ? 2 : 1) + (c.str >= 7 ? 1 : 0);
   }
-  const readsOf = sc => isMarket() ? marketReads() : sc.reads;
-  const readsLeft = sc => readsOf(sc) ? Math.max(0, readsOf(sc) - draft.clues.length) : Infinity;
+  const readsLeft = () => Math.max(0, marketReads() - draft.clues.length);
   // Nadia won't sign it: either the account is down her ladder, or she doesn't trust you.
-  const lockReason = o => isMarket() ? MK.lockReason(capitals().cap, o.exposure, o) : null;
+  const lockReason = o => MK.lockReason(capitals().cap, o.exposure, o);
   const trustLocked = o => !!lockReason(o);
   function marketState(sc) {
     const c = capitals().cap, lines = [];
@@ -772,51 +529,22 @@
     lines.push(`<strong>Runway ${c.time}/10.</strong> Every challenge spends one. It's the season you have left to recover from mistakes.`);
     return `<ul class="mk-state">${lines.map(l => `<li>${l}</li>`).join('')}</ul>`;
   }
-  const readsOpen = sc => !sc.play || (draft.step !== 'choose' && draft.step !== 'push');
-  const readsNote = sc => readsOf(sc) && isFinite(readsLeft(sc)) ? `<p class="reads-note">${readsLeft(sc)} of ${readsOf(sc)} ${readsOf(sc) === 1 ? 'read' : 'reads'} left</p>` : '';
+  const readsNote = () => { const n = marketReads(); return `<p class="reads-note">${readsLeft()} of ${n} ${n === 1 ? 'read' : 'reads'} left</p>`; };
   function clueList(sc) {
     return sc.clues.map((c, i) => {
-      const open = draft.clues.includes(i), shut = !open && (!readsLeft(sc) || !readsOpen(sc));
+      const open = draft.clues.includes(i), shut = !open && !readsLeft();
       return `<li class="clue ${open ? 'is-open' : ''} ${shut ? 'is-shut' : ''}"><button type="button" class="clue-btn" data-clue="${i}" ${open || shut ? 'disabled' : ''} aria-expanded="${open}"><span class="clue-label">${c.label}${c.cost ? `<span class="clue-cost">Costs something: ${c.cost.note}</span>` : ''}</span><span class="clue-state">${open ? 'Noted' : shut ? 'No reads left' : 'Look'}</span></button>${open ? `<p class="clue-text">${clueText(c, ctxNow(sc))}</p>` : ''}</li>`;
     }).join('');
   }
 
-  // A beat scene in play: the state the scene's own functions see right now.
-  const ctxNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return { rel: d.rel, flags: d.flags, type: draft.type, clues: draft.clues, rules, stake: draft.stake }; };
-  const meterLine = (m, delta, stake) => Object.keys(START_METERS).map(k => {
-    const d = delta ? delta[k] || 0 : 0;
-    const v = k === 'time' ? `${m[k]}h` : `${m[k] > 0 ? '+' : ''}${m[k]}`;
-    return `<span class="mtr ${stake === k ? 'is-stake' : ''}"><span class="mtr-k">${METER_NAME[k]}${stake === k ? ' · protecting' : ''}</span><span class="mtr-v">${v}${d ? `<em class="${d > 0 ? 'up' : 'down'}" title="This scene">${d > 0 ? '↑' : '↓'}${Math.abs(d)}${k === 'time' ? 'h' : ''}</em>` : ''}</span></span>`;
-  }).join('');
-
-  function panelBeats(sc) {
-    if (draft.step === 'stake') {
-      return `<div class="beat"><p class="beat-k">Before anything else</p><h2 class="beat-q">${sc.stakes.ask}</h2>
-        <div class="beat-choices">${sc.stakes.choices.map(c => `<button type="button" class="beat-choice" data-act="stake" data-v="${c.id}"><strong>${c.label}</strong><span>${c.note}</span></button>`).join('')}</div></div>`;
-    }
-    if (draft.step === 'push') {
-      const p = val(optsNow(sc).find(o => o.key === draft.selected).push, ctxNow(sc));
-      return `<div class="beat"><p class="beat-k">${PP.people[p.who].name} pushes back</p><blockquote class="beat-say">“${p.say}”</blockquote>
-        <div class="beat-choices">${['hold', 'give', 'walk'].map(k => `<button type="button" class="beat-choice" data-act="push" data-v="${k}"><strong>${p[k].label}</strong><span>“${p[k].line}”</span></button>`).join('')}</div></div>`;
-    }
-    const left = readsLeft(sc);
-    return `<div class="beat"><p class="beat-k">Read the room · ${left} of ${sc.reads} ${sc.reads === 1 ? 'read' : 'reads'} left</p><h2 class="beat-q">${sc.readAsk}</h2>
-      <p class="beat-note">Each read takes a moment, and some of them get noticed. Slow-mo uses the same reads.</p>
-      <ul class="clues">${clueList(sc)}</ul>
-      <div class="decide-bar">
-        <button type="button" class="btn btn-ghost" data-act="freeze"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>Freeze and study the room</button>
-        <button type="button" class="btn btn-primary" data-act="press">${draft.clues.length ? 'Enough. Hear her out' : 'Answer without looking'}</button>
-      </div></div>`;
-  }
+  // The state a challenge's own functions see right now.
+  const ctxNow = sc => { const d = derive(history.slice(0, LIST.indexOf(sc))); return { flags: d.flags, type: draft.type, clues: draft.clues, rules }; };
 
   function panelFrozen(sc) {
-    const past = derive(history.slice(0, LIST.indexOf(sc))).rel;
     const cast = sc.stage.cast.map((c, i) => {
       const meta = sc.cast[i] || {};
-      const t = past[c.id] || 0;
       return `<li class="who"><span class="pin pin-inline">${i + 1}</span><div>
         <p class="who-name"><strong>${PP.people[c.id].name}</strong> <span>${meta.role || ''}</span></p>
-        ${t ? `<p class="who-trust ${t > 0 ? 'up' : 'down'}">${t > 0 ? 'Trusts you' : 'Wary of you'}, from earlier scenes</p>` : ''}
         <p class="who-want">Wants: ${c.wants}</p>
         <p class="who-tags"><span class="tag">${meta.archetype || ''}</span><span class="tag tag-power">Power: ${meta.power || ''}</span></p>
       </div></li>`;
@@ -835,34 +563,11 @@
         <section class="fz"><h2 class="block-h">Information</h2>
           <div class="ku"><div><h3 class="ku-h">You know</h3><ul class="ticks">${val(sc.known, ctxNow(sc)).map(k => `<li>${k}</li>`).join('')}</ul></div>
           <div><h3 class="ku-h">Still uncertain</h3><ul class="ticks ticks-q">${sc.unknown.map(k => `<li>${k}</li>`).join('')}</ul></div></div>
-          <h3 class="ku-h ku-gap">Read the room</h3>${readsNote(sc)}<ul class="clues">${clues}</ul></section>
+          <h3 class="ku-h ku-gap">Read the room</h3>${readsNote()}<ul class="clues">${clues}</ul></section>
       </div>
       ${canDecide ? `<section class="fz"><h2 class="block-h">Your options and where they might lead</h2><ol class="fopts">${opts}</ol>
         <p class="small">These are possibilities, not grades. The scene decides what actually happens.</p></section>` : ''}
     </div>`;
-  }
-
-  // Why it went the way it did, from the other side: their reasoning, what your history with
-  // them changed, and whether you found what you needed to make the strong version of your move.
-  function theirSide(sc, opt, type) {
-    const t = sc.types && sc.types.find(x => x.id === type);
-    const who = t ? `<div><p class="their-k">Who they were this time</p><p><strong>${t.label}.</strong> ${t.tell}</p><p class="their-note">${sc.share ? `${t.who} stays the same for the rest of this episode, so what you learned here still applies later. Replay the episode and that may change.` : `Play it again and ${t.who} may be different.`}</p></div>` : '';
-    let knew = '';
-    // needs: [-1] marks a move that has no sharper version for this type, so there is nothing to say.
-    const needed = (opt.needs || []).filter(i => sc.clues[i]);
-    if (needed.length) {
-      const labels = needed.map(i => `“${sc.clues[i].label}”`).join(' and ');
-      knew = opt.vague
-        ? `You hadn't checked ${labels}, so you could only make the general version of this move. With it, you could have said: <em>${val(sc.options.find(o => o.key === opt.key).text, opt._c || {})}</em>`
-        : `You checked ${labels}, which let you make the sharper version of this move. Sharper isn't always better: what matters is whether it fits the other side's incentives.`;
-    }
-    if (!opt.their && !opt.shaped && !knew && !who) return '';
-    return `<section class="their">
-      ${who}
-      ${opt.their ? `<div><p class="their-k">The other side</p><p>${opt.their}</p></div>` : ''}
-      ${opt.shaped ? `<div><p class="their-k">What earlier scenes changed</p><p>${opt.shaped}</p></div>` : ''}
-      ${knew ? `<div><p class="their-k">What you knew</p><p>${knew}</p></div>` : ''}
-    </section>`;
   }
 
   function lensBody(sc, opt, opts = sc.options) {
@@ -882,8 +587,6 @@
     : opt.q <= 1 && outcome.tone === 'good' ? `It worked out, but the reasoning was weak. Be most careful here: a lucky win teaches you to do it again.`
       : `The grade judges the decision. The result includes things you couldn't control.`;
   // When nothing you saw could tell some versions of the other person apart, say so, and what the move was worth in the one you got.
-  const fairNote = opt => !opt.worlds || opt.qWorld === opt.q ? '' : ` <span class="verdict-fair">From what you'd seen, it could have been any of these: ${opt.worlds.map(t => t.label).join(' / ')}. Your grade weighs the move across all of them. In the version you actually got, it was ${grades[opt.qWorld].name.toLowerCase()}.</span>`;
-
   // Skill and luck: what each move was worth on average, given what you'd seen, and what this roll added.
   function skillLuck(sc, idx, move) {
     const capBefore = capitals(history.slice(0, idx)).cap;
@@ -1002,261 +705,10 @@
     </div>`;
   }
 
-  function panelResult(sc) {
-    if (isMarket()) return panelResultMarket(sc);
-    const idx = history.length - 1;
-    const all = derive(history);
-    const move = all.moves[idx];
-    const before = derive(history.slice(0, idx));
-    const { opt, outcome } = move;
-    const st = staged(sc, opt);
-    const g = grades[opt.q];
-    const a = sc.analysis;
-    const last = epEnd(idx);
-    const ctxAfter = { rel: all.rel, flags: all.flags, type: move.type, clues: move.clues };
-    const ratingDelta = move.ratingAfter - move.ratingBefore;
-    const why = whyOf(opt, outcome) + fairNote(opt);
-
-    const tabs = [['outcome', 'Outcome'], ['game', 'The game'], ['people', 'The people'], ['lens', 'The lens']];
-    const tabBar = `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" class="tab" data-tab="${k}" aria-selected="${ui.tab === k}" id="tab-${k}" aria-controls="tp-${k}">${l}</button>`).join('')}</div>`;
-
-    let body = '';
-    if (ui.tab === 'outcome' && sc.play) {
-      body = consequences(sc, move, all, ctxAfter, why);
-    } else if (ui.tab === 'outcome') {
-      const deltas = Object.entries(opt.s || {}).filter(([, v]) => v).sort((x, y) => y[1] - x[1])
-        .map(([k, v]) => `<li class="delta ${v > 0 ? 'up' : 'down'}"><span>${v > 0 ? '+' : '−'}${Math.abs(v)}</span>${skills[k]}</li>`).join('')
-        + (move.clues.length ? `<li class="delta up"><span>+${Math.min(move.clues.length, 2) * 0.5}</span>${skills.inf} (read the room)</li>` : '');
-      const rels = Object.entries(opt.rel || {}).filter(([, v]) => v).map(([k, v]) => `<li class="relchip ${v > 0 ? 'up' : 'down'}">${PP.people[k].name} ${v > 0 ? 'trusts you more' : 'trusts you less'}</li>`).join('');
-      body = `
-        <div class="verdict">
-          <div class="verdict-glyph g${opt.q}" aria-hidden="true">${g.glyph}</div>
-          <div class="verdict-copy">
-            <p class="eyebrow">You played ${opt.key}</p><h2>${g.name}</h2><p class="verdict-note">${g.note}</p>
-            <div class="verdict-pills"><span class="pill">Decision: ${g.name}</span><span class="pill pill-${outcome.tone}">Result: ${toneLabel[outcome.tone]}</span><span class="pill pill-num">Rating ${move.ratingAfter} <small>${move.replay ? '(replay · your first try counts)' : `(${ratingDelta >= 0 ? '+' : '−'}${Math.abs(ratingDelta)})`}</small></span></div>
-            <p class="verdict-why">${why}</p>
-          </div>
-        </div>
-        <ol class="timeline">
-          <li><span class="tl-k">Right now</span><p>${outcome.text}</p></li>
-          <li><span class="tl-k">Later</span><p>${text(opt.later, ctxAfter)}</p>${rels ? `<ul class="relchips">${rels}</ul>` : ''}</li>
-        </ol>
-        ${theirSide(sc, opt, move.type)}
-        <h3 class="block-h">How it shaped your profile</h3><ul class="deltas">${deltas}</ul>`;
-    } else if (ui.tab === 'game') {
-      body = `
-        <h3 class="viz-h">Payoff matrix</h3>${PP.viz.matrix(sc.stage.matrix, st.row, sc.stage.matrix && sc.stage.matrix.byType ? sc.types.findIndex(t => t.id === move.type) : st.outcomes[move.outcomeIdx].col)}
-        <h3 class="viz-h">Decision tree</h3>${PP.viz.tree({ ...sc, options: move.opts }, opt.key, move.outcomeIdx)}
-        <h3 class="viz-h">What reading the room would have shown</h3>
-        <ul class="clue-recap">${sc.clues.map((c, i) => `<li class="${move.clues.includes(i) ? 'is-seen' : ''}"><strong>${c.label}</strong> <span class="seen">${move.clues.includes(i) ? 'You looked' : 'You didn\'t look'}</span><p>${clueText(c, move.ctx)}</p></li>`).join('')}</ul>`;
-    } else if (ui.tab === 'people') {
-      const nodes = sc.stage.cast.map((c, i) => ({ id: c.id, name: PP.people[c.id].name, short: PP.people[c.id].short, trust: all.rel[c.id] || 0, recurring: RECURRING.includes(c.id), role: (sc.cast[i] || {}).role }));
-      const mainThem = PP.people[sc.stage.cast[0].id].name;
-      body = `
-        <div class="people-grid">
-          <div><h3 class="viz-h">Relationship map</h3>${PP.viz.relMap(nodes, sc.stage.links, opt.rel || {})}
-            <p class="viz-note">Lines show trust between you and each person. Gray dashed lines are neutral. Labels between others show how they're connected to each other.</p></div>
-          <div><h3 class="viz-h">Where the leverage was</h3>${PP.viz.leverage(sc.stage.leverage, mainThem)}</div>
-        </div>
-        <h3 class="viz-h">What each person wanted</h3>
-        <ul class="wants">${sc.stage.cast.map(c => `<li><strong>${PP.people[c.id].name}</strong>${c.wants}</li>`).join('')}</ul>
-        <dl class="analysis">${[['What game you were playing', a.game], ['What people wanted', a.incentives], ['What you controlled', a.controlled], ['What you couldn\'t control', a.couldnt]].map(([k, v]) => `<div class="arow"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
-    } else {
-      body = lensBody(sc, opt, move.opts);
-    }
-
-    return `<div class="result">
-      ${tabBar}
-      <div class="tabpanel" role="tabpanel" id="tp-${ui.tab}" aria-labelledby="tab-${ui.tab}">${body}</div>
-      <div class="result-bar">
-        <button class="btn btn-ghost" data-act="takeback">Replay with another strategy</button>
-        ${last && LIST[idx + 1] ? `<button class="btn btn-ghost" data-act="profile">See your dance</button><button class="btn btn-primary" data-act="next">Start Episode ${LIST[idx + 1].ep.number}</button>`
-          : `<button class="btn btn-primary" data-act="${last ? 'profile' : 'next'}">${last ? 'See your dance' : `Next scene`}</button>`}
-      </div>
-    </div>`;
-  }
-
-  // ───────────────────────── Consequences first (beat scenes)
-  // What changed, measured against what you said you were protecting; what they now think of you;
-  // who they really were. The verdict is still there, folded under "How you played it."
-  const TRAIT = { easy: 'Easy to ask', firm: 'Holds their ground', fair: 'Trades favor for favor', sharp: 'Uses what they know', kind: 'Kind when it counts', careful: 'Checks before trusting', direct: 'Takes it to the source' };
-  function stakeVerdict(stake, d) {
-    if (!stake) return '';
-    const name = METER_NAME[stake].toLowerCase();
-    if (stake === 'time') return d < 0 ? `You were protecting your time. This cost you ${-d} ${-d === 1 ? 'hour' : 'hours'}.` : `You were protecting your time, and you kept all of it.`;
-    return d > 0 ? `You were protecting your ${name}, and it grew.` : d < 0 ? `You were protecting your ${name}, and it took a hit.` : `You were protecting your ${name}. It held steady.`;
-  }
-  function consequences(sc, move, all, ctxAfter, why) {
-    const { opt, outcome } = move;
-    const g = grades[opt.q];
-    const main = sc.stage.cast[0].id, name = PP.people[main].name;
-    const stake = move.stake || all.flags.stake;
-    const traits = Object.entries(move.rep || {}).filter(([, v]) => v > 0).map(([k]) => `<li>${TRAIT[k] || k}</li>`).join('');
-    const rels = Object.entries(opt.rel || {}).filter(([, v]) => v).map(([k, v]) => `<li class="relchip ${v > 0 ? 'up' : 'down'}">${PP.people[k].name} ${v > 0 ? 'trusts you more' : 'trusts you less'}</li>`).join('');
-    const deltas = Object.entries(opt.s || {}).filter(([, v]) => v).sort((x, y) => y[1] - x[1])
-      .map(([k, v]) => `<li class="delta ${v > 0 ? 'up' : 'down'}"><span>${v > 0 ? '+' : '−'}${Math.abs(v)}</span>${skills[k]}</li>`).join('');
-    const ratingDelta = move.ratingAfter - move.ratingBefore;
-    const c = { ...move.ctx, clues: move.clues };
-    const epi = sc.epilogue && val(sc.epilogue, c);
-    const missed = sc.clues.map((k, i) => move.clues.includes(i) ? '' : `<li><strong>${k.label}.</strong> ${clueText(k, move.ctx)}</li>`).join('');
-    return `
-      <section class="cq">
-        <p class="eyebrow">What changed</p>
-        <div class="meters meters-result">${meterLine(all.flags.meters || START_METERS, move.fx, stake)}</div>
-        ${stake ? `<p class="cq-stake">${stakeVerdict(stake, (move.fx || {})[stake] || 0)}</p>` : ''}
-        ${move.push ? `<p class="cq-push">${{ hold: `${name} pushed back. You held your answer.`, give: `${name} pushed back, and you gave in.`, walk: `${name} pushed back, and you changed your answer.` }[move.push]}</p>` : ''}
-      </section>
-      <ol class="timeline">
-        <li><span class="tl-k">Right now</span><p>${outcome.text}</p>${epi ? `<p class="cq-epi">${epi.caption}</p>` : ''}</li>
-        <li><span class="tl-k">Later</span><p>${text(opt.later, ctxAfter)}</p>${rels ? `<ul class="relchips">${rels}</ul>` : ''}</li>
-      </ol>
-      ${missed ? `<section class="cq-missed"><p class="their-k">What you didn't check</p><ul>${missed}</ul></section>` : ''}
-      ${traits ? `<section class="cq-read"><p class="their-k">What ${name} takes away about you</p><ul class="cq-traits">${traits}</ul>
-        <p class="their-note">People talk. What you did here will reach the others in the office before long.</p></section>` : ''}
-      ${theirSide(sc, opt, move.type)}
-      <details class="cq-judge"><summary><span class="g${opt.q}">${g.glyph}</span> How you played it: ${g.name}</summary>
-        <p class="verdict-note">${g.note} ${why}</p>
-        <div class="verdict-pills"><span class="pill">Decision: ${g.name}</span><span class="pill pill-${outcome.tone}">Result: ${toneLabel[outcome.tone]}</span><span class="pill pill-num">Rating ${move.ratingAfter} <small>${move.replay ? '(replay · your first try counts)' : `(${ratingDelta >= 0 ? '+' : '−'}${Math.abs(ratingDelta)})`}</small></span></div>
-        <h3 class="block-h">How it shaped your profile</h3><ul class="deltas">${deltas}</ul>
-      </details>`;
-  }
-
-  // ───────────────────────── Your Dance
-  // A mirror, not a lesson: what the people saw, what the choices bought, three moments, one question.
-
+  // A character's face, for what the desk says about you.
   function portrait(id, mood) {
     const look = PP.people[id].look, h = look.h || 1;
     return `<svg class="portrait" viewBox="-80 ${Math.round(-618 * h)} 160 ${Math.round(150 * h)}" aria-hidden="true">${PP.art.actor(id, look, { mood, pose: 'down' })}</svg>`;
-  }
-
-  function moments(d) {
-    const ms = d.moves.map((m, i) => ({ ...m, i, trust: Object.values(m.opt.rel || {}).reduce((a, v) => a + v, 0) }));
-    const taken = new Set();
-    const take = (list, pick) => { const m = list.filter(x => !taken.has(x.i)).sort(pick)[0]; if (m) taken.add(m.i); return m; };
-    const nameOf = m => PP.people[m.sc.stage.cast[0].id].name;
-    const out = [];
-
-    const best = take(ms.filter(m => m.opt.q >= 3), (a, b) => b.opt.q - a.opt.q || (b.outcome.tone === 'good') - (a.outcome.tone === 'good'));
-    if (best) out.push({ m: best, k: `Your best call`, by: 'nash',
-      note: `Given your move, ${nameOf(best)}'s best reply was also good for you. That's what an equilibrium feels like from the inside.` });
-
-    const luck = take(ms.filter(m => (m.opt.q <= 1 && m.outcome.tone === 'good') || (m.opt.q >= 3 && m.outcome.tone !== 'good')), (a, b) => Math.abs(b.opt.q - 2) - Math.abs(a.opt.q - 2))
-      || take(ms, (a, b) => a.opt.q - b.opt.q);
-    if (luck) {
-      const lucky = luck.opt.q <= 1 && luck.outcome.tone === 'good', unlucky = luck.opt.q >= 3 && luck.outcome.tone !== 'good';
-      out.push({ m: luck, k: lucky ? `Where luck covered for you` : unlucky ? `Where the dice let you down` : `The one to replay`, by: 'duke',
-        note: lucky ? `It worked, and that's the danger. A good result rewarded a weak decision, and it will tempt you to do it again.`
-          : unlucky ? `It didn't land, but the decision was sound. Judge the choice, not the draw, and make it again.`
-            : `This one wasn't the dice. The choice itself left the most on the table.` });
-    }
-
-    const echo = take(ms.filter(m => m.trust), (a, b) => Math.abs(b.trust) - Math.abs(a.trust));
-    if (echo) out.push({ m: echo, k: echo.trust > 0 ? `What they'll remember` : `What they'll hold onto`, by: 'schelling',
-      note: echo.trust > 0 ? `You'll see ${nameOf(echo)} again. In a game that repeats, what they expect of you next time is worth more than this round.`
-        : `This round wasn't the last. ${nameOf(echo)} trusts you less now, and that changes every move after it.` });
-    return out;
-  }
-
-  function yourDance(d, ranked) {
-    const I = PP.insight;
-    const said = d.moves.map(m => {
-      const v = ((I.scenes[m.sc.id] || {}).options || {})[m.opt.key];
-      if (!v) return '';
-      const mood = m.opt.q >= 3 ? 'smile' : m.opt.q === 2 ? 'neutral' : m.outcome.tone === 'good' ? 'awkward' : 'skeptical';
-      return `<li class="said"><span class="said-face">${portrait(v.verdict.who, mood)}</span>
-        <blockquote><p>“${v.verdict.line}”</p><footer><strong>${PP.people[v.verdict.who].name}</strong> · ${m.sc.title}</footer></blockquote></li>`;
-    }).join('');
-
-    const counts = {};
-    d.moves.forEach(m => (((I.scenes[m.sc.id] || {}).options || {})[m.opt.key] || { buys: [] }).buys.forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
-    const buys = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    const max = buys.length ? buys[0][1] : 1;
-    const buyBars = buys.map(([t, c]) => `<li><span class="buy-name">${I.tags[t]}</span><span class="buy-track" aria-hidden="true"><span class="buy-fill" style="width:${Math.round(c / max * 100)}%"></span></span><span class="buy-n">${c}</span></li>`).join('');
-
-    const mo = moments(d).map(({ m, k, by, note }) => {
-      const t = thinkers[by];
-      return `<li class="moment">
-        <div class="mo-main"><p class="mo-k">${k}</p><h4>${m.sc.title}</h4><p class="mo-move"><span class="mo-key">${m.opt.key}</span>${m.opt.text}</p><p class="mo-out">${m.outcome.text}</p></div>
-        <aside class="mo-note" style="--tc:${t.color}"><span class="mo-icon">${t.icon}</span><p><strong>${t.short}</strong> ${note}</p></aside>
-      </li>`;
-    }).join('');
-
-    const weakest = ranked.length ? ranked[ranked.length - 1].k : 'inc';
-    return `<section class="dance" aria-labelledby="dance-h">
-      <div class="section-head"><p class="eyebrow">Your dance</p><h2 id="dance-h">What the room saw</h2>
-        <p class="lede">Every person you met formed an opinion. Here's what each of them would say about you.</p></div>
-      <svg width="0" height="0" class="defs-only" aria-hidden="true">${PP.art.DEFS}</svg>
-      <ul class="said-list">${said}</ul>
-      <section class="card dance-buys"><h3 class="block-h">What your choices were buying</h3>
-          <ul class="buys">${buyBars}</ul>
-          ${buys.length ? `<p class="buy-note">${I.buyNotes[buys[0][0]]}</p>` : ''}
-          <aside class="mo-note" style="--tc:${thinkers.seykota.color}"><span class="mo-icon">${thinkers.seykota.icon}</span><p><strong>${thinkers.seykota.short}</strong> Everybody gets what they want. Your choices show what that was.</p></aside>
-      </section>
-      <h3 class="block-h block-h-gap">Three moments</h3>
-      <ol class="moments">${mo}</ol>
-      <div class="carry"><p class="eyebrow">One question to take with you</p><p class="carry-q">${I.questions[weakest]}</p></div>
-    </section>`;
-  }
-
-  // ───────────────────────── Profile
-
-  function viewProfile() {
-    const d = derive(history);
-    const n = history.length;
-    if (!n) return `<section class="wrap page empty"><p class="eyebrow">Your profile</p><h1>No moves yet.</h1>
-      <p class="lede">Your profile builds from real choices: ten measures of strategic intelligence, how your relationships changed, and whether your good results came from good decisions.</p>
-      <div class="page-actions"><button class="btn btn-primary" data-act="play">Play Episode 1</button></div></section>`;
-    const done = n >= LIST.length;
-    const finished = epEnd(n - 1) ? LIST[n - 1].ep : null;
-    const at = done ? null : pos(n);
-    const touched = Object.keys(skills).filter(k => d.moves.some(m => m.opt.s && m.opt.s[k] !== undefined) || (k === 'inf' && d.moves.some(m => m.clues.length)));
-    const ranked = touched.map(k => ({ k, v: skillScore(d.totals[k]) })).sort((x, y) => y.v - x.v);
-    const strengths = ranked.filter(r => r.v > 55).slice(0, 2);
-    const growth = ranked.filter(r => r.v < 60).slice(-2).reverse();
-    const bars = Object.keys(skills).map(k => {
-      const has = touched.includes(k), v = skillScore(d.totals[k]);
-      return `<li class="bar ${has ? '' : 'is-empty'}"><span class="bar-name">${skills[k]}</span><span class="bar-track" aria-hidden="true"><span class="bar-mid"></span><span class="bar-fill" style="width:${has ? v : 0}%"></span></span><span class="bar-val">${has ? v : '—'}</span></li>`;
-    }).join('');
-    const quad = { earned: 0, unlucky: 0, lucky: 0, lesson: 0 };
-    d.moves.forEach(m => { const gd = m.opt.q >= 3, gr = m.outcome.tone === 'good'; quad[gd ? (gr ? 'earned' : 'unlucky') : (gr ? 'lucky' : 'lesson')]++; });
-    const record = d.moves.map((m, i) => `<li class="rec"><span class="rec-n">${i + 1}.</span><span class="rec-move">${m.opt.key}<span class="rec-glyph g${m.opt.q}">${grades[m.opt.q].glyph}</span></span><span class="rec-title">${m.sc.title}</span><span class="rec-tone pill-${m.outcome.tone}">${toneLabel[m.outcome.tone]}</span></li>`).join('');
-    const met = RECURRING.filter(id => d.rel[id] !== undefined);
-    const net = met.length ? PP.viz.relMap(met.map(id => ({ id, name: PP.people[id].name, trust: d.rel[id], recurring: true })), [['priya', 'marcus', 'rivals'], ['jordan', 'marcus', 'allies']].filter(([x, y]) => met.includes(x) && met.includes(y))) : `<p class="small">Nobody remembers you yet.</p>`;
-    const lensesMet = [...new Set(d.moves.flatMap(m => m.sc.lens))];
-
-    return `<section class="wrap page profile">
-      <header class="profile-head">
-        <div><p class="eyebrow">${done ? 'Every scene played' : finished ? `Episode ${finished.number} complete` : `${n} of ${LIST.length} scenes played`}</p>
-          <h1>${done ? 'You read the room.' : finished ? `${finished.title}, played.` : 'Your profile so far'}</h1>
-          <p class="lede">${done ? `You walked into ${NUM[LIST.length] || LIST.length} ordinary situations with no title and no special power. Here's how you played them.`
-            : finished ? `Here's what the room saw. Episode ${at.ep.number}, ${at.ep.title}, is waiting when you are.`
-              : `Built from your actual choices. It sharpens as you play the remaining ${LIST.length - n} scene${LIST.length - n === 1 ? '' : 's'}.`}</p>
-          ${finished && !done ? `<button class="btn btn-primary profile-next" data-act="play">Start Episode ${at.ep.number} · ${at.ep.title}</button>` : ''}</div>
-        <div class="rating-card"><span class="rating-label">Strategic rating</span><span class="rating-num">${d.rating}</span><span class="rating-sub">Started at ${START_RATING}</span></div>
-      </header>
-      ${n >= DANCE_AT ? yourDance(d, ranked) + `<h2 class="profile-sub">The numbers behind it</h2>` : ''}
-      <div class="profile-grid">
-        <section class="block card"><h2 class="block-h">Ten measures <span class="block-hint">50 is where everyone starts</span></h2><ul class="bars">${bars}</ul></section>
-        <section class="block card"><h2 class="block-h">Decisions vs. results</h2><p class="small">Annie Duke's warning: don't grade a decision by how it turned out.</p>
-          <div class="quad">
-            <div class="quad-cell q-earned"><span class="quad-n">${quad.earned}</span><span class="quad-k">Earned</span><span class="quad-d">Good decision, good result</span></div>
-            <div class="quad-cell q-unlucky"><span class="quad-n">${quad.unlucky}</span><span class="quad-k">Unlucky</span><span class="quad-d">Good decision, poor result</span></div>
-            <div class="quad-cell q-lucky"><span class="quad-n">${quad.lucky}</span><span class="quad-k">Got lucky</span><span class="quad-d">Weak decision, good result</span></div>
-            <div class="quad-cell q-lesson"><span class="quad-n">${quad.lesson}</span><span class="quad-k">Lesson</span><span class="quad-d">Weak decision, poor result</span></div>
-          </div></section>
-      </div>
-      <section class="block feedback">
-        <div><h2 class="block-h">What you do well</h2>${strengths.length ? `<ul class="fb">${strengths.map(r => `<li><strong>${skills[r.k]}.</strong> ${strengthNote[r.k]}</li>`).join('')}</ul>` : `<p class="small">No clear strength yet. That usually means your choices have been inconsistent, which is worth noticing.</p>`}</div>
-        <div><h2 class="block-h">What to work on</h2>${growth.length ? `<ul class="fb">${growth.map(r => `<li><strong>${skills[r.k]}.</strong> ${growthAdvice[r.k]}</li>`).join('')}</ul>` : `<p class="small">No recurring weakness so far. Keep an eye on whether that holds as the scenes get harder.</p>`}</div>
-      </section>
-      <div class="profile-grid">
-        <section class="block card"><h2 class="block-h">Your network</h2>${net}</section>
-        <section class="block card"><h2 class="block-h">Game record</h2><ol class="record">${record}</ol>
-          <h2 class="block-h block-h-gap">Lenses you've played through</h2><ul class="lenses">${lensesMet.map(k => `<li>${thinkers[k].name}</li>`).join('')}</ul></section>
-      </div>
-      <div class="page-actions">${done ? '' : `<button class="btn btn-primary" data-act="play">${at.n === 1 ? `Play Episode ${at.ep.number} · ${at.ep.title}` : `Continue · Scene ${at.n}`}</button>`}
-        <button class="${done && !confirmReset ? 'btn btn-primary' : 'btn btn-ghost'} ${confirmReset ? 'is-danger' : ''}" data-act="reset">${confirmReset ? 'Tap again to erase this run' : done ? 'Play again from the start' : 'Start over'}</button></div>
-    </section>`;
   }
 
   // ───────────────────────── The Trader's Mind
@@ -1436,13 +888,11 @@
   // ───────────────────────── Render + events
 
   function render() {
-    ui.view = routeOf(ui.view);
-    useTrack(trackFor(ui.view));
+    if (RETIRED.includes(ui.view)) ui.view = 'market';
     const settled = ui.phase !== 'result' && ui.phase !== 'react';
-    if (ui.view === 'play' && history.length >= LIST.length && settled) ui.view = 'profile';
     if (ui.view === 'trade' && settled && (!rules || marketOver())) ui.view = 'market';
     if (ui.view === 'phone' && !PP.callGame.ready) ui.view = 'call';
-    const views = { home: viewHome, bench: viewBench, episodes: viewEpisodes, play: viewPlay, trade: viewPlay, profile: viewProfile, market: viewMarket, call: viewCall, phone: PP.callGame.playHTML };
+    const views = { home: viewHome, bench: viewBench, trade: viewPlay, market: viewMarket, call: viewCall, phone: PP.callGame.playHTML };
     try {
       app.innerHTML = views[ui.view]();
       if (ui.view === 'phone') PP.callGame.mount();
@@ -1458,9 +908,9 @@
     document.body.classList.toggle('on-home', ui.view === 'home');
     const light = document.querySelector('meta[name="theme-color"][media*="light"]');
     if (light) light.content = ui.view === 'home' ? '#0e1014' : '#f6f1e7';
-    const playing = ui.view === 'play' || ui.view === 'trade';
+    const playing = ui.view === 'trade';
     const sc = playing ? LIST[currentIndex()] : null;
-    document.title = (sc ? `${sc.title} · ` : ui.view === 'phone' ? `${PP.callGame.title} · The Call · ` : ui.view === 'call' ? 'The Call · ' : ui.view === 'bench' ? 'The Bench · ' : ui.view === 'profile' ? 'Profile · ' : ui.view === 'market' ? 'The Trader\'s Mind · ' : '') + 'The Dance';
+    document.title = (sc ? `${sc.title} · ` : ui.view === 'phone' ? `${PP.callGame.title} · The Call · ` : ui.view === 'call' ? 'The Call · ' : ui.view === 'bench' ? 'The Bench · ' : ui.view === 'market' ? 'The Trader\'s Mind · ' : '') + 'The Dance';
 
     if (playing) {
       if (ui.phase === 'result') { mountStage(LIST[history.length - 1], history.length - 1); settleResult(); renderPanel(); }
@@ -1475,16 +925,16 @@
 
   document.addEventListener('click', e => {
     if (e.target.closest('[data-act="repair"]')) {
-      try { [TRACKS.main.key, TRACKS.market.key, RULES_KEY, FIRSTS_KEY, 'thedance:call:v1', 'thedance:call:rules', 'thedance:journal:v1'].forEach(k => localStorage.removeItem(k)); } catch (err) { /* storage unavailable */ }
+      try { [KEY, RULES_KEY, 'thedance:call:v1', 'thedance:call:rules', 'thedance:journal:v1'].forEach(k => localStorage.removeItem(k)); } catch (err) { /* storage unavailable */ }
       location.reload(); return;
     }
     const nav = e.target.closest('[data-nav]');
-    if (nav) { e.preventDefault(); go(nav.dataset.nav === 'play' ? 'episodes' : nav.dataset.nav); return; }
+    if (nav) { e.preventDefault(); go(nav.dataset.nav); return; }
 
     const clue = e.target.closest('[data-clue]');
     if (clue) {
       const i = Number(clue.dataset.clue), sc = LIST[history.length];
-      if (!draft.clues.includes(i) && (!sc || (readsLeft(sc) > 0 && readsOpen(sc)))) draft.clues.push(i);
+      if (!draft.clues.includes(i) && (!sc || readsLeft() > 0)) draft.clues.push(i);
       renderPanel(); return;
     }
 
@@ -1516,9 +966,8 @@
     if (!act) return;
     const a = act.dataset.act;
     if (a !== 'reset' && a !== 'market-reset') confirmReset = false;
-    if (a !== 'scene' && a !== 'pick') confirmScene = -1;
+    if (a !== 'scene') confirmScene = -1;
     switch (a) {
-      case 'play': ui.phase = 'intro'; go('play'); break;
       case 'trade': ui.phase = 'intro'; go('trade'); break;
       case 'market': go('market'); break;
       case 'call': go('call'); break;
@@ -1530,43 +979,21 @@
         confirmReset = false; history = []; save(); rules = null; saveRules(); MK.journal.clear('desk'); draft = fresh(); go('market');
         break;
       case 'bench': go('bench'); break;
-      case 'episodes': go('episodes'); break;
-      case 'pick': confirmScene = Number(act.dataset.i); go('episodes'); app.querySelector(`[data-act="scene"][data-i="${confirmScene}"]`)?.scrollIntoView({ block: 'center' }); break;
-      case 'profile': go('profile'); break;
       case 'freeze': stage && stage.freeze(); break;
       case 'resume': stage && stage.resume(); break;
       case 'to-decision': toDecision(); break;
       case 'replay-intro': draft.selected = null; playIntro(); break;
       case 'next': draft = fresh(); ui.phase = 'intro'; render(); window.scrollTo({ top: 0 }); break;
-      case 'stake': draft.stake = act.dataset.v; draft.step = 'read'; renderPanel(); break;
-      case 'press': {
-        const sc = LIST[history.length];
-        draft.step = 'choose'; renderPanel();
-        const p = sc.press && val(sc.press, ctxNow(sc));
-        if (p && stage) stage.run([{ who: p.who, say: p.say, mood: p.mood }]);
-        break;
-      }
-      case 'push': {
-        const sc = LIST[history.length], c = ctxNow(sc);
-        const p = val(optsNow(sc).find(o => o.key === draft.selected).push, c);
-        const v = act.dataset.v, key = p[v].key || draft.selected;
-        commitMove(sc, key, { push: v, said: p[v].line });
-        break;
-      }
       case 'rule': {
         const idx = history.length - 1;
-        if (isMarket() && MK.journalRules[act.dataset.r]) MK.journal.add({ rule: act.dataset.r, id: LIST[idx].id, at: idx, src: 'desk' });
+        if (MK.journalRules[act.dataset.r]) MK.journal.add({ rule: act.dataset.r, id: LIST[idx].id, at: idx, src: 'desk' });
         renderPanel(); break;
       }
       case 'takeback': {
         const idx = history.length - 1;
-        if (isMarket()) MK.journal.trim(idx);
-        if (!isMarket() && firsts[LIST[idx].id] == null) { firsts[LIST[idx].id] = derive(history).moves[idx].opt.q; saveFirsts(); }
+        MK.journal.trim(idx);
         const last = history.pop(); save();
-        if (isMarket()) {
-          draft = fresh(last.clues.slice(), last.type || null);
-          if (LIST[history.length].play) { draft.stake = last.stake || null; draft.step = 'choose'; }
-        } else draft = fresh(); // A fresh deal: the other person is drawn again, and the details are unread.
+        draft = fresh(last.clues.slice(), last.type || null);
         ui.phase = 'decide';
         app.innerHTML = viewPlay();
         toDecision();
@@ -1581,19 +1008,15 @@
           return;
         }
         confirmScene = -1;
-        if (i < history.length) { history = history.slice(0, i); save(); if (isMarket()) MK.journal.trim(i); }
-        draft = fresh(); ui.phase = 'intro'; go(isMarket() ? 'trade' : 'play');
+        if (i < history.length) { history = history.slice(0, i); save(); MK.journal.trim(i); }
+        draft = fresh(); ui.phase = 'intro'; go('trade');
         break;
       }
-      case 'reset':
-        if (!confirmReset) { confirmReset = true; render(); app.querySelector('[data-act="reset"]').focus(); return; }
-        confirmReset = false; history = []; draft = fresh(); save(); firsts = {}; saveFirsts(); ui.phase = 'intro'; go('play');
-        break;
     }
   });
 
   document.addEventListener('keydown', e => {
-    if ((ui.view !== 'play' && ui.view !== 'trade') || !stage) return;
+    if (ui.view !== 'trade' || !stage) return;
     // Keys on links, form controls and buttons keep their normal meaning.
     if (e.target.closest('a, input, textarea, select, button, label, [role="button"]')) return;
     if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!stage.paused) stage.skip(); }
@@ -1622,22 +1045,14 @@
     const sc = LIST[history.length];
     const opt = optsNow(sc).find(o => o.key === draft.selected);
     if (trustLocked(opt)) return;
-    const p = sc.play && opt.push && val(opt.push, ctxNow(sc));
-    if (p) {
-      draft.step = 'push'; renderPanel();
-      if (stage) stage.run([{ you: opt.line || staged(sc, opt).line }, { who: p.who, say: p.say, mood: p.mood }]);
-      return;
-    }
     commitMove(sc, opt.key);
   });
 
   // A move becomes final: record it, then let the room react.
-  function commitMove(sc, key, extra = {}) {
+  function commitMove(sc, key) {
     const opt = optsNow(sc).find(o => o.key === key);
-    const replay = !isMarket() && firsts[sc.id] != null;
-    history.push({ id: sc.id, key, outcome: pickOutcome(opt), clues: draft.clues.slice(), type: draft.type, ...(draft.stake ? { stake: draft.stake } : {}), ...(replay ? { replay } : {}), ...extra });
+    history.push({ id: sc.id, key, outcome: pickOutcome(opt), clues: draft.clues.slice(), type: draft.type });
     save();
-    if (!isMarket() && !replay) { firsts[sc.id] = opt.q; saveFirsts(); }
     draft = fresh();
     document.querySelector('.play-head').innerHTML = document.querySelector('.play-head').innerHTML.replace(/<ol class="file-strip"[\s\S]*?<\/ol>/, strip(history.length - 1, derive(history)));
     document.getElementById('stage-mount').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1651,14 +1066,13 @@
   window.addEventListener('resize', () => { if (stage && stage.paused) stage.placePins(); });
   window.addEventListener('hashchange', () => {
     const h = location.hash.replace('#', '');
-    if (['bench', 'profile', 'episodes', 'play', 'market', 'trade', 'call', 'phone'].includes(h) && h !== ui.view) { ui.phase = 'intro'; go(h); }
+    if (['bench', 'market', 'trade', 'call', 'phone', ...RETIRED].includes(h) && h !== ui.view) { ui.phase = 'intro'; go(h); }
   });
 
-  // The Debrief call reads the Desk's decisions, whichever track is open.
+  // The Debrief call reads the Desk's decisions.
   const deskSteps = () => {
     try {
-      const h = MK.journal.stored(TRACKS.market.key), bad = h.findIndex((x, i) => !x || !TRACKS.market.list[i] || TRACKS.market.list[i].id !== x.id);
-      return capitals(bad < 0 ? h : h.slice(0, bad)).steps
+      return capitals(history).steps
         .map(x => ({ id: x.sc.id, title: x.sc.title, did: x.opt.did || x.opt.text, q: x.opt.q, fin: x.oc.ruin ? -x.before.fin : x.oc.fin, defies: val(x.opt.defies, x.opt._c) || [] }));
     } catch (e) { return []; }
   };
@@ -1667,6 +1081,6 @@
 
   history = playable(history);
   const initial = location.hash.replace('#', '');
-  if (['bench', 'profile', 'episodes', 'play', 'market', 'trade', 'call', 'phone'].includes(initial)) ui.view = initial;
+  if (['bench', 'market', 'trade', 'call', 'phone', ...RETIRED].includes(initial)) ui.view = initial;
   render();
 })();

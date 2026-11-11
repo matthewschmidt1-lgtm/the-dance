@@ -52,20 +52,20 @@ Content lives in `js/call.js`; the engine, the paper and the screens in `js/call
 5. **You choose a move.** What you can say depends on what you found out: reading a clue sharpens some options (not always into the right one), and your history with people shifts how they respond. Gary pays for the fence alone far more often if The Spot went well.
    Each challenge and call draws one hidden world (did the peg break, was the caller warning you or shopping your shares), and clues hint at which one you're in.
 6. **The room reacts** in a short animated sequence. Results are partly random.
-7. **Analysis in four tabs**: *Outcome* (decision grade vs. result, now vs. later, trust changes, and the other side: their reasoning, what earlier scenes changed, and what you knew), *The game* (payoff matrix with your cell highlighted, decision tree of every move's possible results, what reading the room would have shown), *The people* (relationship map, leverage scale, incentives), *The lens* (the thinkers' concepts, every move graded, the lesson).
+7. **Analysis in four tabs**: *Outcome* (decision grade vs. result, skill and luck, your capital, your rules and your journal), *The decision* (what every move could cost or earn, a decision tree of every move's possible results, what reading the room would have shown), *The mind* (your rules against this move, what Nadia or Theo saw, the same decision away from the screens), *The lens* (the thinkers' concepts, every move graded, the lesson).
 8. **Replay with another strategy**, or move on.
 
-Moves are graded with chess annotations (`!!` `!` `!?` `?!` `?`) on decision quality, never on outcome. The profile tracks ten measures, a strategic rating, your relationship network, and Annie Duke's decision-vs-result grid.
+Moves are graded with chess annotations (`!!` `!` `!?` `?!` `?`) on decision quality, never on outcome.
 
 ## What's animated, honestly
 
 - **Environments** are real 3D scenes modeled and lit in Blender (Cycles), rendered to layered images. They are not real-time 3D: the camera moves within a high-resolution render (pan and zoom), with characters composited at the correct depth and scale.
 - **Characters** are 2D vector illustrations with volumetric shading. Their faces, poses and gestures are animated live in the browser (SVG + CSS), including blinking, breathing, talking and walking. They are not 3D models.
-- **Diagrams** (matrix, tree, relationship map, leverage scale) animate on reveal.
+- **Diagrams** (the risk chart and the decision tree) animate on reveal.
 
 ## Design principles (Mike Markkula)
 
-- **Empathy.** Start where people already live: a checkout lane, not a boardroom. No lecture before the first move. Characters show as "Unclear" when you genuinely can't know their intent.
+- **Empathy.** Start where people already are: one position, one phone call, one decision. No lecture before the first move. Characters show as "Unclear" when you genuinely can't know their intent.
 - **Focus.** One scene and one decision at a time. Deep analysis sits behind tabs, so the default view stays simple. No accounts, no settings.
 - **Impute.** People judge by presentation. Lit sets, cinematic framing and restrained typography make the ideas feel as serious as they are.
 
@@ -75,20 +75,20 @@ Moves are graded with chess annotations (`!!` `!` `!?` `?!` `?`) on decision qua
 public/
   index.html            app shell
   css/styles.css        all styles, light + dark, stage and character animation
-  img/env/*.webp        rendered sets: <env>-bg / -mid / -fg layers
-  js/thinkers.js        the bench, skills, grades
-  js/scenarios.js       the scene format (options, grades, outcomes) shared with the Desk
-  js/scenes.js          the desk's people (the Play track's episode list is empty)
-  js/insight.js         what each move pursues, what people say about you, closing questions
-  js/market.js          The Trader's Mind: challenges, staging, capital, rules and principles
+  img/env/*.webp        rendered sets: the trading floor and five desk times of day, as -bg / -fg layers
+  img/hero-dance-floor.webp   the home page header
+  js/thinkers.js        the bench and the decision grades
+  js/people.js          how Theo and Nadia look on stage
+  js/market.js          The Desk: challenges, staging, capital, rules, the journal and principles
   js/call.js            The Call: five callers, their hidden truths, moments and reveals
   js/callplay.js        The Call: engine, the phone, the paper and The Mirror
-  js/env-data.js        generated: where people stand in each render, camera targets
-  js/art.js             character renderer (moods, poses) and environment layering
+  js/env-data.js        generated: where people stand in each render, camera targets, screen corners
+  js/art.js             character renderer (moods, poses) and set layering
   js/stage.js           playback engine: camera, dialogue, freeze, skip
-  js/viz.js             payoff matrix, decision tree, relationship map, leverage scale
-  js/game.js            flow, views, scoring, profile
-tools/blender/render_envs.py   builds and renders every set
+  js/viz.js             the decision tree
+  js/game.js            the Desk's flow, views, grading and review; the home and bench pages
+tools/blender/render_envs.py   builds and renders the trading floor and the desk sets
+tools/blender/render_hero.py   renders the home page header
 server.js               zero-dependency static server
 ```
 
@@ -108,7 +108,7 @@ The home page header ("The Dance Floor") is its own scene: two pieces in overlap
 /Applications/Blender.app/Contents/MacOS/Blender -b -P tools/blender/render_hero.py -- "$PWD" --samples 160
 ```
 
-For the game sets, add env names (`checkout desks kitchen conference street yard`) after `"$PWD"` to render only some. The script also rewrites `public/js/env-data.js`, projecting each character's standing spot through the real camera so feet land on the floor at the correct scale. If the renders are missing, the game falls back to hand-drawn SVG sets.
+To render only some sets, add their names (`trading desk-dusk desk-morning desk-noon desk-rain desk-night`) after `"$PWD"`. The script also rewrites `public/js/env-data.js`, projecting each character's standing spot through the real camera so feet land on the floor at the correct scale. If the renders are missing, the game falls back to hand-drawn SVG sets.
 
 ## Run locally
 

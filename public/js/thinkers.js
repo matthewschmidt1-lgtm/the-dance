@@ -129,21 +129,7 @@ PP.uiIcons = {
   ask: ico('<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.3c-.7.3-1.2.9-1.2 1.6v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor"/>')
 };
 
-// The ten measures of strategic intelligence. Getting your way is not one of them.
-PP.skills = {
-  str: `Strategic thinking`,
-  reg: `Emotional self-regulation`,
-  inc: `Reading incentives`,
-  neg: `Negotiation`,
-  com: `Communication`,
-  lng: `Long-term thinking`,
-  coo: `Cooperation`,
-  bnd: `Boundary setting`,
-  inf: `Information gathering`,
-  jdg: `Judgment under uncertainty`
-};
-
-// Chess annotation symbols grade the decision, never the result.
+// Decision grades, as chess annotations: judged on what you could know, never on how it turned out.
 PP.grades = [
   { glyph: `?`,  name: `Mistake`,   note: `This made the position worse for reasons you could have seen.` },
   { glyph: `?!`, name: `Dubious`,   note: `Understandable, but it gave something away.` },

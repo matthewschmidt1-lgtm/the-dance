@@ -1449,10 +1449,5 @@ window.PP = window.PP || {};
     }
   };
 
-  // What the desk says about you plugs into the same system as the main game.
-  M.scenarios.forEach(s => {
-    PP.insight.scenes[s.id] = { options: Object.fromEntries(s.options.map(o => [o.key, { buys: [], verdict: o.verdict }])) };
-  });
-
   PP.market = M;
 })();
